@@ -5,7 +5,7 @@ export interface PageStateStore {
   setActiveStep: (step: number) => void;
 }
 
-export const pageStateStore = create<PageStateStore>((set) => ({
+export const usePageStateStore = create<PageStateStore>((set) => ({
   activeStep: 0,
   setActiveStep: (step) => set({ activeStep: step }),
 }));

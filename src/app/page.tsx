@@ -1,15 +1,26 @@
 "use client";
-
-import { pageStateStore } from "@/stores/page-state.store";
 import { useEffect, useRef } from "react";
+import { usePageStateStore } from "@/stores/page-state.store";
+import Sidebar from "@/components/sidebar/sidebar";
 
 export default function Home() {
-  const { activeStep, setActiveStep } = pageStateStore();
+  const { activeStep, setActiveStep } = usePageStateStore();
   const isScrolling = useRef(false);
-  const totalSteps = 6;
+
+  const totalSteps = 5;
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      const isInsideCommand =
+        target.closest("[cmdk-root]") ||
+        target.closest('[data-slot="command-list"]');
+
+      if (isInsideCommand) {
+        return;
+      }
+
+      e.preventDefault();
       if (isScrolling.current) return;
 
       isScrolling.current = true;
@@ -22,10 +33,10 @@ export default function Home() {
 
       setTimeout(() => {
         isScrolling.current = false;
-      }, 800);
+      }, 1200);
     };
 
-    window.addEventListener("wheel", handleWheel);
+    window.addEventListener("wheel", handleWheel, { passive: false });
     return () => window.removeEventListener("wheel", handleWheel);
   }, [activeStep, setActiveStep]);
 
@@ -36,25 +47,7 @@ export default function Home() {
           <span className="text-zinc-400 font-mono">Step: {activeStep}</span>
         </div>
       </section>
-
-      <aside className="flex-[0.2] bg-white p-6 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-8 text-zinc-900">Props</h2>
-
-        <div className="flex flex-col gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className={`p-4 rounded-lg border transition-colors ${
-                activeStep === i
-                  ? "border-zinc-900 bg-zinc-50"
-                  : "border-transparent text-zinc-400"
-              }`}
-            >
-              Prop {i + 1}
-            </div>
-          ))}
-        </div>
-      </aside>
+      <Sidebar />
     </main>
   );
 }
