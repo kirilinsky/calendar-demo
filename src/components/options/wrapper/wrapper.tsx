@@ -4,13 +4,11 @@ import { motion } from "framer-motion";
 import { ReactNode } from "react";
 
 interface WrapperProps {
-  title: string;
   description?: string;
   children: ReactNode;
 }
 
 export const Wrapper = ({
-  title,
   description,
   children,
 }: WrapperProps): React.JSX.Element => {
@@ -23,9 +21,6 @@ export const Wrapper = ({
       className="overflow-hidden"
     >
       <div className="space-y-1">
-        <h4 className="text-sm font-semibold leading-none text-zinc-900">
-          {title}
-        </h4>
         {description && (
           <p className="text-[13px] text-zinc-500 leading-snug">
             {description}

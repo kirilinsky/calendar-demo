@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CalendarProps } from "react-calendar-datetime";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
+import { cn } from "@/lib/utils";
 
 export const ModulesOptions = () => {
   const { setProp, ...state } = useCalendarStateStore();
@@ -15,17 +16,14 @@ export const ModulesOptions = () => {
     { id: "months", label: "Months" },
     { id: "time", label: "Time" },
     { id: "presets", label: "Presets" },
-    { id: "compactMonths", label: "Compact Months" },
-    { id: "compactYears", label: "Compact Years" },
+    { id: "compactMonths", label: "Compact M" },
+    { id: "compactYears", label: "Compact Y" },
   ];
 
   return (
-    <Wrapper
-      title="Modules"
-      description="Combine any modules to customize your calendar's functionality."
-    >
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+    <Wrapper description="Combine any modules to customize your calendar's functionality.">
+      <div className="space-y-6 pt-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
           {modules.map((mod) => {
             const isChecked = !!state[mod.id];
 
@@ -36,16 +34,16 @@ export const ModulesOptions = () => {
               >
                 <Label
                   htmlFor={mod.id}
-                  className="text-[13px] text-zinc-600 group-hover:text-zinc-900 transition-colors cursor-pointer truncate mr-2"
+                  className="text-[12px] transition-colors cursor-pointer truncate mr-2 text-zinc-600 group-hover:text-zinc-900"
                 >
                   {mod.label}
                 </Label>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center shrink-0">
                   <Switch
                     id={mod.id}
                     checked={isChecked}
                     onCheckedChange={(val) => setProp(mod.id, val)}
-                    className="scale-90" 
+                    className="scale-75 origin-right"
                   />
                 </div>
               </div>
@@ -53,12 +51,12 @@ export const ModulesOptions = () => {
           })}
         </div>
 
-        <div className="flex flex-col items-center gap-2 pt-4 border-t border-zinc-100">
-          <span className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider">
-            Ready for more?
+        <div className="flex flex-col items-center gap-2 pt-4 border-t border-zinc-100 transition-colors">
+          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">
+            Next Step
           </span>
-          <div className="opacity-50 animate-bounce">
-            <ArrowDown size={16} className="text-zinc-400" />
+          <div className="opacity-50 animate-bounce text-zinc-400">
+            <ArrowDown size={14} />
           </div>
         </div>
       </div>

@@ -1,30 +1,41 @@
 "use client";
 
 import { Wrapper } from "@/components/options/wrapper/wrapper";
-import { MousePointer2, ArrowDown } from "lucide-react";
+import { ArrowDown, Sparkles } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 export const BaseOptions = () => {
   return (
-    <Wrapper title="Base" description="Welcome to the configurator.">
-      <Alert className="bg-zinc-900 text-zinc-50 border-none overflow-hidden relative group">
-        <div className="absolute -right-2 -top-2 opacity-10 group-hover:rotate-12 transition-transform">
-          <MousePointer2   size={64} />
-        </div>
-
-        <AlertTitle  className="flex items-center gap-2 font-semibold">
+    <Wrapper description="Welcome to the configurator.">
+      <Alert
+        className={cn(
+          "border-none overflow-hidden relative group transition-colors duration-500",
+          "bg-zinc-900 text-zinc-50",
+        )}
+      >
+        <AlertTitle className="flex items-center gap-2 font-semibold">
+          <Sparkles size={14} className={"text-amber-400"} />
           <span>Explore more</span>
         </AlertTitle>
 
-        <AlertDescription className="text-zinc-400 mt-2">
-          All settings are hidden below. Just
-          <span className="text-white font-medium mx-1">scroll down</span>
-          or use your trackpad to reveal the magic.
+        <AlertDescription
+          className={cn("mt-2 text-[13px] leading-relaxed", "text-zinc-400")}
+        >
+          All settings are hidden below. Proceed step by step to build your
+          perfect calendar.
         </AlertDescription>
+
+        <div
+          className={cn(
+            "absolute -right-4 -top-4 size-16 rounded-full blur-3xl opacity-20",
+            "bg-white",
+          )}
+        />
       </Alert>
 
-      <div className="flex justify-center pt-4 opacity-50 animate-bounce">
-        <ArrowDown size={18} className="text-zinc-400" />
+      <div className="flex justify-center pt-6 opacity-50 animate-bounce">
+        <ArrowDown size={15} className={"text-zinc-400"} />
       </div>
     </Wrapper>
   );

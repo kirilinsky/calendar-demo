@@ -6,6 +6,7 @@ export const THEMES = [
   { id: "dracula", backdrop: "#1c1111", highlight: "#ff5e5e", type: "dark" },
   { id: "sandstone", backdrop: "#1f1c18", highlight: "#e3ae5c", type: "dark" },
   { id: "temporal", backdrop: "#14252e", highlight: "#27d1f4", type: "dark" },
+  { id: "crimson", backdrop: "#0d0909", highlight: "#f92f2f", type: "dark" },
   { id: "paper", backdrop: "#ffffff", highlight: "#1a1a1c", type: "light" },
   { id: "mintblue", backdrop: "#f8f9fc", highlight: "#60d276", type: "light" },
   { id: "comfy", backdrop: "#e9ded5", highlight: "#a65d3a", type: "light" },
@@ -13,4 +14,5 @@ export const THEMES = [
   { id: "larosa", backdrop: "#dbd8e0", highlight: "#d65d91", type: "light" },
   { id: "solar", backdrop: "#d8cf9a", highlight: "#e67e22", type: "light" },
   { id: "neonlight", backdrop: "#f7f8f9", highlight: "#80ec27", type: "light" },
+  { id: "amethyst", backdrop: "#f5f3f7", highlight: "#681c9e", type: "light" },
 ];

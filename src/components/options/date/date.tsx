@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StartOfWeek } from "react-calendar-datetime";
+import { cn } from "@/lib/utils";
 
 export const DAYS_OPTIONS = [
   { label: "Sunday", value: "0" },
@@ -34,7 +35,6 @@ export const DateOptions = () => {
     if (!date) return "";
     const d = new Date(date);
     if (isNaN(d.getTime())) return "";
-
     try {
       return d.toISOString().split("T")[0];
     } catch (e) {
@@ -43,15 +43,12 @@ export const DateOptions = () => {
   };
 
   return (
-    <Wrapper
-      title="Date & Constraints"
-      description="Define the range, limits, and behavior of the calendar."
-    >
-      <div className="space-y-6">
+    <Wrapper description="Define the range, limits, and behavior of the calendar.">
+      <div className="space-y-6 pt-2">
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <Label className="text-zinc-600">Component Width</Label>
-            <span className="text-[10px] font-mono text-zinc-400">
+            <span className="text-[10px] font-mono text-zinc-500">
               {state.width}px
             </span>
           </div>
@@ -63,36 +60,35 @@ export const DateOptions = () => {
             onValueChange={([val]) => setProp("width", val)}
           />
         </div>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <Label className="text-zinc-600">Jelly Mode</Label>
-          </div>
+
+        <div className="flex items-center justify-between group">
+          <Label className="text-zinc-600">Jelly Mode</Label>
           <Switch
-            defaultChecked
             checked={state.jellyMode}
             onCheckedChange={(val) => setProp("jellyMode", val)}
+            className="scale-90"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label className="text-[11px] uppercase text-zinc-400">
+            <Label className="text-[10px] uppercase tracking-wider text-zinc-500">
               Min Date
             </Label>
             <Input
               type="date"
-              className="h-8 text-xs px-2 cursor-pointer"
+              className="h-8 text-[11px] px-2 cursor-pointer bg-white border-zinc-200"
               value={formatDateForInput(state.minDate)}
               onChange={(e) => setProp("minDate", new Date(e.target.value))}
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[11px] uppercase text-zinc-400">
+            <Label className="text-[10px] uppercase tracking-wider text-zinc-500">
               Max Date
             </Label>
             <Input
               type="date"
-              className="h-8 text-xs px-2 cursor-pointer"
+              className="h-8 text-[11px] px-2 cursor-pointer bg-white border-zinc-200"
               value={formatDateForInput(state.maxDate)}
               onChange={(e) => setProp("maxDate", new Date(e.target.value))}
             />
@@ -100,83 +96,62 @@ export const DateOptions = () => {
         </div>
 
         <div className="space-y-4 pt-1">
-          <div className="flex items-center justify-between group">
-            <Label
-              htmlFor="highlight"
-              className="text-zinc-600 cursor-pointer group-hover:text-zinc-900 transition-colors"
+          {[
+            { id: "highlightWeekends", label: "Highlight Weekends" },
+            { id: "disableWeekends", label: "Disable Weekends" },
+            { id: "gestures", label: "Enable Gestures" },
+          ].map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between group"
             >
-              Highlight Weekends
-            </Label>
-            <Switch
-              id="highlight"
-              checked={state.highlightWeekends}
-              onCheckedChange={(val) => setProp("highlightWeekends", val)}
-            />
-          </div>
+              <Label
+                htmlFor={item.id}
+                className="text-[13px] cursor-pointer text-zinc-600 group-hover:text-zinc-900 transition-colors"
+              >
+                {item.label}
+              </Label>
+              <Switch
+                id={item.id}
+                checked={!!state[item.id as keyof typeof state]}
+                onCheckedChange={(val) => setProp(item.id as any, val)}
+                className="scale-90"
+              />
+            </div>
+          ))}
 
-          <div className="flex items-center justify-between group">
-            <Label
-              htmlFor="disableWeekends"
-              className="text-zinc-600 cursor-pointer group-hover:text-zinc-900 transition-colors"
-            >
-              Disable Weekends
-            </Label>
-            <Switch
-              id="disableWeekends"
-              checked={state.disableWeekends}
-              onCheckedChange={(val) => setProp("disableWeekends", val)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between group">
-            <Label
-              htmlFor="gestures"
-              className="text-zinc-600 cursor-pointer group-hover:text-zinc-900 transition-colors"
-            >
-              Enable Gestures
-            </Label>
-            <Switch
-              id="gestures"
-              checked={state.gestures}
-              onCheckedChange={(val) => setProp("gestures", val)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between group">
-            <Label
-              htmlFor="gestures"
-              className="text-zinc-600 cursor-pointer group-hover:text-zinc-900 transition-colors"
-            >
-              Set Start of Week
-            </Label>
+          <div className="flex items-center justify-between group pt-2">
+            <Label className="text-[13px] text-zinc-600">Start of Week</Label>
             <Select
-              defaultValue={String(state.startOfWeek)}
+              value={String(state.startOfWeek)}
               onValueChange={(value) =>
                 setProp("startOfWeek", Number(value) as StartOfWeek)
               }
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Start of Week" />
+              <SelectTrigger className="w-[120px] h-8 text-[11px] bg-white">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {DAYS_OPTIONS.map(({ label, value }) => {
-                    return (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    );
-                  })}
+                  {DAYS_OPTIONS.map(({ label, value }) => (
+                    <SelectItem
+                      key={value}
+                      value={value}
+                      className="text-[11px]"
+                    >
+                      {label}
+                    </SelectItem>
+                  ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 p-3 bg-zinc-50 rounded-lg border border-zinc-100">
+        <div className="flex items-center gap-2 p-3 rounded-xl border bg-zinc-50 border-zinc-100 transition-colors">
           <CalendarDays className="size-4 text-zinc-400" />
-          <span className="text-[11px] text-zinc-500 leading-tight">
-            All changes will be reflected in the preview on the left.
+          <span className="text-[11px] leading-tight text-zinc-500">
+            Live preview is active.
           </span>
         </div>
       </div>

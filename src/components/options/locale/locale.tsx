@@ -19,48 +19,42 @@ import {
 } from "@/components/ui/popover";
 import { POPULAR_LANGUAGES, ALL_LANGUAGES } from "@/constants/languages";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export const LocalesOptions = () => {
   const { setProp, locale } = useCalendarStateStore();
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(locale);
-
-  useEffect(() => {
-    setProp("locale", value);
-  }, [value]);
 
   return (
-    <Wrapper
-      title="Locales"
-      description="Choose your preferred language and date formatting."
-    >
-      <div className="space-y-6 scroll-overloaded">
+    <Wrapper description="Choose your preferred language and date formatting.">
+      <div className="space-y-6 pt-2">
         <div className="space-y-3">
-          <Label className="text-[11px] uppercase tracking-wider text-zinc-400">
+          <Label className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">
             Popular
           </Label>
           <div className="grid grid-cols-2 gap-2">
-            {POPULAR_LANGUAGES.map((lang) => (
-              <Button
-                key={lang.value}
-                variant="outline"
-                className={cn(
-                  "text-xs h-8  font-normal transition-all  text-center",
-                  value === lang.value
-                    ? "border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900"
-                    : "border-zinc-200 text-zinc-500 hover:text-zinc-900",
-                )}
-                onClick={() => setValue(lang.value)}
-              >
-                {lang.label}
-              </Button>
-            ))}
+            {POPULAR_LANGUAGES.map((lang) => {
+              const isActive = locale === lang.value;
+              return (
+                <Button
+                  key={lang.value}
+                  variant="outline"
+                  className={cn(
+                    "text-[11px] h-8 font-normal transition-all",
+                    isActive
+                      ? "border-zinc-900 bg-zinc-950 text-white shadow-sm"
+                      : "border-zinc-200 text-zinc-500 hover:text-zinc-900",
+                  )}
+                  onClick={() => setProp("locale", lang.value)}
+                >
+                  {lang.label}
+                </Button>
+              );
+            })}
           </div>
         </div>
-
         <div className="space-y-3">
-          <Label className="text-[11px] uppercase tracking-wider text-zinc-400">
+          <Label className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">
             Search All
           </Label>
           <Popover open={open} onOpenChange={setOpen}>
@@ -68,46 +62,48 @@ export const LocalesOptions = () => {
               <Button
                 variant="outline"
                 role="combobox"
-                className="w-full justify-between font-normal text-zinc-600 h-10"
+                className="w-full justify-between font-normal h-9 transition-colors bg-white border-zinc-200 text-zinc-600"
               >
-                <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-2 text-[11px]">
                   <Globe className="h-3 w-3 opacity-50" />
-                  {ALL_LANGUAGES.find((l) => l.value === value)?.label ||
+                  {ALL_LANGUAGES.find((l) => l.value === locale)?.label ||
                     "Select language..."}
                 </div>
-                <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-[var(--radix-popover-trigger-width)] p-0"
+              className="w-[var(--radix-popover-trigger-width)] p-0 border-none shadow-2xl bg-white"
               align="start"
             >
-              <Command className="rounded-lg border shadow-md">
+              <Command className="rounded-xl border bg-white border-zinc-100">
                 <CommandInput
                   placeholder="Type a language..."
-                  className="h-9"
+                  className="h-9 text-xs"
                 />
-                <CommandList className="max-h-[200px] overflow-y-auto overflow-x-hidden custom-scrollbar">
-                  <CommandEmpty>No results found.</CommandEmpty>
-                  <CommandGroup>
+                <CommandList className="max-h-[220px] overflow-y-auto custom-scrollbar">
+                  <CommandEmpty className="py-4 text-xs text-center text-zinc-500">
+                    No results found.
+                  </CommandEmpty>
+                  <CommandGroup className="p-1">
                     {ALL_LANGUAGES.map((lang) => (
                       <CommandItem
                         key={lang.value}
                         value={lang.label}
                         onSelect={() => {
-                          setValue(lang.value);
+                          setProp("locale", lang.value);
                           setOpen(false);
                         }}
-                        className="text-sm cursor-pointer"
+                        className="text-[11px] cursor-pointer rounded-lg mb-0.5 text-zinc-600"
                       >
                         <Check
                           className={cn(
-                            "mr-2 h-4 w-4",
-                            value === lang.value ? "opacity-100" : "opacity-0",
+                            "mr-2 h-3 w-3 text-zinc-900",
+                            locale === lang.value ? "opacity-100" : "opacity-0",
                           )}
                         />
                         {lang.label}
-                        <span className="ml-auto text-[10px] font-mono opacity-30">
+                        <span className="ml-auto text-[9px] font-mono opacity-30">
                           {lang.value}
                         </span>
                       </CommandItem>
