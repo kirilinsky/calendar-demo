@@ -4,15 +4,15 @@ import { usePageStateStore } from "@/stores/page-state.store";
 import Sidebar from "@/components/sidebar/sidebar";
 import { Calendar } from "react-calendar-datetime";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
-import { Sun, Moon, Calendar as CalendarIcon } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Calendar as CalendarIcon, Sun, Moon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
-export default function Home() {
+function CalendarPageContent() {
   const searchParams = useSearchParams();
-  const { lightMode, setLightMode, setActiveStep } = usePageStateStore();
+  const { setActiveStep, lightMode, setLightMode } = usePageStateStore();
   const { setProp, ...calendarProps } = useCalendarStateStore();
 
   useEffect(() => {
@@ -83,10 +83,7 @@ export default function Home() {
         />
 
         <div className="relative z-10 flex flex-col items-center gap-8">
-          <div
-            className="no-scroll"
-            style={{ width: "600px", transition: "all .3s ease-in-out" }}
-          >
+          <div className="no-scroll" style={{ width: "600px" }}>
             <Calendar
               {...calendarProps}
               onChangeDate={(d) => setProp("date", d)}
@@ -123,9 +120,15 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <div className="light contents">
-        <Sidebar />
-      </div>
+      <Sidebar />
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="h-screen w-full bg-zinc-50" />}>
+      <CalendarPageContent />
+    </Suspense>
   );
 }
