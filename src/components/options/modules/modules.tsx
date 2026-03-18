@@ -22,32 +22,30 @@ export const ModulesOptions = () => {
   return (
     <Wrapper
       title="Modules"
-      description="Here you can combine any modules exactly how you want them to appear."
+      description="Combine any modules to customize your calendar's functionality."
     >
       <div className="space-y-6">
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-x-2 gap-y-3">
           {modules.map((mod) => {
             const isChecked = !!state[mod.id];
 
             return (
               <div
                 key={mod.id}
-                className="flex items-center justify-between group"
+                className="flex items-center justify-between group min-w-0"
               >
                 <Label
                   htmlFor={mod.id}
-                  className="text-zinc-600 group-hover:text-zinc-900 transition-colors cursor-pointer"
+                  className="text-[13px] text-zinc-600 group-hover:text-zinc-900 transition-colors cursor-pointer truncate mr-2"
                 >
                   {mod.label}
                 </Label>
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-mono uppercase text-zinc-400 w-6">
-                    {isChecked ? "ON" : "OFF"}
-                  </span>
+                <div className="flex items-center gap-2 shrink-0">
                   <Switch
                     id={mod.id}
                     checked={isChecked}
                     onCheckedChange={(val) => setProp(mod.id, val)}
+                    className="scale-90" 
                   />
                 </div>
               </div>

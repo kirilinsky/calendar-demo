@@ -6,6 +6,7 @@ declare const DARK_THEMES: readonly ["carbon", "midnight", "sandstone", "phospho
 type CalendarTheme = (typeof LIGHT_THEMES)[number] | (typeof DARK_THEMES)[number];
 //#endregion
 //#region src/types/calendar.d.ts
+type StartOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 interface CalendarProps {
   presets?: boolean;
   months?: boolean;
@@ -15,11 +16,11 @@ interface CalendarProps {
   locale?: string;
   maxDate?: Date;
   minDate?: Date;
-  disabledDates?: Date | Date[];
+  jellyMode?: boolean;
   highlightWeekends?: boolean;
   disableWeekends?: boolean;
   gestures?: boolean;
-  startOfWeek?: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  startOfWeek?: StartOfWeek;
   compactYears?: boolean;
   compactMonths?: boolean;
   onChangeDate?: (date: Date) => void;
@@ -31,4 +32,4 @@ interface CalendarProps {
 //#region src/components/calendar/calendar.d.ts
 declare const Calendar: React.FC<CalendarProps>;
 //#endregion
-export { Calendar, type CalendarProps, type CalendarTheme };
+export { Calendar, type CalendarProps, type CalendarTheme, type StartOfWeek };

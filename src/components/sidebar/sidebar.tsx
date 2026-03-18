@@ -12,11 +12,11 @@ const Sidebar = () => {
   const { activeStep, setActiveStep } = usePageStateStore();
 
   return (
-    <aside className="flex-[0.2] bg-white p-5 overflow-y-auto">
-      <div className="flex flex-col gap-4">
+    <aside className="flex-[0.3] bg-white p-5 overflow-y-auto">
+      <div className="flex flex-col gap-3">
         <div
           onClick={() => setActiveStep(0)}
-          className={`p-4 rounded-lg border transition-colors ${
+          className={`p-3 rounded-lg border transition-colors ${
             activeStep === 0
               ? "border-zinc-900 bg-zinc-50"
               : "border-transparent text-zinc-400"
@@ -33,7 +33,7 @@ const Sidebar = () => {
 
         <div
           onClick={() => setActiveStep(1)}
-          className={`p-4 rounded-lg border transition-colors ${
+          className={`p-3 rounded-lg border transition-colors ${
             activeStep === 1
               ? "border-zinc-900 bg-zinc-50"
               : "border-transparent text-zinc-400"
@@ -50,7 +50,7 @@ const Sidebar = () => {
 
         <div
           onClick={() => setActiveStep(2)}
-          className={`p-4 rounded-lg border transition-colors ${
+          className={`p-3 rounded-lg border transition-colors ${
             activeStep === 2
               ? "border-zinc-900 bg-zinc-50"
               : "border-transparent text-zinc-400"
@@ -67,7 +67,7 @@ const Sidebar = () => {
 
         <div
           onClick={() => setActiveStep(3)}
-          className={`p-4 rounded-lg border transition-colors ${
+          className={`p-3 rounded-lg border transition-colors ${
             activeStep === 3
               ? "border-zinc-900 bg-zinc-50"
               : "border-transparent text-zinc-400"
@@ -84,7 +84,7 @@ const Sidebar = () => {
 
         <div
           onClick={() => setActiveStep(4)}
-          className={`p-4 rounded-lg border transition-colors ${
+          className={`p-3 rounded-lg border transition-colors ${
             activeStep === 4
               ? "border-zinc-900 bg-zinc-50"
               : "border-transparent text-zinc-400"

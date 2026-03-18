@@ -16,6 +16,7 @@ export default function Home() {
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
       const isInsideCommand =
+        target.closest(".no-scroll") ||
         target.closest("[cmdk-root]") ||
         target.closest('[data-slot="command-list"]');
 
@@ -45,11 +46,13 @@ export default function Home() {
 
   return (
     <main className="flex h-screen w-full overflow-hidden bg-zinc-50">
-      <span className="text-zinc-400 font-mono">Step: {activeStep}</span>
-      <section className="relative flex flex-[0.8] items-center justify-center border-r border-zinc-200 bg-zinc-50/50 p-12">
+      <section className="relative flex flex-[0.7] items-center justify-center border-r border-zinc-200 bg-zinc-50/50 p-1">
         <div className="absolute inset-0 z-0 opacity-30 [background-image:radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:24px_24px]" />
 
-        <div style={{ width: "600px", transition: "all .3 linear" }}>
+        <div
+          className="no-scroll"
+          style={{ width: "600px", transition: "all .3 linear" }}
+        >
           <Calendar {...props} onChangeDate={(date) => console.log(date)} />
         </div>
       </section>

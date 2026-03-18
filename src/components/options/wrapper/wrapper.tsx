@@ -33,7 +33,7 @@ export const Wrapper = ({
         )}
       </div>
 
-      <div className="pt-2 flex flex-col gap-4">{children}</div>
+      <div className="pt-1 flex flex-col gap-3">{children}</div>
     </motion.div>
   );
 };

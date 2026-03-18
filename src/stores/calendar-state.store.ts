@@ -23,7 +23,7 @@ export const useCalendarStateStore = create<CalendarStateStore>((set) => ({
   startOfWeek: 1,
   compactYears: false,
   compactMonths: false,
-  width: 450,
+  width: 650,
   height: "auto",
   theme: "carbon" as CalendarTheme,
 

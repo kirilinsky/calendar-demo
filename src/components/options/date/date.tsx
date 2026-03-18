@@ -7,6 +7,25 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { CalendarDays } from "lucide-react";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { StartOfWeek } from "react-calendar-datetime";
+
+export const DAYS_OPTIONS = [
+  { label: "Sunday", value: "0" },
+  { label: "Monday", value: "1" },
+  { label: "Tuesday", value: "2" },
+  { label: "Wednesday", value: "3" },
+  { label: "Thursday", value: "4" },
+  { label: "Friday", value: "5" },
+  { label: "Saturday", value: "6" },
+];
 
 export const DateOptions = () => {
   const { setProp, ...state } = useCalendarStateStore();
@@ -44,6 +63,16 @@ export const DateOptions = () => {
             onValueChange={([val]) => setProp("width", val)}
           />
         </div>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <Label className="text-zinc-600">Jelly Mode</Label>
+          </div>
+          <Switch
+            defaultChecked
+            checked={state.jellyMode}
+            onCheckedChange={(val) => setProp("jellyMode", val)}
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
@@ -70,7 +99,7 @@ export const DateOptions = () => {
           </div>
         </div>
 
-        <div className="space-y-4 pt-2">
+        <div className="space-y-4 pt-1">
           <div className="flex items-center justify-between group">
             <Label
               htmlFor="highlight"
@@ -111,6 +140,36 @@ export const DateOptions = () => {
               checked={state.gestures}
               onCheckedChange={(val) => setProp("gestures", val)}
             />
+          </div>
+
+          <div className="flex items-center justify-between group">
+            <Label
+              htmlFor="gestures"
+              className="text-zinc-600 cursor-pointer group-hover:text-zinc-900 transition-colors"
+            >
+              Set Start of Week
+            </Label>
+            <Select
+              defaultValue={String(state.startOfWeek)}
+              onValueChange={(value) =>
+                setProp("startOfWeek", Number(value) as StartOfWeek)
+              }
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Start of Week" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {DAYS_OPTIONS.map(({ label, value }) => {
+                    return (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
