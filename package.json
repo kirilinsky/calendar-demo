@@ -1,6 +1,6 @@
 {
   "name": "calendar-demo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -19,6 +19,7 @@
     "next": "16.1.7",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
+    "react-calendar-datetime": "file:.yalc/react-calendar-datetime",
     "react-dom": "19.2.3",
     "shadcn": "^4.0.8",
     "tailwind-merge": "^3.5.0",

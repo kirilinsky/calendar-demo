@@ -5,14 +5,14 @@ import { ModulesOptions } from "@/components/options/modules/modules";
 import { usePageStateStore } from "@/stores/page-state.store";
 import { AnimatePresence } from "framer-motion";
 import { LocalesOptions } from "../options/locale/locale";
+import { ThemesOptions } from "../options/themes/themes";
+import { DateOptions } from "../options/date/date";
 
 const Sidebar = () => {
   const { activeStep, setActiveStep } = usePageStateStore();
 
   return (
-    <aside className="flex-[0.2] bg-white p-6 overflow-y-auto">
-      <h2 className="text-lg font-semibold mb-8 text-zinc-900">Props</h2>
-
+    <aside className="flex-[0.2] bg-white p-5 overflow-y-auto">
       <div className="flex flex-col gap-4">
         <div
           onClick={() => setActiveStep(0)}
@@ -61,6 +61,40 @@ const Sidebar = () => {
           ) : (
             <AnimatePresence>
               <LocalesOptions />
+            </AnimatePresence>
+          )}
+        </div>
+
+        <div
+          onClick={() => setActiveStep(3)}
+          className={`p-4 rounded-lg border transition-colors ${
+            activeStep === 3
+              ? "border-zinc-900 bg-zinc-50"
+              : "border-transparent text-zinc-400"
+          }`}
+        >
+          {activeStep !== 3 ? (
+            "Themes"
+          ) : (
+            <AnimatePresence>
+              <ThemesOptions />
+            </AnimatePresence>
+          )}
+        </div>
+
+        <div
+          onClick={() => setActiveStep(4)}
+          className={`p-4 rounded-lg border transition-colors ${
+            activeStep === 4
+              ? "border-zinc-900 bg-zinc-50"
+              : "border-transparent text-zinc-400"
+          }`}
+        >
+          {activeStep !== 4 ? (
+            "Rest Options"
+          ) : (
+            <AnimatePresence>
+              <DateOptions />
             </AnimatePresence>
           )}
         </div>

@@ -9,10 +9,10 @@ export const BaseOptions = () => {
     <Wrapper title="Base" description="Welcome to the configurator.">
       <Alert className="bg-zinc-900 text-zinc-50 border-none overflow-hidden relative group">
         <div className="absolute -right-2 -top-2 opacity-10 group-hover:rotate-12 transition-transform">
-          <MousePointer2 size={64} />
+          <MousePointer2   size={64} />
         </div>
 
-        <AlertTitle className="flex items-center gap-2 font-semibold">
+        <AlertTitle  className="flex items-center gap-2 font-semibold">
           <span>Explore more</span>
         </AlertTitle>
 

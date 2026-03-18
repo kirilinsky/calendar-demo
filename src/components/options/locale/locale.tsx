@@ -1,7 +1,5 @@
-// src/options/locales/locales.tsx
 "use client";
 
-import * as React from "react";
 import { Wrapper } from "@/components/options/wrapper/wrapper";
 import { Check, ChevronsUpDown, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,10 +18,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { POPULAR_LANGUAGES, ALL_LANGUAGES } from "@/constants/languages";
+import { useCalendarStateStore } from "@/stores/calendar-state.store";
+import { useEffect, useState } from "react";
 
 export const LocalesOptions = () => {
-  const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("en-US");
+  const { setProp, locale } = useCalendarStateStore();
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(locale);
+
+  useEffect(() => {
+    setProp("locale", value);
+  }, [value]);
 
   return (
     <Wrapper

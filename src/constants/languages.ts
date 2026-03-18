@@ -109,7 +109,6 @@ export const ALL_LANGUAGES = [
   { label: "Vietnamese", value: "vi-VN" },
   { label: "Welsh", value: "cy-GB" },
   { label: "Zulu", value: "zu-ZA" },
-  // Adding more regional/specific codes to hit 166...
   { label: "Afrikaans (Namibia)", value: "af-NA" },
   { label: "Albanian (Kosovo)", value: "sq-XK" },
   { label: "Arabic (Algeria)", value: "ar-DZ" },

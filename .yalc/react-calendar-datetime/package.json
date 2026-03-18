@@ -1,0 +1,61 @@
+{
+  "name": "react-calendar-datetime",
+  "version": "3.0.0",
+  "description": "Ultra-lightweight React Calendar Date & Time picker. 0 dependencies, 400+ languages, 14 themes and presets.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": {
+        "import": "./dist/index.d.mts",
+        "require": "./dist/index.d.cts"
+      },
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kirilinsky/react-calendar-datetime"
+  },
+  "homepage": "https://github.com/kirilinsky/react-calendar-datetime/",
+  "bugs": {
+    "url": "https://github.com/kirilinsky/react-calendar-datetime/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "ladle serve",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "build:demo": "ladle build",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "keywords": [
+    "react",
+    "calendar",
+    "datepicker",
+    "datetime-picker",
+    "time-picker",
+    "react-calendar",
+    "react-datepicker",
+    "localization",
+    "multi-language",
+    "themes",
+    "customizable",
+    "lightweight",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Kirilinsky (https://github.com/kirilinsky)",
+  "license": "MIT",
+  "yalcSig": "7117fae8cc82b66e23351263e042105e"
+}

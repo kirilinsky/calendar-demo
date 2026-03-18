@@ -1,0 +1,16 @@
+export const THEMES = [
+  { id: "carbon", backdrop: "#1a1a1c", highlight: "#ffffff", type: "dark" },
+  { id: "midnight", backdrop: "#1a1e2b", highlight: "#3559e0", type: "dark" },
+  { id: "cyber", backdrop: "#07070b", highlight: "#00f3ff", type: "dark" },
+  { id: "phosphor", backdrop: "#010401", highlight: "#76ff03", type: "dark" },
+  { id: "dracula", backdrop: "#1c1111", highlight: "#ff5e5e", type: "dark" },
+  { id: "sandstone", backdrop: "#1f1c18", highlight: "#e3ae5c", type: "dark" },
+  { id: "temporal", backdrop: "#14252e", highlight: "#27d1f4", type: "dark" },
+  { id: "paper", backdrop: "#ffffff", highlight: "#1a1a1c", type: "light" },
+  { id: "mintblue", backdrop: "#f8f9fc", highlight: "#60d276", type: "light" },
+  { id: "comfy", backdrop: "#e9ded5", highlight: "#a65d3a", type: "light" },
+  { id: "snowstorm", backdrop: "#e2e5e9", highlight: "#3a60d6", type: "light" },
+  { id: "larosa", backdrop: "#dbd8e0", highlight: "#d65d91", type: "light" },
+  { id: "solar", backdrop: "#d8cf9a", highlight: "#e67e22", type: "light" },
+  { id: "neonlight", backdrop: "#f7f8f9", highlight: "#80ec27", type: "light" },
+];
