@@ -9,10 +9,9 @@ export const BaseOptions = () => {
   return (
     <Wrapper description="Welcome to the configurator.">
       <Alert
-        className={cn(
-          "border-none overflow-hidden relative group transition-colors duration-500",
-          "bg-zinc-900 text-zinc-50",
-        )}
+        className={
+          "border-none overflow-hidden relative group transition-colors duration-500  text-zinc-50"
+        }
       >
         <AlertTitle className="flex items-center gap-2 font-semibold">
           <Sparkles size={14} className={"text-amber-400"} />

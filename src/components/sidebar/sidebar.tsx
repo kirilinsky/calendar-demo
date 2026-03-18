@@ -45,7 +45,7 @@ const Sidebar = () => {
               className={cn(
                 "p-4 rounded-2xl cursor-pointer border transition-all duration-300 relative overflow-hidden",
                 isActive
-                  ? "border-zinc-900 bg-zinc-900 text-white shadow-md"
+                  ? "border-zinc-900  text-white shadow-md"
                   : "border-transparent bg-transparent text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50",
               )}
             >
