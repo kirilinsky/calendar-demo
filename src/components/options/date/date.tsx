@@ -98,6 +98,7 @@ export const DateOptions = () => {
             { id: "highlightWeekends", label: "Highlight Weekends" },
             { id: "disableWeekends", label: "Disable Weekends" },
             { id: "gestures", label: "Enable Gestures" },
+            { id: "showWeekNumber", label: "Show Week Number" },
           ].map((item) => (
             <div
               key={item.id}
