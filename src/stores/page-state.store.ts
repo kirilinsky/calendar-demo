@@ -2,14 +2,14 @@ import { create } from "zustand";
 
 export interface PageStateStore {
   activeStep: number;
-  darkMode: boolean;
+  lightMode: boolean;
   setActiveStep: (step: number) => void;
-  setDarkMode: (mode: boolean) => void;
+  setLightMode: (mode: boolean) => void;
 }
 
 export const usePageStateStore = create<PageStateStore>((set) => ({
   activeStep: 0,
-  darkMode: true,
+  lightMode: true,
   setActiveStep: (step) => set({ activeStep: step }),
-  setDarkMode: (mode) => set({ darkMode: mode }),
+  setLightMode: (mode) => set({ lightMode: mode }),
 }));

@@ -16,7 +16,7 @@ export const ThemesOptions = () => {
     theme: activeTheme,
     gradientBackground,
   } = useCalendarStateStore();
-  const { setDarkMode } = usePageStateStore();
+  const { setLightMode } = usePageStateStore();
 
   return (
     <Wrapper description="Select a color palette for your interface.">
@@ -43,7 +43,7 @@ export const ThemesOptions = () => {
                 key={theme.id}
                 variant="outline"
                 onClick={() => {
-                  setDarkMode(theme.type === "dark");
+                  setLightMode(theme.type === "dark");
                   setProp("theme", theme.id as CalendarTheme);
                 }}
                 className={cn(

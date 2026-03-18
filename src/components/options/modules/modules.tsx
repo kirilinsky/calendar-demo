@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CalendarProps } from "react-calendar-datetime";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
-import { cn } from "@/lib/utils";
 
 export const ModulesOptions = () => {
   const { setProp, ...state } = useCalendarStateStore();

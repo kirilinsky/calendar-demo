@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { CalendarDays } from "lucide-react";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
 import {
   Select,
@@ -16,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StartOfWeek } from "react-calendar-datetime";
-import { cn } from "@/lib/utils";
 
 export const DAYS_OPTIONS = [
   { label: "Sunday", value: "0" },
@@ -146,13 +144,6 @@ export const DateOptions = () => {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 p-3 rounded-xl border bg-zinc-50 border-zinc-100 transition-colors">
-          <CalendarDays className="size-4 text-zinc-400" />
-          <span className="text-[11px] leading-tight text-zinc-500">
-            Live preview is active.
-          </span>
         </div>
       </div>
     </Wrapper>

@@ -43,7 +43,7 @@ export const LocalesOptions = () => {
                     "text-[11px] h-8 font-normal transition-all",
                     isActive
                       ? "border-zinc-900 bg-zinc-950 text-white shadow-sm"
-                      : "border-zinc-200 text-zinc-500 hover:text-zinc-900",
+                      : "border-zinc-200 text-zinc-500 hover:text-zinc-900 bg-white",
                   )}
                   onClick={() => setProp("locale", lang.value)}
                 >
@@ -53,6 +53,7 @@ export const LocalesOptions = () => {
             })}
           </div>
         </div>
+
         <div className="space-y-3">
           <Label className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">
             Search All
@@ -72,20 +73,21 @@ export const LocalesOptions = () => {
                 <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
+
             <PopoverContent
-              className="w-[var(--radix-popover-trigger-width)] p-0 border-none shadow-2xl bg-white"
+              className="w-[var(--radix-popover-trigger-width)] p-0 border border-zinc-200 shadow-xl bg-white text-zinc-950"
               align="start"
             >
-              <Command className="rounded-xl border bg-white border-zinc-100">
+              <Command className="rounded-xl bg-white text-zinc-950">
                 <CommandInput
                   placeholder="Type a language..."
-                  className="h-9 text-xs"
+                  className="h-9 text-xs border-none focus:ring-0 text-zinc-900"
                 />
-                <CommandList className="max-h-[220px] overflow-y-auto custom-scrollbar">
-                  <CommandEmpty className="py-4 text-xs text-center text-zinc-500">
+                <CommandList className="max-h-[220px] overflow-y-auto">
+                  <CommandEmpty className="py-4 text-xs text-center text-zinc-500 bg-white">
                     No results found.
                   </CommandEmpty>
-                  <CommandGroup className="p-1">
+                  <CommandGroup className="p-1 bg-white">
                     {ALL_LANGUAGES.map((lang) => (
                       <CommandItem
                         key={lang.value}
@@ -94,7 +96,7 @@ export const LocalesOptions = () => {
                           setProp("locale", lang.value);
                           setOpen(false);
                         }}
-                        className="text-[11px] cursor-pointer rounded-lg mb-0.5 text-zinc-600"
+                        className="text-[11px] cursor-pointer rounded-lg mb-0.5 text-zinc-600 hover:bg-zinc-100 aria-selected:bg-zinc-100 aria-selected:text-zinc-900"
                       >
                         <Check
                           className={cn(
@@ -103,7 +105,7 @@ export const LocalesOptions = () => {
                           )}
                         />
                         {lang.label}
-                        <span className="ml-auto text-[9px] font-mono opacity-30">
+                        <span className="ml-auto text-[9px] font-mono opacity-40">
                           {lang.value}
                         </span>
                       </CommandItem>

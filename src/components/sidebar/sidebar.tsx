@@ -6,11 +6,18 @@ import { ModulesOptions } from "@/components/options/modules/modules";
 import { LocalesOptions } from "../options/locale/locale";
 import { ThemesOptions } from "../options/themes/themes";
 import { DateOptions } from "../options/date/date";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BaseOptions } from "../options/base/base";
 
 const Sidebar = () => {
+  const router = useRouter();
   const { activeStep, setActiveStep } = usePageStateStore();
+
+  const handleStepClick = (id: number) => {
+    setActiveStep(id);
+    router.push(`?step=${id}`, { scroll: false });
+  };
 
   const steps = [
     { id: 0, label: "Base", component: <BaseOptions /> },
@@ -23,54 +30,57 @@ const Sidebar = () => {
   return (
     <aside
       className={cn(
-        "flex-[0.3] p-4 overflow-y-auto transition-colors duration-500 border-l",
-        "bg-white border-zinc-200",
+        "light flex-[0.3] p-4 overflow-y-auto border-l bg-white border-zinc-200 text-zinc-950 transition-colors duration-500",
       )}
     >
       <div className="flex flex-col gap-3">
-        {steps.map((step) => (
-          <motion.div
-            layout
-            key={step.id}
-            onClick={() => setActiveStep(step.id)}
-            className={cn(
-              "p-4 rounded-2xl cursor-pointer border transition-all duration-300 relative overflow-hidden",
-              activeStep === step.id,
-              "border-zinc-200 bg-zinc-50 shadow-sm",
-              "border-transparent text-zinc-400 hover:text-zinc-600",
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={cn(
-                  "text-sm font-semibold transition-colors",
-                  activeStep === step.id && "text-white",
-                )}
-              >
-                {step.label}
-              </span>
+        {steps.map((step) => {
+          const isActive = activeStep === step.id;
 
-              {activeStep !== step.id && (
-                <span className="text-[10px] font-mono opacity-50">
-                  0{step.id + 1}
-                </span>
+          return (
+            <motion.div
+              layout
+              key={step.id}
+              onClick={() => handleStepClick(step.id)}
+              className={cn(
+                "p-4 rounded-2xl cursor-pointer border transition-all duration-300 relative overflow-hidden",
+                isActive
+                  ? "border-zinc-900 bg-zinc-900 text-white shadow-md"
+                  : "border-transparent bg-transparent text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50",
               )}
-            </div>
-
-            <AnimatePresence mode="wait">
-              {activeStep === step.id && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                  animate={{ opacity: 1, height: "auto", marginTop: 16 }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={cn(
+                    "text-sm font-semibold transition-colors",
+                    isActive ? "text-white" : "text-zinc-900",
+                  )}
                 >
-                  {step.component}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        ))}
+                  {step.label}
+                </span>
+
+                {!isActive && (
+                  <span className="text-[10px] font-mono opacity-50">
+                    0{step.id + 1}
+                  </span>
+                )}
+              </div>
+
+              <AnimatePresence mode="wait">
+                {isActive && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                    animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  >
+                    {step.component}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
       </div>
     </aside>
   );

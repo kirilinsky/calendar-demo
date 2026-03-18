@@ -2,15 +2,17 @@
 
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
-
+import { cn } from "@/lib/utils";
 interface WrapperProps {
   description?: string;
   children: ReactNode;
+  className?: string;
 }
 
 export const Wrapper = ({
   description,
   children,
+  className,
 }: WrapperProps): React.JSX.Element => {
   return (
     <motion.div
@@ -18,17 +20,16 @@ export const Wrapper = ({
       animate={{ height: "auto", opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="overflow-hidden"
+      className={cn("overflow-hidden text-zinc-950", className)}
     >
-      <div className="space-y-1">
-        {description && (
-          <p className="text-[13px] text-zinc-500 leading-snug">
+      {description && (
+        <div className="pb-2">
+          <p className="text-[13px] text-zinc-500 leading-snug font-normal">
             {description}
           </p>
-        )}
-      </div>
-
-      <div className="pt-1 flex flex-col gap-3">{children}</div>
+        </div>
+      )}
+      <div className="flex flex-col gap-3">{children}</div>
     </motion.div>
   );
 };
