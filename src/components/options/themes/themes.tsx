@@ -15,6 +15,7 @@ export const ThemesOptions = () => {
     setProp,
     theme: activeTheme,
     gradientBackground,
+    brutalism,
   } = useCalendarStateStore();
   const { setLightMode } = usePageStateStore();
 
@@ -32,6 +33,20 @@ export const ThemesOptions = () => {
           <Switch
             checked={gradientBackground}
             onCheckedChange={(val) => setProp("gradientBackground", val)}
+            className="scale-90"
+          />
+        </div>
+        <div className="flex items-center justify-between group">
+          <Label
+            className={cn(
+              "text-[13px] transition-colors cursor-pointer text-zinc-600 group-hover:text-zinc-900",
+            )}
+          >
+            Brutalism Mode
+          </Label>
+          <Switch
+            checked={brutalism}
+            onCheckedChange={(val) => setProp("brutalism", val)}
             className="scale-90"
           />
         </div>
