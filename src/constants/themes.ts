@@ -9,6 +9,7 @@ export const THEMES = [
   { id: "industrial", backdrop: "#111111", highlight: "#e85d00", type: "dark" },
   { id: "crimson", backdrop: "#0d0909", highlight: "#f92f2f", type: "dark" },
   { id: "paper", backdrop: "#ffffff", highlight: "#1a1a1c", type: "light" },
+  { id: "graphite", backdrop: "#eaecf0", highlight: "#f1a01d", type: "light" }, 
   { id: "mint", backdrop: "#f8f9fc", highlight: "#60d276", type: "light" },
   { id: "comfy", backdrop: "#e9ded5", highlight: "#a65d3a", type: "light" },
   { id: "snow", backdrop: "#e2e5e9", highlight: "#3a60d6", type: "light" },
