@@ -11,9 +11,9 @@ interface CalendarStateStore extends CalendarProps {
 }
 
 export const useCalendarStateStore = create<CalendarStateStore>((set) => ({
-  presets: true,
-  months: false,
-  years: true,
+  presets: false,
+  months: true,
+  years: false,
   date: new Date(),
   time: false,
   locale: "en-US",
@@ -21,9 +21,9 @@ export const useCalendarStateStore = create<CalendarStateStore>((set) => ({
   disableWeekends: false,
   gestures: false,
   startOfWeek: 1,
-  compactYears: false,
-  compactMonths: true,
-  width: 600,
+  compactYears: true,
+  compactMonths: false,
+  width: 400,
   height: "auto",
   theme: "carbon" as CalendarTheme,
 

@@ -12,11 +12,12 @@ export const ModulesOptions = () => {
 
   const modules: { id: keyof CalendarProps; label: string }[] = [
     { id: "years", label: "Years" },
-    { id: "months", label: "Months" },
+    { id: "months", label: "Months" }, 
     { id: "time", label: "Time" },
     { id: "presets", label: "Presets" },
-    { id: "compactMonths", label: "Compact M" },
-    { id: "compactYears", label: "Compact Y" },
+    { id: "monthsGrid", label: "Months Grid" },
+    { id: "compactMonths", label: "Compact Months" },
+    { id: "compactYears", label: "Compact Years" },
   ];
 
   return (

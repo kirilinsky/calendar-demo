@@ -83,12 +83,12 @@ function CalendarPageContent() {
         />
 
         <div className="relative z-10 flex flex-col items-center gap-8">
-          <div className="no-scroll" style={{ width: "600px" }}>
+          
             <Calendar
               {...calendarProps}
               onChangeDate={(d) => setProp("date", d)}
             />
-          </div>
+        
 
           <div
             className={cn(

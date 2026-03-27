@@ -30,10 +30,10 @@ const Sidebar = () => {
   return (
     <aside
       className={cn(
-        "light flex-[0.3] p-4 overflow-y-auto border-l bg-white border-zinc-200 text-zinc-950 transition-colors duration-500",
+        "light flex-[0.3] p-3 overflow-y-auto border-l bg-white border-zinc-200 text-zinc-950 transition-colors duration-500",
       )}
     >
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
         {steps.map((step) => {
           const isActive = activeStep === step.id;
 

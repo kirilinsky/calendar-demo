@@ -14,7 +14,7 @@ export const ThemesOptions = () => {
   const {
     setProp,
     theme: activeTheme,
-    gradientBackground,
+    gradient,
     brutalism,
   } = useCalendarStateStore();
   const { setLightMode } = usePageStateStore();
@@ -22,33 +22,35 @@ export const ThemesOptions = () => {
   return (
     <Wrapper description="Select a color palette for your interface.">
       <div className="space-y-6 pt-2">
-        <div className="flex items-center justify-between group">
-          <Label
-            className={cn(
-              "text-[13px] transition-colors cursor-pointer text-zinc-600 group-hover:text-zinc-900",
-            )}
-          >
-            Gradient Background
-          </Label>
-          <Switch
-            checked={gradientBackground}
-            onCheckedChange={(val) => setProp("gradientBackground", val)}
-            className="scale-90"
-          />
-        </div>
-        <div className="flex items-center justify-between group">
-          <Label
-            className={cn(
-              "text-[13px] transition-colors cursor-pointer text-zinc-600 group-hover:text-zinc-900",
-            )}
-          >
-            Brutalism Mode
-          </Label>
-          <Switch
-            checked={brutalism}
-            onCheckedChange={(val) => setProp("brutalism", val)}
-            className="scale-90"
-          />
+        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+          <div className="flex items-center justify-between group">
+            <Label
+              className={cn(
+                "text-[13px] transition-colors cursor-pointer text-zinc-600 group-hover:text-zinc-900",
+              )}
+            >
+              Gradient Background
+            </Label>
+            <Switch
+              checked={gradient}
+              onCheckedChange={(val) => setProp("gradient", val)}
+              className="scale-90"
+            />
+          </div>
+          <div className="flex items-center justify-between group">
+            <Label
+              className={cn(
+                "text-[13px] transition-colors cursor-pointer text-zinc-600 group-hover:text-zinc-900",
+              )}
+            >
+              Brutalism Mode
+            </Label>
+            <Switch
+              checked={brutalism}
+              onCheckedChange={(val) => setProp("brutalism", val)}
+              className="scale-90"
+            />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {THEMES.map((theme) => {
