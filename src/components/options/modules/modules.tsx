@@ -14,6 +14,7 @@ export const ModulesOptions = () => {
     { id: "years", label: "Years" },
     { id: "months", label: "Months" }, 
     { id: "time", label: "Time" },
+    { id: "timeGrid", label: "Time Grid" },
     { id: "presets", label: "Presets" },
     { id: "monthsGrid", label: "Months Grid" },
     { id: "compactMonths", label: "Compact Months" },
