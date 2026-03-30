@@ -40,7 +40,7 @@ function CalendarPageContent() {
   return (
     <main
       className={cn(
-        "flex h-screen w-full overflow-hidden transition-colors duration-500",
+        "flex min-h-screen w-full   transition-colors duration-500",
         lightMode ? "bg-zinc-950" : "bg-zinc-50",
       )}
     >
