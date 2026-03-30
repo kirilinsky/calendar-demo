@@ -9,12 +9,13 @@ import {
   Sun,
   Moon,
   SlidersHorizontal,
-  X,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { FaGithub } from "react-icons/fa";
+import { SiNpm } from "react-icons/si";
 
 function CalendarPageContent() {
   const searchParams = useSearchParams();
@@ -73,6 +74,18 @@ function CalendarPageContent() {
             size={14}
             className={lightMode ? "text-indigo-400" : "text-zinc-400"}
           />
+
+          <a href="https://github.com/kirilinsky" target="_blank">
+            <FaGithub
+              className={lightMode ? "text-zinc-400" : "text-white-400"}
+            />
+          </a>
+          <a
+            href="https://www.npmjs.com/package/react-calendar-datetime"
+            target="_blank"
+          >
+            <SiNpm className={"text-red-400"} />
+          </a>
         </div>
 
         <button
