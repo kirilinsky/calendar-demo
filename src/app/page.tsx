@@ -75,7 +75,10 @@ function CalendarPageContent() {
             className={lightMode ? "text-indigo-400" : "text-zinc-400"}
           />
 
-          <a href="https://github.com/kirilinsky" target="_blank">
+          <a
+            href="https://github.com/kirilinsky/react-calendar-datetime"
+            target="_blank"
+          >
             <FaGithub
               className={lightMode ? "text-zinc-400" : "text-white-400"}
             />
