@@ -33,6 +33,21 @@ function CalendarPageContent() {
     }
   }, [searchParams, setActiveStep]);
 
+  const [viewportWidth, setViewportWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200,
+  );
+
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = viewportWidth < 768;
+  const effectiveWidth = isMobile
+    ? Math.min(Number(calendarProps.width) || 480, viewportWidth - 32)
+    : calendarProps.width;
+
   const formattedDate = calendarProps.date?.toLocaleDateString(
     calendarProps.locale || "en-US",
     { day: "numeric", month: "long", year: "numeric" },
@@ -113,9 +128,10 @@ function CalendarPageContent() {
           )}
         />
 
-        <div className="relative z-10 flex flex-col items-center gap-8 px-4">
+        <div className="relative z-10 flex flex-col items-center gap-8 px-4 w-full overflow-x-hidden">
           <Calendar
             {...calendarProps}
+            width={effectiveWidth}
             onChangeDate={(d) => setProp("date", d as Date)}
           />
 
