@@ -100,7 +100,7 @@ function CalendarPageContent() {
         <div className="relative z-10 flex flex-col items-center gap-8 px-4">
           <Calendar
             {...calendarProps}
-            onChangeDate={(d) => setProp("date", d)}
+            onChangeDate={(d) => setProp("date", d as Date)}
           />
 
           <div

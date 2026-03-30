@@ -3,7 +3,6 @@
 import { Wrapper } from "@/components/options/wrapper/wrapper";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
 import {
@@ -42,31 +41,7 @@ export const DateOptions = () => {
 
   return (
     <Wrapper description="Define the range, limits, and behavior of the calendar.">
-      <div className="space-y-6 pt-2">
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <Label className="text-zinc-600">Component Width</Label>
-            <span className="text-[10px] font-mono text-zinc-500">
-              {state.width}px
-            </span>
-          </div>
-          <Slider
-            value={[Number(state.width) || 400]}
-            max={800}
-            min={200}
-            step={10}
-            onValueChange={([val]) => setProp("width", val)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between group">
-          <Label className="text-zinc-600">Jelly Mode</Label>
-          <Switch
-            checked={state.jellyMode}
-            onCheckedChange={(val) => setProp("jellyMode", val)}
-            className="scale-90"
-          />
-        </div>
+      <div className="space-y-6 pt-2"> 
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">

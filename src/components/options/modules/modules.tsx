@@ -3,6 +3,7 @@
 import { Wrapper } from "@/components/options/wrapper/wrapper";
 import { ArrowDown } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { CalendarProps } from "react-calendar-datetime";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
@@ -12,7 +13,7 @@ export const ModulesOptions = () => {
 
   const modules: { id: keyof CalendarProps; label: string }[] = [
     { id: "years", label: "Years" },
-    { id: "months", label: "Months" }, 
+    { id: "months", label: "Months" },
     { id: "time", label: "Time" },
     { id: "timeGrid", label: "Time Grid" },
     { id: "presets", label: "Presets" },
@@ -24,7 +25,7 @@ export const ModulesOptions = () => {
   return (
     <Wrapper description="Combine any modules to customize your calendar's functionality.">
       <div className="space-y-6 pt-2">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+       
           {modules.map((mod) => {
             const isChecked = !!state[mod.id];
 
@@ -50,6 +51,21 @@ export const ModulesOptions = () => {
               </div>
             );
           })}
+      
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <Label className="text-zinc-600">Component Width</Label>
+            <span className="text-[10px] font-mono text-zinc-500">
+              {state.width}px
+            </span>
+          </div>
+          <Slider
+            value={[Number(state.width) || 400]}
+            max={800}
+            min={200}
+            step={10}
+            onValueChange={([val]) => setProp("width", val)}
+          />
         </div>
 
         <div className="flex flex-col items-center gap-2 pt-4 border-t border-zinc-100 transition-colors">

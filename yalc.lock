@@ -1,9 +1,0 @@
-{
-  "version": "v1",
-  "packages": {
-    "react-calendar-datetime": {
-      "signature": "d75232f757f6d5eb1506e6c96a4c40c6",
-      "file": true
-    }
-  }
-}
