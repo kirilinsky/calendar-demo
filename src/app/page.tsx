@@ -110,9 +110,9 @@ function CalendarPageContent() {
           onClick={() => setShowSidebar(true)}
           className={cn(
             "absolute top-4 right-4 z-20 md:hidden p-2 rounded-full border backdrop-blur-md transition-all",
-            lightMode
-              ? "bg-zinc-900/40 border-zinc-700/50 text-zinc-300"
-              : "bg-white/40 border-zinc-200/50 text-zinc-700",
+            !lightMode
+              ? "bg-white/40 border-zinc-200/50 text-zinc-700"
+              : "bg-zinc-900/40 border-zinc-700/50 text-zinc-300",
           )}
         >
           <SlidersHorizontal size={16} />
