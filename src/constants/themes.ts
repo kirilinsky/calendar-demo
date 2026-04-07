@@ -8,6 +8,7 @@ export const THEMES = [
   { id: "temporal", backdrop: "#14252e", highlight: "#27d1f4", type: "dark" },
   { id: "industrial", backdrop: "#111111", highlight: "#e85d00", type: "dark" },
   { id: "crimson", backdrop: "#0d0909", highlight: "#f92f2f", type: "dark" },
+  { id: "forest", backdrop: "#0b1a0d", highlight: "#4ade80", type: "dark" },
   { id: "paper", backdrop: "#ffffff", highlight: "#1a1a1c", type: "light" },
   { id: "graphite", backdrop: "#eaecf0", highlight: "#f1a01d", type: "light" }, 
   { id: "mint", backdrop: "#f8f9fc", highlight: "#60d276", type: "light" },
@@ -17,4 +18,5 @@ export const THEMES = [
   { id: "solar", backdrop: "#d8cf9a", highlight: "#e67e22", type: "light" },
   { id: "neon", backdrop: "#f7f8f9", highlight: "#80ec27", type: "light" },
   { id: "amethyst", backdrop: "#f5f3f7", highlight: "#681c9e", type: "light" },
+  { id: "latte", backdrop: "#f5ede0", highlight: "#7c4a1e", type: "light" },
 ];

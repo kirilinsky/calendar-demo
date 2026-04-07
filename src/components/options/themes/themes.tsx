@@ -52,7 +52,7 @@ export const ThemesOptions = () => {
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-1.5">
           {THEMES.map((theme) => {
             const isActive = activeTheme === theme.id;
             return (
@@ -64,13 +64,13 @@ export const ThemesOptions = () => {
                   setProp("theme", theme.id as CalendarTheme);
                 }}
                 className={cn(
-                  "h-11 justify-start gap-3 px-3 transition-all border",
+                  "h-8 justify-start gap-2 px-2 transition-all border",
                   isActive
                     ? "border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900"
                     : "border-zinc-200 text-zinc-500 hover:text-zinc-900",
                 )}
               >
-                <div className="flex size-4 shrink-0 overflow-hidden rounded-full border border-zinc-200/50">
+                <div className="flex size-3 shrink-0 overflow-hidden rounded-full border border-zinc-200/50">
                   <div
                     className="h-full w-1/2"
                     style={{ backgroundColor: theme.backdrop }}
@@ -80,10 +80,9 @@ export const ThemesOptions = () => {
                     style={{ backgroundColor: theme.highlight }}
                   />
                 </div>
-
                 <span
                   className={cn(
-                    "text-[11px] font-medium capitalize truncate",
+                    "text-[10px] font-medium capitalize truncate",
                     isActive && "text-zinc-900",
                   )}
                 >

@@ -1,7 +1,6 @@
 "use client";
 
 import { Wrapper } from "@/components/options/wrapper/wrapper";
-import { ArrowDown } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -20,39 +19,44 @@ export const ModulesOptions = () => {
     { id: "monthsGrid", label: "Months Grid" },
     { id: "compactMonths", label: "Compact Months" },
     { id: "compactYears", label: "Compact Years" },
+    { id: "twoMonthsLayout", label: "Two Months Layout" },
+    { id: "monthsColumn", label: "Months Column" },
+    { id: "showSelectedDates", label: "Show Selected Dates" },
+    { id: "hideWeekdays", label: "Hide Weekdays" },
+    { id: "shortMonths", label: "Short Month Names" },
+    { id: "showHomeButton", label: "Show Home Button" },
+    { id: "showClearButton", label: "Show Clear Button" },
   ];
 
   return (
     <Wrapper description="Combine any modules to customize your calendar's functionality.">
-      <div className="space-y-6 pt-2">
-       
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
           {modules.map((mod) => {
             const isChecked = !!state[mod.id];
-
             return (
               <div
                 key={mod.id}
-                className="flex items-center justify-between group min-w-0"
+                className="flex items-center justify-between group min-w-0 py-1"
               >
                 <Label
                   htmlFor={mod.id}
-                  className="text-[12px] transition-colors cursor-pointer truncate mr-2 text-zinc-600 group-hover:text-zinc-900"
+                  className="text-[11px] leading-tight transition-colors cursor-pointer truncate mr-1 text-zinc-500 group-hover:text-zinc-900"
                 >
                   {mod.label}
                 </Label>
-                <div className="flex items-center shrink-0">
-                  <Switch
-                    id={mod.id}
-                    checked={isChecked}
-                    onCheckedChange={(val) => setProp(mod.id, val)}
-                    className="scale-75 origin-right"
-                  />
-                </div>
+                <Switch
+                  id={mod.id}
+                  checked={isChecked}
+                  onCheckedChange={(val) => setProp(mod.id, val)}
+                  className="scale-[0.65] origin-right shrink-0"
+                />
               </div>
             );
           })}
-      
-        <div className="space-y-3">
+        </div>
+
+        <div className="space-y-3 mb-1">
           <div className="flex justify-between items-center">
             <Label className="text-zinc-600">Component Width</Label>
             <span className="text-[10px] font-mono text-zinc-500">
@@ -66,15 +70,6 @@ export const ModulesOptions = () => {
             step={10}
             onValueChange={([val]) => setProp("width", val)}
           />
-        </div>
-
-        <div className="flex flex-col items-center gap-2 pt-4 border-t border-zinc-100 transition-colors">
-          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">
-            Next Step
-          </span>
-          <div className="opacity-50 animate-bounce text-zinc-400">
-            <ArrowDown size={14} />
-          </div>
         </div>
       </div>
     </Wrapper>

@@ -4,12 +4,7 @@ import { usePageStateStore } from "@/stores/page-state.store";
 import Sidebar from "@/components/sidebar/sidebar";
 import { Calendar } from "react-calendar-datetime";
 import { useCalendarStateStore } from "@/stores/calendar-state.store";
-import {
-  Calendar as CalendarIcon,
-  Sun,
-  Moon,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Sun, Moon, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense, useState } from "react";
 import { Switch } from "@/components/ui/switch";
@@ -27,7 +22,7 @@ function CalendarPageContent() {
     const stepParam = searchParams.get("step");
     if (stepParam !== null) {
       const step = Number(stepParam);
-      if (!isNaN(step) && step >= 0 && step <= 4) {
+      if (!isNaN(step) && step >= 0 && step <= 5) {
         setActiveStep(step);
       }
     }
@@ -48,10 +43,38 @@ function CalendarPageContent() {
     ? Math.min(Number(calendarProps.width) || 480, viewportWidth - 32)
     : calendarProps.width;
 
-  const formattedDate = calendarProps.date?.toLocaleDateString(
-    calendarProps.locale || "en-US",
-    { day: "numeric", month: "long", year: "numeric" },
-  );
+  const mode = calendarProps.mode || "single";
+  const locale = calendarProps.locale || "en-US";
+
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+
+  let selectedLabel = "";
+  let selectedValue = "";
+
+  if (mode === "single") {
+    const d = calendarProps.value instanceof Date ? calendarProps.value : null;
+    selectedLabel = "Selected Date";
+    selectedValue = d ? formatDate(d) : "";
+  } else if (mode === "multiple") {
+    const dates = Array.isArray(calendarProps.value) ? (calendarProps.value as Date[]) : [];
+    selectedLabel = "Selected Dates";
+    selectedValue = dates.length
+      ? dates.length === 1
+        ? formatDate(dates[0])
+        : `${dates.length} dates`
+      : "";
+  } else if (mode === "range") {
+    const range = calendarProps.value as { from: Date | null; to: Date | null } | null;
+    selectedLabel = "Date Range";
+    if (range?.from && range?.to) {
+      selectedValue = `${formatDate(range.from)} — ${formatDate(range.to)}`;
+    } else if (range?.from) {
+      selectedValue = `${formatDate(range.from)} — …`;
+    } else {
+      selectedValue = "";
+    }
+  }
 
   return (
     <main
@@ -104,7 +127,45 @@ function CalendarPageContent() {
           >
             <SiNpm className={"text-red-400"} />
           </a>
+          <a
+            href="/doc"
+            className={cn(
+              "text-[10px] font-mono uppercase tracking-wider transition-opacity hover:opacity-70",
+              lightMode ? "text-zinc-400" : "text-zinc-500",
+            )}
+          >
+            docs
+          </a>
+
         </div>
+
+        {selectedValue && (
+          <div
+            className={cn(
+              "absolute top-4 right-4 z-20 hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border transition-all shadow-sm",
+              lightMode
+                ? "bg-zinc-900/40 border-zinc-700/50"
+                : "bg-white/40 border-zinc-200/50",
+            )}
+          >
+            <span
+              className={cn(
+                "text-[10px] uppercase tracking-wider font-semibold",
+                lightMode ? "text-zinc-500" : "text-zinc-400",
+              )}
+            >
+              {selectedLabel}
+            </span>
+            <span
+              className={cn(
+                "font-mono text-[11px]",
+                lightMode ? "text-zinc-200" : "text-zinc-700",
+              )}
+            >
+              {selectedValue}
+            </span>
+          </div>
+        )}
 
         <button
           onClick={() => setShowSidebar(true)}
@@ -128,45 +189,18 @@ function CalendarPageContent() {
           )}
         />
 
-        <div className="relative z-10 flex flex-col items-center gap-8 px-4 w-full overflow-x-hidden">
+        <div className="relative z-10 flex flex-col items-center px-4 w-full overflow-x-hidden">
           <Calendar
             {...calendarProps}
             width={effectiveWidth}
-            onChangeDate={(d) => setProp("date", d as Date)}
+            onChange={(d) => setProp("value", d as Date)}
+            onDatesChange={(dates) => setProp("value", dates as any)}
+            onRangeChange={(range) => setProp("value", range as any)}
           />
-
-          <div
-            className={cn(
-              "flex items-center gap-3 px-6 py-3 rounded-2xl border transition-all duration-500",
-              lightMode
-                ? "bg-zinc-900/80 border-zinc-800 text-zinc-100 shadow-xl"
-                : "bg-white border-zinc-100 text-zinc-900 shadow-sm",
-            )}
-          >
-            <div
-              className={cn(
-                "p-2 rounded-lg",
-                lightMode ? "bg-zinc-800" : "bg-zinc-100",
-              )}
-            >
-              <CalendarIcon
-                size={16}
-                className={lightMode ? "text-zinc-400" : "text-zinc-500"}
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">
-                Selected Date
-              </span>
-              <span className="text-sm font-medium font-mono">
-                {formattedDate}
-              </span>
-            </div>
-          </div>
         </div>
       </section>
 
-      <div className="hidden md:flex h-full w-[20%] border-l border-zinc-200 shrink-0">
+      <div className="hidden md:flex h-full w-[24%] border-l border-zinc-200 shrink-0">
         <Sidebar />
       </div>
 

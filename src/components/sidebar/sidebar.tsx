@@ -6,6 +6,7 @@ import { ModulesOptions } from "@/components/options/modules/modules";
 import { LocalesOptions } from "../options/locale/locale";
 import { ThemesOptions } from "../options/themes/themes";
 import { DateOptions } from "../options/date/date";
+import { DisabledOptions } from "../options/disabled/disabled";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BaseOptions } from "../options/base/base";
@@ -25,6 +26,7 @@ const Sidebar = () => {
     { id: 2, label: "Locales", component: <LocalesOptions /> },
     { id: 3, label: "Themes", component: <ThemesOptions /> },
     { id: 4, label: "Date Settings", component: <DateOptions /> },
+    { id: 5, label: "Disabled", component: <DisabledOptions /> },
   ];
 
   return (

@@ -3,7 +3,6 @@ import { CalendarProps, CalendarTheme } from "react-calendar-datetime";
 
 interface CalendarStateStore extends CalendarProps {
   theme: CalendarTheme;
-  onChangeDate: (newDate: Date | null) => void;
   setProp: <K extends keyof CalendarProps>(
     key: K,
     value: CalendarProps[K],
@@ -11,15 +10,15 @@ interface CalendarStateStore extends CalendarProps {
 }
 
 export const useCalendarStateStore = create<CalendarStateStore>((set) => ({
+  value: new Date(),
+  mode: "single",
   presets: false,
   months: true,
   years: false,
-  date: new Date(),
   time: true,
   timeGrid: false,
   locale: "en",
   highlightWeekends: true,
-  disableWeekends: false,
   gestures: false,
   startOfWeek: 1,
   compactYears: true,
@@ -27,12 +26,22 @@ export const useCalendarStateStore = create<CalendarStateStore>((set) => ({
   hour12: false,
   width: 480,
   theme: "carbon" as CalendarTheme,
+  gradient: false,
+  brutalism: false,
+  showWeekNumber: false,
+  twoMonthsLayout: false,
+  monthsColumn: false,
+  showSelectedDates: false,
+  hideLimited: false,
+  hideDisabled: false,
+  hideWeekdays: false,
+  shortMonths: false,
+  showHomeButton: false,
+  showClearButton: false,
 
   setProp: (key: string, value: any) =>
     set((state) => ({
       ...state,
       [key]: value,
     })),
-
-  onChangeDate: (newDate: Date | null) => set({ date: newDate ?? undefined }),
 }));
