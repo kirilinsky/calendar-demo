@@ -19,7 +19,7 @@ export const useCalendarStateStore = create<CalendarStateStore>((set) => ({
   timeGrid: false,
   locale: "en",
   highlightWeekends: true,
-  gestures: false,
+  gestures: true,
   startOfWeek: 1,
   compactYears: true,
   compactMonths: false,
