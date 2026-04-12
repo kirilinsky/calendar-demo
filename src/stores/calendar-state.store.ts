@@ -38,6 +38,7 @@ export const useCalendarStateStore = create<CalendarStateStore>((set) => ({
   shortMonths: false,
   showHomeButton: false,
   showClearButton: false,
+  showThemeToggle: false,
 
   setProp: (key: string, value: any) =>
     set((state) => ({

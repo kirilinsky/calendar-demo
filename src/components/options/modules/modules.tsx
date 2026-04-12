@@ -26,6 +26,7 @@ export const ModulesOptions = () => {
     { id: "shortMonths", label: "Short Month Names" },
     { id: "showHomeButton", label: "Show Home Button" },
     { id: "showClearButton", label: "Show Clear Button" },
+    { id: "showThemeToggle", label: "Show Theme Toggle" },
   ];
 
   return (

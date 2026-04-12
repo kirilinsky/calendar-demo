@@ -32,6 +32,7 @@ const THEMES_LIST = [
   { id: "industrial", bg: "#111111", hi: "#e85d00", type: "dark" },
   { id: "crimson", bg: "#0d0909", hi: "#f92f2f", type: "dark" },
   { id: "forest", bg: "#0b1a0d", hi: "#4ade80", type: "dark" },
+  { id: "nebula", bg: "#0b0a16", hi: "#b388ff", type: "dark" },
   { id: "paper", bg: "#ffffff", hi: "#1a1a1c", type: "light" },
   { id: "graphite", bg: "#eaecf0", hi: "#f1a01d", type: "light" },
   { id: "mint", bg: "#f8f9fc", hi: "#60d276", type: "light" },

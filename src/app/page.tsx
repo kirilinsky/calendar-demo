@@ -47,7 +47,11 @@ function CalendarPageContent() {
   const locale = calendarProps.locale || "en-US";
 
   const formatDate = (d: Date) =>
-    d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+    d.toLocaleDateString(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
   let selectedLabel = "";
   let selectedValue = "";
@@ -57,7 +61,9 @@ function CalendarPageContent() {
     selectedLabel = "Selected Date";
     selectedValue = d ? formatDate(d) : "";
   } else if (mode === "multiple") {
-    const dates = Array.isArray(calendarProps.value) ? (calendarProps.value as Date[]) : [];
+    const dates = Array.isArray(calendarProps.value)
+      ? (calendarProps.value as Date[])
+      : [];
     selectedLabel = "Selected Dates";
     selectedValue = dates.length
       ? dates.length === 1
@@ -65,7 +71,10 @@ function CalendarPageContent() {
         : `${dates.length} dates`
       : "";
   } else if (mode === "range") {
-    const range = calendarProps.value as { from: Date | null; to: Date | null } | null;
+    const range = calendarProps.value as {
+      from: Date | null;
+      to: Date | null;
+    } | null;
     selectedLabel = "Date Range";
     if (range?.from && range?.to) {
       selectedValue = `${formatDate(range.from)} — ${formatDate(range.to)}`;
@@ -136,7 +145,6 @@ function CalendarPageContent() {
           >
             docs
           </a>
-
         </div>
 
         {selectedValue && (
@@ -188,7 +196,7 @@ function CalendarPageContent() {
             "[background-size:24px_24px]",
           )}
         />
-
+        {calendarProps.theme}
         <div className="relative z-10 flex flex-col items-center px-4 w-full overflow-x-hidden">
           <Calendar
             {...calendarProps}
