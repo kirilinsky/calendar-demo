@@ -1252,6 +1252,12 @@ export default function App() {
               desc="Visually highlights Saturday and Sunday in the day grid."
             />
             <PropRow
+              name="highlightToday"
+              type="boolean"
+              def="true"
+              desc="Visually highlights today's cell with outline border."
+            />
+            <PropRow
               name="shortMonths"
               type="boolean"
               def="false"

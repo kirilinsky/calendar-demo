@@ -192,6 +192,7 @@ export const DateOptions = () => {
         <div className="space-y-4 pt-1">
           {[
             { id: "highlightWeekends", label: "Highlight Weekends" },
+            { id: "highlightToday", label: "Highlight Today's Cell" },
             { id: "gestures", label: "Enable Gestures" },
             { id: "showWeekNumber", label: "Show Week Number" },
             { id: "hour12", label: "12-hour (AM/PM) or 24-hour time" },
