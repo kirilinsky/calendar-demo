@@ -195,8 +195,7 @@ function CalendarPageContent() {
               : "[background-image:radial-gradient(#e5e7eb_1px,transparent_1px)]",
             "[background-size:24px_24px]",
           )}
-        />
-        {calendarProps.theme}
+        /> 
         <div className="relative z-10 flex flex-col items-center px-4 w-full overflow-x-hidden">
           <Calendar
             {...calendarProps}
