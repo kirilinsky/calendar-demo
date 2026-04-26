@@ -628,7 +628,7 @@ export default function DocPage() {
         <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between gap-3">
           <div className="flex items-center gap-6 shrink-0">
             <a
-              href="/"
+              href="/legacy"
               style={{ color: "var(--text-muted)" }}
               className="font-mono text-sm hover:opacity-80 transition-opacity cursor-pointer"
             >
