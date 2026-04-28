@@ -17,8 +17,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "React Datetime Calendar | Demo",
-  description: "Here you can adjust and play calendar component",
+  metadataBase: new URL("https://kirilinsky.github.io/dateforge-react-calendar/"),
+  title: {
+    default: "DateForge React Calendar",
+    template: "%s | DateForge React Calendar",
+  },
+  description:
+    "Composable React calendar and date-time picker examples for product interfaces.",
+  openGraph: {
+    title: "DateForge React Calendar",
+    description:
+      "Composable React calendar and date-time picker examples for product interfaces.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DateForge React Calendar",
+    description:
+      "Composable React calendar and date-time picker examples for product interfaces.",
+  },
 };
 
 export default function RootLayout({
