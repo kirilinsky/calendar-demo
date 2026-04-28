@@ -1,17 +1,16 @@
 "use client";
 
-import { usePageStateStore } from "@/stores/page-state.store";
-import Sidebar from "@/components/sidebar/sidebar";
+import { usePageStateStore } from "@/app/legacy/stores/page-state.store";
 import { Calendar } from "react-calendar-datetime";
-import { useCalendarStateStore } from "@/stores/calendar-state.store";
+import { useCalendarStateStore } from "@/app/legacy/stores/calendar-state.store";
 import { Sun, Moon, SlidersHorizontal, X, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense, useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
-import { FaGithub } from "react-icons/fa";
+import { cn } from "@/app/legacy/lib/utils";
 import { SiNpm } from "react-icons/si";
+import { Switch } from "./components/ui/switch";
+import Sidebar from "./components/sidebar/sidebar";
 
 function CalendarPageContent() {
   const searchParams = useSearchParams();
@@ -123,15 +122,6 @@ function CalendarPageContent() {
             size={14}
             className={lightMode ? "text-indigo-400" : "text-zinc-400"}
           />
-
-          <a
-            href="https://github.com/kirilinsky/react-calendar-datetime"
-            target="_blank"
-          >
-            <FaGithub
-              className={lightMode ? "text-zinc-400" : "text-white-400"}
-            />
-          </a>
           <a
             href="https://www.npmjs.com/package/react-calendar-datetime"
             target="_blank"
@@ -197,7 +187,7 @@ function CalendarPageContent() {
               : "[background-image:radial-gradient(#e5e7eb_1px,transparent_1px)]",
             "[background-size:24px_24px]",
           )}
-        /> 
+        />
         <div className="relative z-10 flex flex-col items-center px-4 w-full overflow-x-hidden">
           <Calendar
             {...calendarProps}
@@ -254,9 +244,7 @@ function CalendarPageContent() {
             </div>
 
             <div className="px-5 py-5 space-y-4">
-              <h2 className="text-lg font-semibold">
-                This package has moved
-              </h2>
+              <h2 className="text-lg font-semibold">This package has moved</h2>
               <p
                 className={cn(
                   "text-sm leading-relaxed",
