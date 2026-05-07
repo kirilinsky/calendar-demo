@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, useToday } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav } from "@dateforge/react-calendar/modules";
 
 export function HomeCalendarPreview() {
-  const [date, setDate] = useState<Date | null>(new Date());
+  const today = useToday();
+  const [date, setDate] = useState<Date | null>(null);
 
   return (
-    <Calendar value={date} onChange={setDate} width="100%">
+    <Calendar value={date ?? today} onChange={setDate} width="100%">
       <CalendarNav showMonthPicker compactYears />
       <CalendarDays />
     </Calendar>
