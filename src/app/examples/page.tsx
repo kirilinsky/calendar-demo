@@ -54,6 +54,7 @@ const emptyRange = (): RangeValue => ({ from: null, to: null });
 const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
 
 export default function ExamplesPage() {
+  const [basicDate, setBasicDate] = useState<Date | null>(null);
   const [stayRange, setStayRange] = useState<RangeValue>(emptyRange);
   const [flightRange, setFlightRange] = useState<RangeValue>(emptyRange);
   const [twoMonthRange, setTwoMonthRange] = useState<RangeValue>(emptyRange);
@@ -71,6 +72,9 @@ export default function ExamplesPage() {
   const [globalMeeting, setGlobalMeeting] = useState<Date | null>(null);
   const [manualDate, setManualDate] = useState<Date | null>(null);
   const [birthday, setBirthday] = useState<Date | null>(new Date(1994, 5, 14));
+  const [archiveYear, setArchiveYear] = useState<Date | null>(null);
+  const [campaignMonth, setCampaignMonth] = useState<Date | null>(null);
+  const [meetingTime, setMeetingTime] = useState<Date | null>(null);
   const launchDate = useMemo(() => new Date(2026, 8, 9), []);
   const archiveDate = useMemo(() => new Date(2026, 0, 1), []);
   const campaignDate = useMemo(() => new Date(2026, 4, 1), []);
@@ -275,17 +279,39 @@ export default function ExamplesPage() {
 
         <section className="py-10 text-center sm:py-12">
           <p className="text-sm font-medium text-zinc-500">Examples</p>
-          <h1 className="mx-auto mt-3 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
-            Real date flows you can start from.
+          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl lg:max-w-none lg:whitespace-nowrap">
+            Likely one of these fits your case.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-            Each example is a live composition of DateForge modules: booking,
-            operations, dashboards, forms, and scheduling patterns. Storybook
-            stays the open-ended playground; this page is for finished recipes.
+            These are just starting points. Mix the modules however you like —
+            booking, dashboards, forms, scheduling, whatever your product needs.
+            Storybook is the open playground; this page is finished recipes you
+            can copy and tweak.
           </p>
         </section>
 
         <div className="-mx-5 flex flex-col gap-5 sm:mx-auto sm:max-w-[1720px]">
+          <ExampleCard
+            title="The basics"
+            text="Bare minimum: nav, days, selected date. Start here and add modules as you need them."
+            code={`<Calendar mode="single" value={basicDate} onChange={setBasicDate}>
+  <CalendarNav showMonthPicker compactYears />
+  <CalendarDays />
+  <CalendarSelectedDates allowClear={false} />
+</Calendar>`}
+          >
+            <Calendar
+              mode="single"
+              value={basicDate}
+              onChange={setBasicDate}
+              width="100%"
+            >
+              <CalendarNav showMonthPicker compactYears />
+              <CalendarDays />
+              <CalendarSelectedDates allowClear={false} />
+            </Calendar>
+          </ExampleCard>
+
           <ExampleCard
             title="Stay booking"
             text="A lodging-style date range picker: no past dates, shortcuts, and selected stay feedback."
@@ -870,7 +896,7 @@ const holidayPresets = useMemo<PresetEntry[]>(
 ];
 
 <Calendar mode="range" value={sprintRange} onChange={setSprintRange}>
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarNav showMonthPicker compactYears />
   <CalendarPresets presets={sprintPresets} />
   <CalendarDays />
   <CalendarSelectedDates allowClear allowNavigate animated />
@@ -883,7 +909,7 @@ const holidayPresets = useMemo<PresetEntry[]>(
               theme={industrial}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears clear />
+              <CalendarNav showMonthPicker compactYears />
               <CalendarPresets presets={sprintPresets} />
               <CalendarDays />
               <CalendarSelectedDates allowClear allowNavigate animated />
@@ -902,7 +928,7 @@ const holidayPresets = useMemo<PresetEntry[]>(
   maxDate={new Date("2026-08-31")}
 >
   <CalendarManualInput allowClear />
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarNav showMonthPicker compactYears />
   <CalendarDays />
 </Calendar>`}
           >
@@ -918,7 +944,7 @@ const holidayPresets = useMemo<PresetEntry[]>(
               width="100%"
             >
               <CalendarManualInput allowClear />
-              <CalendarNav showMonthPicker compactYears clear />
+              <CalendarNav showMonthPicker compactYears />
               <CalendarDays />
             </Calendar>
           </ExampleCard>
@@ -926,14 +952,21 @@ const holidayPresets = useMemo<PresetEntry[]>(
           <ExampleCard
             title="Archive year browser"
             text="Only the years grid: useful for archive navigation, annual reports, and timeline filters."
-            code={`<Calendar
+            code={`const [archiveYear, setArchiveYear] = useState<Date | null>(null);
+
+<Calendar
   mode="single"
   defaultViewDate={new Date("2026-01-01")}
   minDate={new Date("2018-01-01")}
   maxDate={new Date("2030-12-31")}
 >
-  <CalendarYearsGrid yearsPerPage={12} />
-</Calendar>`}
+  <CalendarYearsGrid
+    yearsPerPage={12}
+    onYearSelect={(date) => setArchiveYear(date)}
+  />
+</Calendar>
+
+{archiveYear && <p>Browsing archive · {archiveYear.getFullYear()}</p>}`}
           >
             <Calendar
               mode="single"
@@ -944,22 +977,45 @@ const holidayPresets = useMemo<PresetEntry[]>(
               appearance={compact}
               width="100%"
             >
-              <CalendarYearsGrid yearsPerPage={12} />
+              <CalendarYearsGrid
+                yearsPerPage={12}
+                onYearSelect={(year) => setArchiveYear(year)}
+              />
             </Calendar>
+            <p
+              aria-live="polite"
+              className="mt-3 text-center text-sm font-medium text-zinc-600"
+            >
+              {archiveYear
+                ? `Browsing archive · ${archiveYear.getFullYear()}`
+                : "Pick a year to browse the archive"}
+            </p>
           </ExampleCard>
 
           <ExampleCard
             title="Campaign month picker"
             text="Only the months grid: a lightweight season, campaign, or billing-period selector."
-            code={`<Calendar
+            code={`const [campaignMonth, setCampaignMonth] = useState<Date | null>(null);
+
+<Calendar
   mode="single"
   defaultViewDate={new Date("2026-05-01")}
   minDate={new Date("2026-01-01")}
-  maxDate={new Date("2026-12-31")} 
+  maxDate={new Date("2026-12-31")}
   gradient
 >
-  <CalendarMonthsGrid short />
-</Calendar>`}
+  <CalendarMonthsGrid
+    short
+    onMonthSelect={(date) => setCampaignMonth(date)}
+  />
+</Calendar>
+
+{campaignMonth && (
+  <p>
+    Campaign ·{" "}
+    {campaignMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
+  </p>
+)}`}
           >
             <Calendar
               mode="single"
@@ -969,8 +1025,64 @@ const holidayPresets = useMemo<PresetEntry[]>(
               appearance={soft}
               width="100%"
             >
-              <CalendarMonthsGrid short />
+              <CalendarMonthsGrid
+                short
+                onMonthSelect={(date) => setCampaignMonth(date)}
+              />
             </Calendar>
+            <p
+              aria-live="polite"
+              className="mt-3 text-center text-sm font-medium text-zinc-600"
+            >
+              {campaignMonth
+                ? `Campaign · ${campaignMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}`
+                : "Pick a month to plan the campaign"}
+            </p>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Time slot picker"
+            text="Only the time grid, snapped to 10-minute steps via timeStep. Handy for slot pickers, reminders, or any flow where the date is already fixed."
+            code={`const [meetingTime, setMeetingTime] = useState<Date | null>(null);
+
+<Calendar
+  mode="single"
+  value={meetingTime}
+  onChange={setMeetingTime}
+  timeStep={{ minute: 10 }}
+>
+  <CalendarTimeGrid />
+</Calendar>
+
+{meetingTime && (
+  <p>
+    Slot ·{" "}
+    {meetingTime.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}
+  </p>
+)}`}
+          >
+            <Calendar
+              mode="single"
+              value={meetingTime}
+              onChange={setMeetingTime}
+              timeStep={{ minute: 10 }}
+              theme={aurora}
+              appearance={loft}
+              width="100%"
+            >
+              <CalendarTimeGrid />
+            </Calendar>
+            <p
+              aria-live="polite"
+              className="mt-3 text-center text-sm font-medium text-zinc-600"
+            >
+              {meetingTime
+                ? `Slot · ${meetingTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`
+                : "Pick a time slot"}
+            </p>
           </ExampleCard>
 
           <ExampleCard
@@ -1247,6 +1359,7 @@ function highlightCode(code: string) {
 
 function getTags(title: string) {
   const tagsByTitle: Record<string, string[]> = {
+    "The basics": ["single", "starter"],
     "Stay booking": ["range", "booking", "presets"],
     "Flight search": ["range", "mobile"],
     "Two-month stay search": ["2 months", "desktop"],
@@ -1264,6 +1377,7 @@ function getTags(title: string) {
     "Invoice due date": ["manual input", "billing"],
     "Archive year browser": ["years grid", "archive"],
     "Campaign month picker": ["months grid", "campaign"],
+    "Time slot picker": ["time grid", "slots"],
     "Global meeting time": ["time zone", "hour12"],
     "Profile birthday": ["tracks", "profile"],
     "Blackout calendar": ["disabled", "operations"],
@@ -1275,6 +1389,9 @@ function getTags(title: string) {
 
 function withImports(title: string, body: string) {
   const importsByTitle: Record<string, string> = {
+    "The basics": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
+import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
     "Stay booking": `import { useMemo, useState } from "react";
 import { Calendar, basicPresets, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
@@ -1325,10 +1442,15 @@ import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } fro
     "Invoice due date": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarManualInput, CalendarNav } from "@dateforge/react-calendar/modules";`,
-    "Archive year browser": `import { Calendar } from "@dateforge/react-calendar";
+    "Archive year browser": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
 import { CalendarYearsGrid } from "@dateforge/react-calendar/modules";`,
-    "Campaign month picker": `import { Calendar } from "@dateforge/react-calendar";
+    "Campaign month picker": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
 import { CalendarMonthsGrid } from "@dateforge/react-calendar/modules";`,
+    "Time slot picker": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
+import { CalendarTimeGrid } from "@dateforge/react-calendar/modules";`,
     "Global meeting time": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarSelectedDates, CalendarTimeGrid } from "@dateforge/react-calendar/modules";`,
