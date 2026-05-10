@@ -71,7 +71,14 @@ export default function ExamplesPage() {
   const [blackoutRange, setBlackoutRange] = useState<RangeValue>(emptyRange);
   const [deliveryDates, setDeliveryDates] = useState<Date[]>([]);
   const [dropDate, setDropDate] = useState<Date | null>(null);
-  const [appointment, setAppointment] = useState<Date | null>(null);
+  const [appointment, setAppointment] = useState<Date | null>(() => {
+    const date = new Date();
+    date.setHours(9, 0, 0, 0);
+    while (date.getDay() === 0 || date.getDay() === 6) {
+      date.setDate(date.getDate() + 1);
+    }
+    return date;
+  });
   const [globalMeeting, setGlobalMeeting] = useState<Date | null>(null);
   const [manualDate, setManualDate] = useState<Date | null>(null);
   const [birthday, setBirthday] = useState<Date | null>(new Date(1994, 5, 14));
