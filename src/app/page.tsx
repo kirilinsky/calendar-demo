@@ -42,8 +42,8 @@ export default async function Home() {
   const coverage = await getCoverage();
   const coverageLabel = coverage ? `${coverage} Test coverage` : "Test coverage";
   return (
-    <main className="h-[100dvh] overflow-hidden bg-[#fbfbfd] text-zinc-950">
-      <div className="mx-auto flex h-[100dvh] w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
+    <main className="min-h-[100dvh] bg-[#fbfbfd] text-zinc-950 lg:h-[100dvh] lg:overflow-hidden">
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col px-5 py-4 sm:px-8 lg:h-[100dvh] lg:min-h-0">
         <header className="flex h-12 items-center justify-between gap-4">
           <Link
             href="/"
