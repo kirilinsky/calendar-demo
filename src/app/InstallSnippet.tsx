@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Clipboard } from "lucide-react";
 
-const COMMAND = "npm install @dateforge/react-calendar";
+const COMMAND = "npm i @dateforge/react-calendar";
 
 export function InstallSnippet({ className = "" }: { className?: string }) {
   const [copied, setCopied] = useState(false);

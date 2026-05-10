@@ -40,7 +40,7 @@ async function getCoverage(): Promise<string | null> {
 
 export default async function Home() {
   const coverage = await getCoverage();
-  const coverageLabel = coverage ? `${coverage} Codecov` : "Codecov";
+  const coverageLabel = coverage ? `${coverage} Test coverage` : "Test coverage";
   return (
     <main className="min-h-screen bg-[#fbfbfd] text-zinc-950">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
@@ -70,13 +70,13 @@ export default async function Home() {
             <div className="hidden items-center gap-2 lg:flex">
               <QualityBadge
                 icon={<ServerCog size={13} />}
-                label="SSR"
+                label="SSR Safe"
                 tone="emerald"
                 href={SSR_URL}
               />
               <QualityBadge
                 icon={<Accessibility size={13} />}
-                label="AXE A11Y"
+                label="AXE A11Y Passed"
                 tone="violet"
                 href={A11Y_URL}
               />
@@ -140,23 +140,23 @@ export default async function Home() {
           />
         </div>
 
-        <section className="flex flex-1 flex-col items-center justify-center py-6 text-center sm:py-8">
-          <div className="mb-7 w-full max-w-[340px] sm:mb-8 lg:max-w-[320px]">
+        <section className="flex flex-col items-center py-4 text-center sm:py-6">
+          <div className="mb-4 w-full max-w-[260px] sm:mb-5 lg:max-w-[240px]">
             <HomeCalendarPreview />
           </div>
 
           <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:max-w-none lg:text-6xl lg:whitespace-nowrap">
             A calendar that fits your product.
           </h1>
-          <div className="mt-5 w-full max-w-md">
+          <div className="mt-4 w-full max-w-md">
             <InstallSnippet />
           </div>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-600 sm:text-base">
-            Assemble it from small parts — navigation, days, presets, tracks,
-            time, themes, appearance. Start lean, add depth as needed.
+          <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-600 sm:text-base">
+            Start with a simple date picker, then add ranges, presets, time,
+            themes, and custom product logic only when you need them and mix as you want.
           </p>
 
-          <div className="mt-6 flex w-full max-w-2xl flex-col items-stretch justify-center gap-2 sm:flex-row">
+          <div className="mt-5 flex w-full max-w-2xl flex-col items-stretch justify-center gap-2 sm:flex-row">
             <BranchLink
               href="/examples"
               title="Browse examples"
