@@ -10,6 +10,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { HomeCalendarPreview } from "./HomeCalendarPreview";
+import { InstallSnippet } from "./InstallSnippet";
 
 const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
 const GITHUB_URL = "https://github.com/kirilinsky/dateforge-react-calendar";
@@ -147,6 +148,9 @@ export default async function Home() {
           <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:max-w-none lg:text-6xl lg:whitespace-nowrap">
             A calendar that fits your product.
           </h1>
+          <div className="mt-5 w-full max-w-md">
+            <InstallSnippet />
+          </div>
           <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-600 sm:text-base">
             Assemble it from small parts — navigation, days, presets, tracks,
             time, themes, appearance. Start lean, add depth as needed.

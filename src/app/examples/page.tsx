@@ -8,6 +8,8 @@ import {
   Check,
   ChevronDown,
   Clipboard,
+  Palette,
+  Sparkles,
 } from "lucide-react";
 import {
   Calendar,
@@ -47,6 +49,7 @@ import {
   snow,
   temporal,
 } from "@dateforge/react-calendar/themes";
+import { InstallSnippet } from "../InstallSnippet";
 
 type RangeValue = { from: Date | null; to: Date | null };
 
@@ -288,12 +291,16 @@ export default function ExamplesPage() {
             Storybook is the open playground; this page is finished recipes you
             can copy and tweak.
           </p>
+          <div className="mx-auto mt-6 max-w-md">
+            <InstallSnippet />
+          </div>
         </section>
 
         <div className="-mx-5 flex flex-col gap-5 sm:mx-auto sm:max-w-[1720px]">
           <ExampleCard
             title="The basics"
-            text="Bare minimum: nav, days, selected date. Start here and add modules as you need them."
+            useWhen="You're starting a new flow and just need a working date picker."
+            demonstrates="Bare minimum composition — Calendar shell + nav + days + selected dates."
             code={`<Calendar mode="single" value={basicDate} onChange={setBasicDate}>
   <CalendarNav showMonthPicker compactYears />
   <CalendarDays />
@@ -314,7 +321,9 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Stay booking"
-            text="A lodging-style date range picker: no past dates, shortcuts, and selected stay feedback."
+            useWhen="Lodging or short-stay rentals where guests pick check-in and check-out."
+            demonstrates="Range mode with disabled past dates, basic stay presets, and a clear/animated selected summary."
+            appearance="soft"
             code={`const noPast = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -347,7 +356,10 @@ export default function ExamplesPage() {
           <ExampleCard
             wide
             title="Flight search"
-            text="A split departure and return picker that uses bound tracks instead of another full month grid."
+            useWhen="Booking flow needing departure and return without a full second month grid."
+            demonstrates={`Split bound tracks (\`bound="from"\` / \`bound="to"\`) for compact range selection across two columns.`}
+            theme="temporal"
+            appearance="compact"
             code={`const noPast = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -386,7 +398,10 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Two-month stay search"
-            text="A desktop booking pattern with adjacent months and one shared range value."
+            useWhen="Desktop booking with side-by-side months and a single shared range."
+            demonstrates={`\`cols={2}\` with two \`CalendarDays\` (offset 0 and 1) and one continuous range value.`}
+            theme="snow"
+            appearance="soft"
             code={`const noPast = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -422,7 +437,10 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Six-month availability"
-            text="A read-only half-year availability map that shows selected open days across separate monthly stretches."
+            useWhen="Showing read-only open slots across half a year."
+            demonstrates={`Read-only multiple-mode with a 3-column 6-month grid and \`defaultViewDate\`.`}
+            theme="industrial"
+            appearance="compact"
             code={`const sixMonthDates = useMemo(
   () => [
     new Date(2026, 4, 8),
@@ -484,7 +502,10 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Delivery slots"
-            text="Pick up to four delivery dates, with weekends and past dates unavailable."
+            useWhen="Letting users pick several non-contiguous delivery dates with capacity."
+            demonstrates={`Multiple mode with \`maxDates\`, weekend + past disable rule, animated selected list.`}
+            theme="mint"
+            appearance="soft"
             code={`const weekdaysOnly = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -515,7 +536,10 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Limited drop window"
-            text="A launch signup with only a few visible days: outside dates and blocked dates are hidden."
+            useWhen="Launch signup with only a handful of valid days."
+            demonstrates={`\`hideOutOfRange\` + \`min/maxDate\` + \`createDisabled\` for a tightly bounded picker.`}
+            theme="riso"
+            appearance="compact"
             code={`const dropDisabled = useMemo(
   () =>
     createDisabled({
@@ -559,7 +583,10 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Appointment booking"
-            text="A doctor, salon, or restaurant reservation with date and time in one flow."
+            useWhen="Doctor, salon, or restaurant reservations needing date and time in one step."
+            demonstrates={`Single mode + \`CalendarTimeGrid\` + nav with \`showTime\`.`}
+            theme="aurora"
+            appearance="loft"
             code={`const weekdaysOnly = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -591,7 +618,9 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Analytics dashboard"
-            text="Report filters with ranges users recognize: last 7, last 30, quarter."
+            useWhen="Filtering reports by familiar ranges (Today / Last 7 / Quarter)."
+            demonstrates={`Range mode + \`CalendarPresets\` with relative offsets + animated summary.`}
+            theme="graphite"
             code={`const analyticsPresets = [
   { label: "Today", value: 0 },
   { label: "Last 7 days", value: -6, range: 6 },
@@ -621,7 +650,10 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Support quick dates"
-            text="Single-date presets for support follow-ups, reminders, and lightweight task scheduling."
+            useWhen={`Reminders or follow-ups where "Tomorrow" or "Next Monday" covers most cases.`}
+            demonstrates={`Single mode with custom presets, including dynamic ones via \`getValue\`.`}
+            theme="mint"
+            appearance="soft"
             code={`const supportPresets = useMemo<PresetEntry[]>(
   () => [
     { label: "Today", value: 0 },
@@ -665,7 +697,10 @@ export default function ExamplesPage() {
 
           <ExampleCard
             title="Holiday planner"
-            text="Custom advanced presets for seasonal planning: Christmas, Thanksgiving, and other holidays."
+            useWhen="Marketing or seasonal planning around fixed and computed holidays."
+            demonstrates="Multiple mode with advanced custom presets (Christmas, Thanksgiving, Black Friday)."
+            theme="snow"
+            appearance="compact"
             code={`function nthWeekdayOfMonth(year: number, month: number, weekday: number, occurrence: number) {
   const date = new Date(year, month, 1);
   const delta = (weekday - date.getDay() + 7) % 7;
@@ -776,7 +811,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Brand theme picker"
-            text="A branded checkout or onboarding date field using a custom theme object."
+            useWhen="Branded checkout or onboarding where the picker has to match a custom palette."
+            demonstrates={`\`createTheme\` with full token override (highlight, accent, backdrop, range, etc.).`}
+            theme="custom"
+            appearance="soft"
             code={`const brandTheme = useMemo(
   () =>
     createTheme({
@@ -814,7 +852,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Dense product filter"
-            text="A custom appearance for dense dashboards where rhythm and cell shape matter more than decoration."
+            useWhen="Compact dashboards where calendar rhythm needs to match dense data UI."
+            demonstrates={`\`createAppearance\` with custom radius, spacing, font size, and \`dayRatio\`.`}
+            theme="graphite"
+            appearance="custom"
             code={`const denseAppearance = useMemo(
   () =>
     createAppearance({
@@ -849,7 +890,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Vacation request"
-            text="HR-style time off selection with a minimum and maximum range length."
+            useWhen="HR-style time off with min and max length rules."
+            demonstrates={`Range mode with \`minRangeDays\` / \`maxRangeDays\` and weekday-only disabled rule.`}
+            theme="riso"
+            appearance="square"
             code={`const weekdaysOnly = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -888,7 +932,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Sprint planning"
-            text="Planning presets for current sprint, next sprint, and release week."
+            useWhen="Engineering planning around current sprint, next sprint, release week."
+            demonstrates="Range mode with custom-length presets (offset + range)."
+            theme="industrial"
             code={`const sprintPresets = [
   { label: "Current sprint", value: 0, range: 13 },
   { label: "Next sprint", value: 14, range: 13 },
@@ -918,7 +964,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Invoice due date"
-            text="A billing form where typing and tapping stay connected, with a real allowed window."
+            useWhen="Billing form where users want to type or pick the date with a strict allowed window."
+            demonstrates={`\`CalendarManualInput\` paired with the picker, \`locale\`, and min/max dates.`}
+            theme="snow"
+            appearance="soft"
             code={`<Calendar
   mode="single"
   value={manualDate}
@@ -951,7 +1000,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Archive year browser"
-            text="Only the years grid: useful for archive navigation, annual reports, and timeline filters."
+            useWhen="Annual reports, archives, or timeline filters that only need year navigation."
+            demonstrates={`Solo \`CalendarYearsGrid\` with \`onYearSelect\` driving external state.`}
+            theme="graphite"
+            appearance="compact"
             code={`const [archiveYear, setArchiveYear] = useState<Date | null>(null);
 
 <Calendar
@@ -994,7 +1046,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Campaign month picker"
-            text="Only the months grid: a lightweight season, campaign, or billing-period selector."
+            useWhen="Lightweight season, campaign, or billing-period selectors."
+            demonstrates={`Solo \`CalendarMonthsGrid\` with \`onMonthSelect\` driving external state.`}
+            theme="temporal"
+            appearance="soft"
             code={`const [campaignMonth, setCampaignMonth] = useState<Date | null>(null);
 
 <Calendar
@@ -1042,7 +1097,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Time slot picker"
-            text="Only the time grid, snapped to 10-minute steps via timeStep. Handy for slot pickers, reminders, or any flow where the date is already fixed."
+            useWhen="Slot pickers, reminders, or any flow where the date is fixed and only time matters."
+            demonstrates={`Solo \`CalendarTimeGrid\` with \`timeStep={{ minute: 10 }}\` for snapped slots.`}
+            theme="aurora"
+            appearance="loft"
             code={`const [meetingTime, setMeetingTime] = useState<Date | null>(null);
 
 <Calendar
@@ -1087,7 +1145,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Global meeting time"
-            text="Scheduling across time zones with 12-hour labels and seconds when precision matters."
+            useWhen="Scheduling across time zones with second-level precision."
+            demonstrates={`\`timeZone\`, \`hour12\`, \`seconds\`, and time grid wired into nav.`}
+            theme="aurora"
+            appearance="loft"
             code={`const noPast = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -1134,7 +1195,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Profile birthday"
-            text="Track-driven selection for older dates where jumping across years matters."
+            useWhen="Older dates where jumping years and months matters more than a month grid."
+            demonstrates={`Track-based UI (\`CalendarYearsTrack\`, \`CalendarMonthsTrack\`, \`CalendarDaysTrack\`).`}
+            theme="midnight"
+            appearance="bubble"
             code={`<Calendar mode="single" value={birthday} onChange={setBirthday} appearance={bubble}>
   <CalendarYearsTrack />
   <CalendarMonthsTrack short />
@@ -1159,7 +1223,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Blackout calendar"
-            text="Operations calendar with weekends, maintenance windows, and exact blackout dates."
+            useWhen="Operations calendars with weekends, maintenance windows, and exact blackout dates."
+            demonstrates={`Range mode with composite \`createDisabled\` (weekends + before + ranges + dates).`}
+            theme="graphite"
+            appearance="compact"
             code={`const blackout = createDisabled({
   weekends: true,
   before: new Date(),
@@ -1189,7 +1256,10 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Launch day"
-            text="Read-only state for locked launches, archive screens, or confirmed bookings."
+            useWhen="Locked launches, archive screens, or confirmed bookings."
+            demonstrates={`\`readOnly\` flag plus \`allowNavigate\` on the selected dates display.`}
+            theme="snow"
+            appearance="soft"
             code={`<Calendar mode="single" value={launchDate} readOnly>
   <CalendarNav monthLabel yearLabel />
   <CalendarDays />
@@ -1217,16 +1287,22 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
 function ExampleCard({
   title,
-  text,
+  useWhen,
+  demonstrates,
   code,
+  theme,
+  appearance,
   featured = false,
   medium = false,
   wide = false,
   children,
 }: {
   title: string;
-  text: string;
+  useWhen: string;
+  demonstrates: string;
   code: string;
+  theme?: string;
+  appearance?: string;
   featured?: boolean;
   medium?: boolean;
   wide?: boolean;
@@ -1266,10 +1342,40 @@ function ExampleCard({
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-950">
               {title}
             </h2>
-            <p className="mt-3 text-sm leading-6 text-zinc-500">{text}</p>
+            <dl className="mt-4 space-y-3 text-sm leading-6 text-zinc-600">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  Use this when
+                </dt>
+                <dd className="mt-1">{renderInlineCode(useWhen)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  What it demonstrates
+                </dt>
+                <dd className="mt-1">{renderInlineCode(demonstrates)}</dd>
+              </div>
+            </dl>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-zinc-400">
+          {(theme || appearance) && (
+            <div className="mt-5 flex flex-wrap gap-2 text-xs">
+              {theme && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 font-medium text-amber-700">
+                  <Palette size={11} />
+                  theme: {theme}
+                </span>
+              )}
+              {appearance && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 font-medium text-indigo-700">
+                  <Sparkles size={11} />
+                  appearance: {appearance}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium text-zinc-400">
             {getTags(title).map((tag) => (
               <span
                 key={tag}
@@ -1309,6 +1415,23 @@ function CodeBlock({ code }: { code: string }) {
       <code>{highlightCode(code)}</code>
     </pre>
   );
+}
+
+function renderInlineCode(text: string): React.ReactNode[] {
+  const parts = text.split(/(`[^`]+`)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code
+          key={index}
+          className="rounded bg-zinc-100 px-1 py-0.5 font-mono text-[0.85em] text-zinc-800"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
 }
 
 function highlightCode(code: string) {

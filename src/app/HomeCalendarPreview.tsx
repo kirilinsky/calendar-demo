@@ -10,7 +10,7 @@ export function HomeCalendarPreview() {
 
   return (
     <Calendar value={date ?? today} onChange={setDate} width="100%">
-      <CalendarNav showMonthPicker compactYears />
+      <CalendarNav showMonthPicker compactYears themeToggle/>
       <CalendarDays />
     </Calendar>
   );

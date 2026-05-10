@@ -63,6 +63,58 @@ ${SOURCE_URL}
 
 If this page cannot reach GitHub from your network, open the source link above.`;
 
+const primerMarkdown = `## Install
+
+\`\`\`bash
+npm install @dateforge/react-calendar
+# or
+pnpm add @dateforge/react-calendar
+# or
+yarn add @dateforge/react-calendar
+\`\`\`
+
+## Quick Start
+
+\`\`\`tsx
+import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
+import {
+  CalendarDays,
+  CalendarNav,
+  CalendarSelectedDates,
+} from "@dateforge/react-calendar/modules";
+
+export function MyPicker() {
+  const [date, setDate] = useState<Date | null>(null);
+
+  return (
+    <Calendar mode="single" value={date} onChange={setDate}>
+      <CalendarNav showMonthPicker compactYears />
+      <CalendarDays />
+      <CalendarSelectedDates />
+    </Calendar>
+  );
+}
+\`\`\`
+
+## Core idea in 30 seconds
+
+DateForge is headless and modular. The \`<Calendar>\` shell owns state (mode, value, view date, theme, appearance, disabled rules, time step). You compose visible UI from small modules: \`CalendarNav\`, \`CalendarDays\`, \`CalendarMonthsGrid\`, \`CalendarYearsGrid\`, \`CalendarTimeGrid\`, \`CalendarPresets\`, \`CalendarSelectedDates\`, plus track variants for compact bound pickers. Mount only what the UI needs and the calendar wires itself together.
+
+## Common recipes
+
+- **Single date** — \`mode="single"\` + \`CalendarNav\` + \`CalendarDays\`.
+- **Date range** — \`mode="range"\`; range highlight comes for free.
+- **Multiple dates** — \`mode="multiple"\` with optional \`maxDates\`.
+- **Two months side by side** — \`cols={2}\` and two \`CalendarDays\` (one with \`offset={1}\`).
+- **Year-only / month-only picker** — drop \`CalendarDays\` and mount \`CalendarYearsGrid\` or \`CalendarMonthsGrid\` solo with \`onYearSelect\` / \`onMonthSelect\`.
+- **Time slot picker** — only \`CalendarTimeGrid\`, plus \`timeStep={{ minute: 10 }}\` for snapped slots.
+- **Disabled dates** — \`createDisabled({ before, weekends, ranges, dates, weekdays })\`.
+- **Theming** — pass \`theme\` (built-in or \`createTheme(...)\`) and \`appearance\` (\`compact\`, \`soft\`, \`bubble\`, \`loft\`, \`square\`, or \`createAppearance(...)\`).
+
+---
+`;
+
 export default function DocsPage() {
   const [dark, setDark] = useState(true);
   const [markdown, setMarkdown] = useState("");
@@ -70,7 +122,11 @@ export default function DocsPage() {
   const [error, setError] = useState("");
   const [active, setActive] = useState("dateforge-react-calendar-documentation");
 
-  const blocks = useMemo(() => parseMarkdown(markdown || fallbackMarkdown), [markdown]);
+  const blocks = useMemo(
+    () =>
+      parseMarkdown(`${primerMarkdown}\n${markdown || fallbackMarkdown}`),
+    [markdown],
+  );
   const headings = useMemo(
     () => blocks.filter((block): block is Heading => block.type === "heading"),
     [blocks],
