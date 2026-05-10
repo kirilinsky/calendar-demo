@@ -56,6 +56,13 @@ type RangeValue = { from: Date | null; to: Date | null };
 const emptyRange = (): RangeValue => ({ from: null, to: null });
 const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
 
+const MEETING_ZONES = [
+  { city: "New York", tz: "America/New_York" },
+  { city: "London", tz: "Europe/London" },
+  { city: "Berlin", tz: "Europe/Berlin" },
+  { city: "Tokyo", tz: "Asia/Tokyo" },
+] as const;
+
 export default function ExamplesPage() {
   const [basicDate, setBasicDate] = useState<Date | null>(null);
   const [stayRange, setStayRange] = useState<RangeValue>(emptyRange);
@@ -614,7 +621,7 @@ const weekdaysOnly = useMemo(() => {
   return createDisabled({ weekends: true, before: today });
 }, []);
 
-<Calendar mode="single" value={appointment} onChange={setAppointment} disabled={weekdaysOnly}>
+<Calendar gradient mode="single" value={appointment} onChange={setAppointment} disabled={weekdaysOnly}>
   <CalendarNav showTime showMonthPicker compactYears clear />
   <CalendarDays />
   <CalendarTimeGrid />
@@ -624,6 +631,7 @@ const weekdaysOnly = useMemo(() => {
             <Calendar
               mode="single"
               value={appointment}
+              gradient
               onChange={setAppointment}
               disabled={weekdaysOnly}
               theme={aurora}
@@ -1185,11 +1193,18 @@ const sprintPresets = [
 
           <ExampleCard
             title="Global meeting time"
-            useWhen="Scheduling across time zones with second-level precision."
-            demonstrates={`\`timeZone\`, \`hour12\`, \`seconds\`, and time grid wired into nav.`}
+            useWhen="Scheduling one slot that teammates in different time zones can read at a glance."
+            demonstrates={`\`timeZone\` + \`hour12\` on the calendar, with the same instant rendered in four cities.`}
             theme="aurora"
             appearance="loft"
-            code={`const [globalMeeting, setGlobalMeeting] = useState<Date | null>(null);
+            code={`const ZONES = [
+  { city: "New York", tz: "America/New_York" },
+  { city: "London", tz: "Europe/London" },
+  { city: "Berlin", tz: "Europe/Berlin" },
+  { city: "Tokyo", tz: "Asia/Tokyo" },
+];
+
+const [globalMeeting, setGlobalMeeting] = useState<Date | null>(null);
 
 const noPast = useMemo(() => {
   const today = new Date();
@@ -1205,11 +1220,31 @@ const noPast = useMemo(() => {
   hour12
   disabled={noPast}
 >
-  <CalendarNav showTime seconds showMonthPicker compactYears clear />
+  <CalendarNav showTime showMonthPicker compactYears clear />
   <CalendarDays />
-  <CalendarTimeGrid seconds />
-  <CalendarSelectedDates allowClear showTime />
-</Calendar>`}
+  <CalendarTimeGrid />
+</Calendar>
+
+{globalMeeting && (
+  <ul>
+    {ZONES.map((z) => (
+      <li key={z.tz}>
+        <span>{z.city}</span>
+        <span>
+          {globalMeeting.toLocaleString("en-US", {
+            timeZone: z.tz,
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })}
+        </span>
+      </li>
+    ))}
+  </ul>
+)}`}
           >
             <Calendar
               mode="single"
@@ -1222,17 +1257,51 @@ const noPast = useMemo(() => {
               appearance={loft}
               width="100%"
             >
-              <CalendarNav
-                showTime
-                seconds
-                showMonthPicker
-                compactYears
-                clear
-              />
+              <CalendarNav showTime showMonthPicker compactYears clear />
               <CalendarDays />
-              <CalendarTimeGrid seconds />
-              <CalendarSelectedDates allowClear showTime />
+              <CalendarTimeGrid />
             </Calendar>
+            <div className="mt-4">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                Same moment around the world
+              </div>
+              <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {MEETING_ZONES.map((zone) => {
+                  const date = globalMeeting
+                    ? globalMeeting.toLocaleDateString("en-US", {
+                        timeZone: zone.tz,
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : null;
+                  const time = globalMeeting
+                    ? globalMeeting.toLocaleTimeString("en-US", {
+                        timeZone: zone.tz,
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })
+                    : null;
+                  return (
+                    <li
+                      key={zone.tz}
+                      className="rounded-xl border border-zinc-200 bg-white px-2 py-1 text-left shadow-sm"
+                    >
+                      <div className="text-[10px] uppercase tracking-wide text-zinc-400">
+                        {zone.city}
+                      </div>
+                      <div className="mt-1 whitespace-nowrap text-sm font-semibold text-zinc-900 tabular-nums">
+                        {time ?? "—"}
+                      </div>
+                      <div className="whitespace-nowrap text-xs text-zinc-500">
+                        {date ?? ""}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </ExampleCard>
 
           <ExampleCard
@@ -1537,7 +1606,7 @@ function getTags(title: string) {
     "Six-month availability": ["read-only", "6 months", "availability"],
     "Delivery slots": ["multiple", "capacity"],
     "Limited drop window": ["hideOutOfRange", "disabled"],
-    "Appointment booking": ["time", "scheduling"],
+    "Appointment booking": ["time", "scheduling", "gradient"],
     "Analytics dashboard": ["range", "reports"],
     "Support quick dates": ["single presets", "support"],
     "Holiday planner": ["advanced presets", "holidays", "multiple"],

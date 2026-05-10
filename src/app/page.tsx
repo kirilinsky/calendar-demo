@@ -40,7 +40,9 @@ async function getCoverage(): Promise<string | null> {
 
 export default async function Home() {
   const coverage = await getCoverage();
-  const coverageLabel = coverage ? `${coverage} Test coverage` : "Test coverage";
+  const coverageLabel = coverage
+    ? `${coverage} Test coverage`
+    : "Test coverage";
   return (
     <main className="min-h-[100dvh] bg-[#fbfbfd] text-zinc-950 lg:h-[100dvh] lg:overflow-hidden">
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col px-5 py-4 sm:px-8 lg:h-[100dvh] lg:min-h-0">
@@ -140,25 +142,24 @@ export default async function Home() {
           />
         </div>
 
-        <section className="flex flex-1 flex-col items-center justify-around gap-4 py-3 text-center">
+        <section className="flex flex-1 flex-col items-center justify-around gap-4 py-3 text-center lg:justify-center lg:gap-10">
           <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[320px]">
             <HomeCalendarPreview />
           </div>
-
           <div className="flex flex-col items-center gap-3">
             <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:max-w-none lg:text-6xl lg:whitespace-nowrap">
               A calendar that fits your product.
             </h1>
-            <div className="w-full max-w-md">
-              <InstallSnippet />
-            </div>
+
             <p className="max-w-xl text-sm leading-6 text-zinc-600 sm:text-base">
               Start with a simple date picker, then add ranges, presets, time,
               themes, and custom product logic only when you need them and mix
               as you want.
             </p>
+          </div>{" "}
+          <div className="w-full max-w-md">
+            <InstallSnippet />
           </div>
-
           <div className="flex w-full max-w-2xl flex-col items-stretch justify-center gap-2 sm:flex-row">
             <BranchLink
               href="/examples"
