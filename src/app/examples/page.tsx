@@ -301,7 +301,9 @@ export default function ExamplesPage() {
             title="The basics"
             useWhen="You're starting a new flow and just need a working date picker."
             demonstrates="Bare minimum composition — Calendar shell + nav + days + selected dates."
-            code={`<Calendar mode="single" value={basicDate} onChange={setBasicDate}>
+            code={`const [basicDate, setBasicDate] = useState<Date | null>(new Date());
+
+<Calendar mode="single" value={basicDate} onChange={setBasicDate}>
   <CalendarNav showMonthPicker compactYears />
   <CalendarDays />
   <CalendarSelectedDates allowClear={false} />
@@ -324,11 +326,13 @@ export default function ExamplesPage() {
             useWhen="Lodging or short-stay rentals where guests pick check-in and check-out."
             demonstrates="Range mode with disabled past dates, basic stay presets, and a clear/animated selected summary."
             appearance="soft"
-            code={`const noPast = useMemo(() => {
+            code={`const [stayRange, setStayRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+const noPast = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return createDisabled({ before: today });
-}, [])
+}, []);
 
 <Calendar mode="range" value={stayRange} onChange={setStayRange} disabled={noPast} theme={snow} appearance={soft}>
   <CalendarNav showMonthPicker compactYears clear />
@@ -360,7 +364,9 @@ export default function ExamplesPage() {
             demonstrates={`Split bound tracks (\`bound="from"\` / \`bound="to"\`) for compact range selection across two columns.`}
             theme="temporal"
             appearance="compact"
-            code={`const noPast = useMemo(() => {
+            code={`const [flightRange, setFlightRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+const noPast = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return createDisabled({ before: today });
@@ -402,7 +408,9 @@ export default function ExamplesPage() {
             demonstrates={`\`cols={2}\` with two \`CalendarDays\` (offset 0 and 1) and one continuous range value.`}
             theme="snow"
             appearance="soft"
-            code={`const noPast = useMemo(() => {
+            code={`const [twoMonthRange, setTwoMonthRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+const noPast = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return createDisabled({ before: today });
@@ -506,7 +514,9 @@ export default function ExamplesPage() {
             demonstrates={`Multiple mode with \`maxDates\`, weekend + past disable rule, animated selected list.`}
             theme="mint"
             appearance="soft"
-            code={`const weekdaysOnly = useMemo(() => {
+            code={`const [deliveryDates, setDeliveryDates] = useState<Date[]>([]);
+
+const weekdaysOnly = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return createDisabled({ weekends: true, before: today });
@@ -540,7 +550,9 @@ export default function ExamplesPage() {
             demonstrates={`\`hideOutOfRange\` + \`min/maxDate\` + \`createDisabled\` for a tightly bounded picker.`}
             theme="riso"
             appearance="compact"
-            code={`const dropDisabled = useMemo(
+            code={`const [dropDate, setDropDate] = useState<Date | null>(null);
+
+const dropDisabled = useMemo(
   () =>
     createDisabled({
       dates: [new Date("2026-07-12"), new Date("2026-07-15")],
@@ -587,7 +599,9 @@ export default function ExamplesPage() {
             demonstrates={`Single mode + \`CalendarTimeGrid\` + nav with \`showTime\`.`}
             theme="aurora"
             appearance="loft"
-            code={`const weekdaysOnly = useMemo(() => {
+            code={`const [appointment, setAppointment] = useState<Date | null>(null);
+
+const weekdaysOnly = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return createDisabled({ weekends: true, before: today });
@@ -621,7 +635,9 @@ export default function ExamplesPage() {
             useWhen="Filtering reports by familiar ranges (Today / Last 7 / Quarter)."
             demonstrates={`Range mode + \`CalendarPresets\` with relative offsets + animated summary.`}
             theme="graphite"
-            code={`const analyticsPresets = [
+            code={`const [reportRange, setReportRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+const analyticsPresets = [
   { label: "Today", value: 0 },
   { label: "Last 7 days", value: -6, range: 6 },
   { label: "Last 30 days", value: -29, range: 29 },
@@ -654,7 +670,9 @@ export default function ExamplesPage() {
             demonstrates={`Single mode with custom presets, including dynamic ones via \`getValue\`.`}
             theme="mint"
             appearance="soft"
-            code={`const supportPresets = useMemo<PresetEntry[]>(
+            code={`const [singlePresetDate, setSinglePresetDate] = useState<Date | null>(null);
+
+const supportPresets = useMemo<PresetEntry[]>(
   () => [
     { label: "Today", value: 0 },
     { label: "Tomorrow", value: 1 },
@@ -701,7 +719,9 @@ export default function ExamplesPage() {
             demonstrates="Multiple mode with advanced custom presets (Christmas, Thanksgiving, Black Friday)."
             theme="snow"
             appearance="compact"
-            code={`function nthWeekdayOfMonth(year: number, month: number, weekday: number, occurrence: number) {
+            code={`const [holidayRange, setHolidayRange] = useState<Date[]>([]);
+
+function nthWeekdayOfMonth(year: number, month: number, weekday: number, occurrence: number) {
   const date = new Date(year, month, 1);
   const delta = (weekday - date.getDay() + 7) % 7;
   date.setDate(1 + delta + (occurrence - 1) * 7);
@@ -815,7 +835,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             demonstrates={`\`createTheme\` with full token override (highlight, accent, backdrop, range, etc.).`}
             theme="custom"
             appearance="soft"
-            code={`const brandTheme = useMemo(
+            code={`const [brandDate, setBrandDate] = useState<Date | null>(null);
+
+const brandTheme = useMemo(
   () =>
     createTheme({
         highlight: "#f4f96f",
@@ -856,7 +878,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             demonstrates={`\`createAppearance\` with custom radius, spacing, font size, and \`dayRatio\`.`}
             theme="graphite"
             appearance="custom"
-            code={`const denseAppearance = useMemo(
+            code={`const [denseRange, setDenseRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+const denseAppearance = useMemo(
   () =>
     createAppearance({
       radius: "5px",
@@ -894,7 +918,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             demonstrates={`Range mode with \`minRangeDays\` / \`maxRangeDays\` and weekday-only disabled rule.`}
             theme="riso"
             appearance="square"
-            code={`const weekdaysOnly = useMemo(() => {
+            code={`const [vacationRange, setVacationRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+const weekdaysOnly = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return createDisabled({ weekends: true, before: today });
@@ -935,7 +961,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             useWhen="Engineering planning around current sprint, next sprint, release week."
             demonstrates="Range mode with custom-length presets (offset + range)."
             theme="industrial"
-            code={`const sprintPresets = [
+            code={`const [sprintRange, setSprintRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+const sprintPresets = [
   { label: "Current sprint", value: 0, range: 13 },
   { label: "Next sprint", value: 14, range: 13 },
   { label: "Release week", value: 28, range: 6 },
@@ -968,7 +996,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             demonstrates={`\`CalendarManualInput\` paired with the picker, \`locale\`, and min/max dates.`}
             theme="snow"
             appearance="soft"
-            code={`<Calendar
+            code={`const [manualDate, setManualDate] = useState<Date | null>(null);
+
+<Calendar
   mode="single"
   value={manualDate}
   onChange={setManualDate}
@@ -1006,19 +1036,20 @@ const holidayPresets = useMemo<PresetEntry[]>(
             appearance="compact"
             code={`const [archiveYear, setArchiveYear] = useState<Date | null>(null);
 
-<Calendar
-  mode="single"
-  defaultViewDate={new Date("2026-01-01")}
-  minDate={new Date("2018-01-01")}
-  maxDate={new Date("2030-12-31")}
->
-  <CalendarYearsGrid
-    yearsPerPage={12}
-    onYearSelect={(date) => setArchiveYear(date)}
-  />
-</Calendar>
-
-{archiveYear && <p>Browsing archive · {archiveYear.getFullYear()}</p>}`}
+<>
+  <Calendar
+    mode="single"
+    defaultViewDate={new Date("2026-01-01")}
+    minDate={new Date("2018-01-01")}
+    maxDate={new Date("2030-12-31")}
+  >
+    <CalendarYearsGrid
+      yearsPerPage={12}
+      onYearSelect={(date) => setArchiveYear(date)}
+    />
+  </Calendar>
+  {archiveYear && <p>Browsing archive · {archiveYear.getFullYear()}</p>}
+</>`}
           >
             <Calendar
               mode="single"
@@ -1052,25 +1083,26 @@ const holidayPresets = useMemo<PresetEntry[]>(
             appearance="soft"
             code={`const [campaignMonth, setCampaignMonth] = useState<Date | null>(null);
 
-<Calendar
-  mode="single"
-  defaultViewDate={new Date("2026-05-01")}
-  minDate={new Date("2026-01-01")}
-  maxDate={new Date("2026-12-31")}
-  gradient
->
-  <CalendarMonthsGrid
-    short
-    onMonthSelect={(date) => setCampaignMonth(date)}
-  />
-</Calendar>
-
-{campaignMonth && (
-  <p>
-    Campaign ·{" "}
-    {campaignMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
-  </p>
-)}`}
+<>
+  <Calendar
+    mode="single"
+    defaultViewDate={new Date("2026-05-01")}
+    minDate={new Date("2026-01-01")}
+    maxDate={new Date("2026-12-31")}
+    gradient
+  >
+    <CalendarMonthsGrid
+      short
+      onMonthSelect={(date) => setCampaignMonth(date)}
+    />
+  </Calendar>
+  {campaignMonth && (
+    <p>
+      Campaign ·{" "}
+      {campaignMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
+    </p>
+  )}
+</>`}
           >
             <Calendar
               mode="single"
@@ -1103,24 +1135,25 @@ const holidayPresets = useMemo<PresetEntry[]>(
             appearance="loft"
             code={`const [meetingTime, setMeetingTime] = useState<Date | null>(null);
 
-<Calendar
-  mode="single"
-  value={meetingTime}
-  onChange={setMeetingTime}
-  timeStep={{ minute: 10 }}
->
-  <CalendarTimeGrid />
-</Calendar>
-
-{meetingTime && (
-  <p>
-    Slot ·{" "}
-    {meetingTime.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}
-  </p>
-)}`}
+<>
+  <Calendar
+    mode="single"
+    value={meetingTime}
+    onChange={setMeetingTime}
+    timeStep={{ minute: 10 }}
+  >
+    <CalendarTimeGrid />
+  </Calendar>
+  {meetingTime && (
+    <p>
+      Slot ·{" "}
+      {meetingTime.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </p>
+  )}
+</>`}
           >
             <Calendar
               mode="single"
@@ -1149,7 +1182,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             demonstrates={`\`timeZone\`, \`hour12\`, \`seconds\`, and time grid wired into nav.`}
             theme="aurora"
             appearance="loft"
-            code={`const noPast = useMemo(() => {
+            code={`const [globalMeeting, setGlobalMeeting] = useState<Date | null>(null);
+
+const noPast = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return createDisabled({ before: today });
@@ -1199,7 +1234,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             demonstrates={`Track-based UI (\`CalendarYearsTrack\`, \`CalendarMonthsTrack\`, \`CalendarDaysTrack\`).`}
             theme="midnight"
             appearance="bubble"
-            code={`<Calendar mode="single" value={birthday} onChange={setBirthday} appearance={bubble}>
+            code={`const [birthday, setBirthday] = useState<Date | null>(new Date(1994, 5, 14));
+
+<Calendar mode="single" value={birthday} onChange={setBirthday} appearance={bubble}>
   <CalendarYearsTrack />
   <CalendarMonthsTrack short />
   <CalendarDaysTrack showMonthLabel />
@@ -1227,7 +1264,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             demonstrates={`Range mode with composite \`createDisabled\` (weekends + before + ranges + dates).`}
             theme="graphite"
             appearance="compact"
-            code={`const blackout = createDisabled({
+            code={`const [blackoutRange, setBlackoutRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+
+const blackout = createDisabled({
   weekends: true,
   before: new Date(),
   ranges: [{ from: new Date("2026-06-10"), to: new Date("2026-06-14") }],
@@ -1260,7 +1299,9 @@ const holidayPresets = useMemo<PresetEntry[]>(
             demonstrates={`\`readOnly\` flag plus \`allowNavigate\` on the selected dates display.`}
             theme="snow"
             appearance="soft"
-            code={`<Calendar mode="single" value={launchDate} readOnly>
+            code={`const launchDate = new Date(2026, 8, 9);
+
+<Calendar mode="single" value={launchDate} readOnly>
   <CalendarNav monthLabel yearLabel />
   <CalendarDays />
   <CalendarSelectedDates allowNavigate animated />
@@ -1541,8 +1582,8 @@ import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/rea
     "Appointment booking": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarSelectedDates, CalendarTimeGrid } from "@dateforge/react-calendar/modules";`,
-    "Analytics dashboard": `import { useMemo, useState } from "react";
-import { Calendar, type PresetEntry } from "@dateforge/react-calendar";
+    "Analytics dashboard": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
     "Support quick dates": `import { useMemo, useState } from "react";
 import { Calendar, type PresetEntry } from "@dateforge/react-calendar";
@@ -1559,8 +1600,8 @@ import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/rea
     "Vacation request": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
-    "Sprint planning": `import { useMemo, useState } from "react";
-import { Calendar, type PresetEntry } from "@dateforge/react-calendar";
+    "Sprint planning": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
     "Invoice due date": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
@@ -1584,14 +1625,43 @@ import { bubble } from "@dateforge/react-calendar/appearances";`,
     "Blackout calendar": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
-    "Launch day": `import { useMemo } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+    "Launch day": `import { Calendar } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
   };
 
-  return `${importsByTitle[title] ?? `import { Calendar } from "@dateforge/react-calendar";`}
+  const imports =
+    importsByTitle[title] ??
+    `import { Calendar } from "@dateforge/react-calendar";`;
+  const componentName = `${toPascal(title)}Example`;
+  const lines = body.split("\n");
+  let jsxStart = lines.findIndex((line) => /^\s*<(>|[A-Z])/.test(line));
+  if (jsxStart === -1) jsxStart = lines.length;
+  const setup = lines.slice(0, jsxStart).join("\n").trim();
+  const jsx = lines.slice(jsxStart).join("\n").trim();
+  const indent = (text: string, n: number) =>
+    text
+      .split("\n")
+      .map((line) => (line ? `${" ".repeat(n)}${line}` : line))
+      .join("\n");
+  const setupBlock = setup ? `${indent(setup, 2)}\n\n` : "";
+  const jsxBlock = jsx ? indent(jsx, 4) : "";
 
-${body}`;
+  return `${imports}
+
+export function ${componentName}() {
+${setupBlock}  return (
+${jsxBlock}
+  );
+}`;
+}
+
+function toPascal(title: string) {
+  return title
+    .replace(/[^A-Za-z0-9 ]/g, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
 }
 
 function startOfDay(date: Date) {

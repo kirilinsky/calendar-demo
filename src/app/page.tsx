@@ -42,8 +42,8 @@ export default async function Home() {
   const coverage = await getCoverage();
   const coverageLabel = coverage ? `${coverage} Test coverage` : "Test coverage";
   return (
-    <main className="min-h-screen bg-[#fbfbfd] text-zinc-950">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
+    <main className="h-[100dvh] overflow-hidden bg-[#fbfbfd] text-zinc-950">
+      <div className="mx-auto flex h-[100dvh] w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
         <header className="flex h-12 items-center justify-between gap-4">
           <Link
             href="/"
@@ -140,23 +140,26 @@ export default async function Home() {
           />
         </div>
 
-        <section className="flex flex-col items-center py-4 text-center sm:py-6">
-          <div className="mb-4 w-full max-w-[260px] sm:mb-5 lg:max-w-[240px]">
+        <section className="flex flex-1 flex-col items-center justify-around gap-4 py-3 text-center">
+          <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[320px]">
             <HomeCalendarPreview />
           </div>
 
-          <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:max-w-none lg:text-6xl lg:whitespace-nowrap">
-            A calendar that fits your product.
-          </h1>
-          <div className="mt-4 w-full max-w-md">
-            <InstallSnippet />
+          <div className="flex flex-col items-center gap-3">
+            <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:max-w-none lg:text-6xl lg:whitespace-nowrap">
+              A calendar that fits your product.
+            </h1>
+            <div className="w-full max-w-md">
+              <InstallSnippet />
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-zinc-600 sm:text-base">
+              Start with a simple date picker, then add ranges, presets, time,
+              themes, and custom product logic only when you need them and mix
+              as you want.
+            </p>
           </div>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-600 sm:text-base">
-            Start with a simple date picker, then add ranges, presets, time,
-            themes, and custom product logic only when you need them and mix as you want.
-          </p>
 
-          <div className="mt-5 flex w-full max-w-2xl flex-col items-stretch justify-center gap-2 sm:flex-row">
+          <div className="flex w-full max-w-2xl flex-col items-stretch justify-center gap-2 sm:flex-row">
             <BranchLink
               href="/examples"
               title="Browse examples"
