@@ -18,6 +18,10 @@ export function ThemesClient() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeCenterRaw, setActiveCenterRaw] = useState(N);
 
+  useEffect(() => {
+    if (today) setDate((current) => current ?? today);
+  }, [today]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const isResetting = useRef(false);
   const rafRef = useRef<number | null>(null);
@@ -67,7 +71,13 @@ export function ThemesClient() {
     if (Math.abs(target - el.scrollLeft) > 1) {
       isSnapping.current = true;
       el.scrollTo({ left: target, behavior: "smooth" });
-      el.addEventListener("scrollend", () => { isSnapping.current = false; }, { once: true });
+      el.addEventListener(
+        "scrollend",
+        () => {
+          isSnapping.current = false;
+        },
+        { once: true },
+      );
     }
   }, []);
 
@@ -154,7 +164,12 @@ export function ThemesClient() {
           className="transition-all duration-500 ease-out"
           style={{ filter: `drop-shadow(0 12px 40px ${active.highlight}2a)` }}
         >
-          <Calendar value={date ?? today} onChange={setDate} width={300} theme={active.theme}>
+          <Calendar
+            value={date}
+            onChange={setDate}
+            width={300}
+            theme={active.theme}
+          >
             <CalendarNav showMonthPicker compactYears />
             <CalendarDays />
           </Calendar>
@@ -165,7 +180,9 @@ export function ThemesClient() {
             className="inline-block w-2 h-2 rounded-full transition-colors duration-500"
             style={{ backgroundColor: active.highlight }}
           />
-          <span className="text-sm font-semibold capitalize text-zinc-800">{active.id}</span>
+          <span className="text-sm font-semibold capitalize text-zinc-800">
+            {active.id}
+          </span>
           <span className="text-[11px] text-zinc-300">·</span>
           <span className="text-xs text-zinc-400">{active.mood}</span>
         </div>
@@ -194,7 +211,11 @@ export function ThemesClient() {
             onPointerCancel={onPointerUp}
           >
             {INFINITE.map((preset, i) => (
-              <ThemeCard key={`${preset.id}-${i}`} preset={preset} isCenter={i === activeCenterRaw} />
+              <ThemeCard
+                key={`${preset.id}-${i}`}
+                preset={preset}
+                isCenter={i === activeCenterRaw}
+              />
             ))}
           </div>
         </div>
@@ -218,7 +239,9 @@ const ThemeCard = memo(function ThemeCard({
         width: CARD_W,
         height: 64,
         scrollSnapAlign: "center",
-        borderColor: isCenter ? `${preset.highlight}55` : "rgb(228 228 231 / 0.6)",
+        borderColor: isCenter
+          ? `${preset.highlight}55`
+          : "rgb(228 228 231 / 0.6)",
         boxShadow: isCenter
           ? `0 2px 12px ${preset.highlight}18, 0 1px 3px rgb(0 0 0 / 0.06)`
           : "0 1px 2px rgb(0 0 0 / 0.04)",
@@ -230,8 +253,14 @@ const ThemeCard = memo(function ThemeCard({
         className="shrink-0 w-8 h-8 rounded-xl overflow-hidden flex border border-zinc-100"
         style={{ boxShadow: "inset 0 0 0 0.5px rgb(0 0 0 / 0.06)" }}
       >
-        <div className="w-1/2 h-full" style={{ backgroundColor: preset.backdrop }} />
-        <div className="w-1/2 h-full" style={{ backgroundColor: preset.highlight }} />
+        <div
+          className="w-1/2 h-full"
+          style={{ backgroundColor: preset.backdrop }}
+        />
+        <div
+          className="w-1/2 h-full"
+          style={{ backgroundColor: preset.highlight }}
+        />
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-semibold capitalize text-zinc-900 leading-tight truncate">
