@@ -30,7 +30,7 @@ export default async function Home() {
         <SiteHeader coverage={coverage} />
 
         <section className="flex flex-1 flex-col items-center justify-around gap-4 py-3 text-center lg:justify-center lg:gap-10">
-          <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[320px]">
+          <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[340px]">
             <HomeCalendarPreview />
           </div>
           <div className="flex flex-col items-center gap-3">

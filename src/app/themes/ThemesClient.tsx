@@ -26,6 +26,14 @@ const CLICK_DRAG_THRESHOLD = 6;
 
 const N = THEMES.length + 1;
 
+function getSliderIndex(target: EventTarget | null) {
+  if (!(target instanceof Element)) return null;
+  const item = target.closest<HTMLElement>("[data-slider-index]");
+  if (!item?.dataset.sliderIndex) return null;
+  const index = Number(item.dataset.sliderIndex);
+  return Number.isFinite(index) ? index : null;
+}
+
 const TOKEN_LABELS: Array<{ key: EditableThemeTokenKey; label: string }> = [
   { key: "accent", label: "Accent" },
   { key: "activeText", label: "Active text" },
@@ -107,6 +115,7 @@ export function ThemesClient() {
     lastT: number;
     vel: number;
     moved: boolean;
+    targetRawIndex: number | null;
   } | null>(null);
   const inertiaRef = useRef<number | null>(null);
   const isSnapping = useRef(false);
@@ -257,6 +266,7 @@ export function ThemesClient() {
       lastT: performance.now(),
       vel: 0,
       moved: false,
+      targetRawIndex: getSliderIndex(e.target),
     };
     suppressClickRef.current = false;
   }, []);
@@ -286,6 +296,10 @@ export function ThemesClient() {
     const drag = dragRef.current;
     if (!el || !drag) return;
     dragRef.current = null;
+    if (!drag.moved && drag.targetRawIndex !== null) {
+      selectRawIndex(drag.targetRawIndex, true);
+      return;
+    }
     if (drag.moved) {
       suppressClickRef.current = true;
       window.setTimeout(() => {
@@ -307,7 +321,11 @@ export function ThemesClient() {
       }
     };
     inertiaRef.current = requestAnimationFrame(runInertia);
-  }, [syncActive, snapToNearest]);
+  }, [selectRawIndex, syncActive, snapToNearest]);
+
+  const onPointerCancel = useCallback(() => {
+    dragRef.current = null;
+  }, []);
 
   const active = themePresets[activeIdx];
 
@@ -318,7 +336,7 @@ export function ThemesClient() {
           className="transition-all duration-500 ease-out"
           style={{ filter: `drop-shadow(0 12px 40px ${active.highlight}2a)` }}
         >
-          <CalendarPreview theme={active.theme} width={325} />
+          <CalendarPreview theme={active.theme} width={345} />
         </div>
       </section>
 
@@ -342,13 +360,14 @@ export function ThemesClient() {
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
+            onPointerCancel={onPointerCancel}
           >
             {infiniteThemes.map((preset, i) => (
               <ThemeCard
                 key={`${preset.id}-${i}`}
                 preset={preset}
                 isCenter={i === activeCenterRaw}
+                rawIndex={i}
                 onAdjust={openAdjust}
                 onSelect={(force) => selectRawIndex(i, force)}
               />
@@ -380,11 +399,13 @@ export function ThemesClient() {
 const ThemeCard = memo(function ThemeCard({
   preset,
   isCenter,
+  rawIndex,
   onAdjust,
   onSelect,
 }: {
   preset: ThemeCardPreset;
   isCenter: boolean;
+  rawIndex: number;
   onAdjust: () => void;
   onSelect: (force?: boolean) => void;
 }) {
@@ -392,6 +413,7 @@ const ThemeCard = memo(function ThemeCard({
     <div
       role="button"
       tabIndex={0}
+      data-slider-index={rawIndex}
       className="shrink-0 flex items-center gap-3 px-3.5 rounded-2xl border bg-white transition-all duration-300 ease-out"
       style={{
         width: CARD_W,
@@ -406,7 +428,6 @@ const ThemeCard = memo(function ThemeCard({
         opacity: isCenter ? 1 : 0.52,
         transform: isCenter ? "scale(1)" : "scale(0.93)",
       }}
-      onClick={() => onSelect()}
       onKeyDown={(event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();

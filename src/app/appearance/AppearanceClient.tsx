@@ -31,6 +31,14 @@ const CLICK_DRAG_THRESHOLD = 6;
 const PREVIEW_DATE = new Date(2026, 4, 13);
 const PREVIEW_VIEW_DATE = new Date(2026, 4, 1);
 
+function getSliderIndex(target: EventTarget | null) {
+  if (!(target instanceof Element)) return null;
+  const item = target.closest<HTMLElement>("[data-slider-index]");
+  if (!item?.dataset.sliderIndex) return null;
+  const index = Number(item.dataset.sliderIndex);
+  return Number.isFinite(index) ? index : null;
+}
+
 const APPEARANCES: AppearancePreset[] = [
   {
     id: "default",
@@ -96,6 +104,7 @@ export function AppearanceClient() {
     lastT: number;
     vel: number;
     moved: boolean;
+    targetRawIndex: number | null;
   } | null>(null);
   const inertiaRef = useRef<number | null>(null);
   const isSnapping = useRef(false);
@@ -222,6 +231,7 @@ export function AppearanceClient() {
       lastT: performance.now(),
       vel: 0,
       moved: false,
+      targetRawIndex: getSliderIndex(e.target),
     };
     suppressClickRef.current = false;
   }, []);
@@ -251,6 +261,10 @@ export function AppearanceClient() {
     const drag = dragRef.current;
     if (!el || !drag) return;
     dragRef.current = null;
+    if (!drag.moved && drag.targetRawIndex !== null) {
+      selectRawIndex(drag.targetRawIndex, true);
+      return;
+    }
     if (drag.moved) {
       suppressClickRef.current = true;
       window.setTimeout(() => {
@@ -270,17 +284,20 @@ export function AppearanceClient() {
       }
     };
     inertiaRef.current = requestAnimationFrame(runInertia);
-  }, [syncActive, snapToNearest]);
+  }, [selectRawIndex, syncActive, snapToNearest]);
+
+  const onPointerCancel = useCallback(() => {
+    dragRef.current = null;
+  }, []);
 
   const active = APPEARANCES[activeIdx];
-  const previewWidth = active.id === "loft" ? "min(70vw, 300px)" : "min(78vw, 320px)";
+  const previewWidth =
+    active.id === "loft" ? "min(70vw, 320px)" : "min(78vw, 340px)";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <section className="flex min-h-0 flex-1 items-center justify-center py-3 sm:py-6">
-        <div
-          className="flex h-[min(53dvh,440px)] min-h-[280px] w-full items-center justify-center overflow-hidden sm:h-[490px] sm:min-h-[399px]"
-        >
+        <div className="flex h-[min(53dvh,440px)] min-h-[280px] w-full items-center justify-center  sm:h-[490px] sm:min-h-[399px]">
           <div
             className="origin-center transition-all duration-500 ease-out"
             style={{
@@ -318,13 +335,14 @@ export function AppearanceClient() {
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
+            onPointerCancel={onPointerCancel}
           >
             {infiniteAppearances.map((preset, i) => (
               <AppearanceCard
                 key={`${preset.id}-${i}`}
                 preset={preset}
                 isCenter={i === activeCenterRaw}
+                rawIndex={i}
                 onSelect={(force) => selectRawIndex(i, force)}
               />
             ))}
@@ -338,16 +356,19 @@ export function AppearanceClient() {
 const AppearanceCard = memo(function AppearanceCard({
   preset,
   isCenter,
+  rawIndex,
   onSelect,
 }: {
   preset: AppearancePreset;
   isCenter: boolean;
+  rawIndex: number;
   onSelect: (force?: boolean) => void;
 }) {
   return (
     <div
       role="button"
       tabIndex={0}
+      data-slider-index={rawIndex}
       className="flex shrink-0 items-center gap-3 rounded-2xl border bg-white px-3.5 transition-all duration-300 ease-out"
       style={{
         width: CARD_W,
@@ -360,7 +381,6 @@ const AppearanceCard = memo(function AppearanceCard({
         opacity: isCenter ? 1 : 0.52,
         transform: isCenter ? "scale(1)" : "scale(0.93)",
       }}
-      onClick={() => onSelect()}
       onKeyDown={(event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
