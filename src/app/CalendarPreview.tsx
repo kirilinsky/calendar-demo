@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   Calendar,
-  useToday,
   type CalendarAppearance,
   type CalendarTheme,
 } from "@dateforge/react-calendar";
@@ -29,12 +28,10 @@ export function CalendarPreview({
   useSavedThemeFallback = true,
   width = "100%",
 }: CalendarPreviewProps) {
-  const today = useToday();
   const savedAppearance = useSavedAppearance();
   const savedTheme = useSavedTheme();
   const [date, setDate] = useState<Date | null>(initialDate);
 
-  const calendarDate = date ?? today;
   const calendarAppearance = useSavedAppearanceFallback
     ? appearance ?? savedAppearance
     : appearance;
@@ -43,7 +40,7 @@ export function CalendarPreview({
   return (
     <Calendar
       mode="single"
-      value={calendarDate}
+      value={date}
       onChange={setDate}
       defaultViewDate={defaultViewDate}
       width={width}
