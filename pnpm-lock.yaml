@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@dateforge/react-calendar':
-        specifier: ^1.4.6
-        version: 1.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: ^1.4.7
+        version: 1.4.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@hugeicons/core-free-icons':
         specifier: ^4.0.0
         version: 4.1.1
@@ -229,8 +229,8 @@ packages:
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
 
-  '@dateforge/react-calendar@1.4.6':
-    resolution: {integrity: sha512-3CkEy5Cr8RaC7TAEOSMrHMUQNQ6KNWS/rM+/1O26poEc5uyKhxEkbbK/1jIVnVCpFIJ0N49xg97Vm6g+3xrlwg==}
+  '@dateforge/react-calendar@1.4.7':
+    resolution: {integrity: sha512-yjrnsE6VIT3bieYh/vNnIlv9ij1opwYYfP85O4FRC61jMVOEyeYiJDKQuGvce0MF89COZCeLjQDqlksTrLlKDQ==}
     engines: {node: '>=20.12.0'}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -4078,7 +4078,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@dateforge/react-calendar@1.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@dateforge/react-calendar@1.4.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
