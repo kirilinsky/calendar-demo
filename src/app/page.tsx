@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { HomeCalendarPreview } from "./HomeCalendarPreview";
 import { InstallSnippet } from "./InstallSnippet";
 import { SiteHeader } from "./SiteHeader";
+import { CalendarPreview } from "./CalendarPreview";
 
 const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
 const CODECOV_BADGE =
@@ -29,42 +29,44 @@ export default async function Home() {
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col px-5 py-4 sm:px-8 lg:h-[100dvh] lg:min-h-0">
         <SiteHeader coverage={coverage} />
 
-        <section className="flex flex-1 flex-col items-center justify-around gap-4 py-3 text-center lg:justify-center lg:gap-10">
-          <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[340px]">
-            <HomeCalendarPreview />
+        <section className="flex flex-1 flex-col items-center justify-around gap-6 py-4 text-center lg:justify-evenly lg:gap-0 lg:py-6">
+          <h1 className="max-w-3xl text-2xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:max-w-none lg:text-6xl lg:whitespace-nowrap">
+            Build exactly the calendar your product needs.
+          </h1>
+          <div className="w-full max-w-[225px] sm:max-w-[265px] lg:max-w-[300px]">
+            <CalendarPreview width="100%" />
           </div>
           <div className="flex flex-col items-center gap-3">
-            <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:max-w-none lg:text-6xl lg:whitespace-nowrap">
-              A calendar that fits your product.
-            </h1>
-
+            <span className="text-[11px] font-medium tracking-tight text-zinc-500">
+              Monolithic pickers ship everything. DateForge ships only what you
+              use.
+            </span>
+            <div className="w-full max-w-md">
+              <InstallSnippet />
+            </div>
             <p className="max-w-xl text-sm leading-6 text-zinc-600 sm:text-base">
-              Start with a simple date picker, then add ranges, presets, time,
-              themes, and custom product logic only when you need them and mix
-              as you want.
+              Start minimal. Scale infinitely. Add only the modules you need.
             </p>
           </div>
-          <div className="w-full max-w-md">
-            <InstallSnippet />
-          </div>
+
           <div className="flex w-full max-w-2xl flex-col items-stretch justify-center gap-2 sm:flex-row">
             <BranchLink
               href="/examples"
-              title="Browse examples"
+              title="Browse Examples"
               text="Polished recipes"
-            />
-            <BranchLink href="/docs" title="Read docs" text="Complete API" />
-            <BranchLink href="/themes" title="Theming" text="Explore themes" />
-            <BranchLink
-              href="/appearance"
-              title="Appearance"
-              text="Visual representation"
+              variant="secondary"
             />
             <BranchLink
               href={STORYBOOK_URL}
               title="Open Storybook"
               text="Interactive playground"
               external
+              variant="primary"
+            />
+            <BranchLink
+              href="/docs"
+              title="Read Documentation"
+              text="Complete API"
             />
           </div>
         </section>
@@ -73,31 +75,63 @@ export default async function Home() {
   );
 }
 
+type BranchVariant = "default" | "secondary" | "primary";
+
+const BRANCH_VARIANTS: Record<
+  BranchVariant,
+  { link: string; title: string; sub: string; arrow: string; size: number }
+> = {
+  primary: {
+    link: "min-h-14 px-5 border border-emerald-500 bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600 hover:border-emerald-600",
+    title: "text-base font-bold",
+    sub: "text-emerald-50/90",
+    arrow: "text-white",
+    size: 18,
+  },
+  secondary: {
+    link: "min-h-14 px-5 border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 hover:border-emerald-300",
+    title: "text-sm font-semibold",
+    sub: "text-emerald-700/70",
+    arrow: "text-emerald-400 group-hover:text-emerald-900",
+    size: 16,
+  },
+  default: {
+    link: "min-h-14 px-5 border border-zinc-200 bg-white/70 text-zinc-950 hover:border-zinc-300 hover:bg-white",
+    title: "text-sm font-semibold",
+    sub: "text-zinc-500",
+    arrow: "text-zinc-400 group-hover:text-zinc-950",
+    size: 16,
+  },
+};
+
 function BranchLink({
   href,
   title,
   text,
   external = false,
+  variant = "default",
 }: {
   href: string;
   title: string;
   text: string;
   external?: boolean;
+  variant?: BranchVariant;
 }) {
+  const v = BRANCH_VARIANTS[variant];
   return (
     <Link
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      className="group flex min-h-12 items-center justify-between gap-4 rounded-full border border-zinc-200 bg-white/70 px-4 text-left shadow-sm transition hover:border-zinc-300 hover:bg-white"
+      className={`group flex items-center justify-between gap-4 rounded-full text-left shadow-sm transition ${v.link}`}
     >
       <span className="min-w-0">
-        <span className="block truncate text-sm font-semibold">{title}</span>
-        <span className="block truncate text-xs text-zinc-500">{text}</span>
+        <span className={`block truncate ${v.title}`}>{title}</span>
+        <span className={`block truncate text-xs ${v.sub}`}>{text}</span>
       </span>
       <ArrowUpRight
-        size={16}
-        className="shrink-0 text-zinc-400 transition group-hover:translate-x-0.5 group-hover:text-zinc-950"
+        size={v.size}
+        className={`shrink-0 transition group-hover:translate-x-0.5 ${v.arrow}`}
       />
     </Link>
   );

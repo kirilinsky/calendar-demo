@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Clipboard } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 
 const COMMAND = "npm i @dateforge/react-calendar";
 
@@ -28,8 +28,7 @@ export function InstallSnippet({ className = "" }: { className?: string }) {
         aria-label="Copy install command"
         className="flex h-7 items-center gap-1.5 rounded-md bg-white/10 px-2 text-xs font-semibold text-zinc-100 transition hover:bg-white/20"
       >
-        {copied ? <Check size={13} /> : <Clipboard size={13} />}
-        {copied ? "Copied" : "Copy"}
+        {copied ? <Check size={13} /> : <Copy size={13} />}
       </button>
     </div>
   );

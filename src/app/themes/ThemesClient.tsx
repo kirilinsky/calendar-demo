@@ -9,7 +9,7 @@ import {
   saveCustomTheme,
   saveThemePreset,
 } from "../calendar-preferences";
-import { CalendarPreview } from "../CalendarPreview";
+import { CalendarPreview, THEMES_NAV } from "../CalendarPreview";
 import { THEMES, type ThemePreset } from "./themes-data";
 
 type ThemeCardPreset = ThemePreset & {
@@ -56,6 +56,7 @@ export function ThemesClient() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeCenterRaw, setActiveCenterRaw] = useState(N);
   const [adjustOpen, setAdjustOpen] = useState(false);
+  const [ready, setReady] = useState(false);
   const [customTokens, setCustomTokens] = useState<EditableThemeTokens>(
     DEFAULT_CUSTOM_THEME_TOKENS,
   );
@@ -147,6 +148,7 @@ export function ThemesClient() {
       if (el) {
         el.scrollLeft = raw * SLOT + CARD_W / 2 - el.clientWidth / 2;
       }
+      setReady(true);
     });
 
     return () => cancelAnimationFrame(frame);
@@ -331,13 +333,16 @@ export function ThemesClient() {
   const active = themePresets[activeIdx];
 
   return (
-    <div className="flex flex-1 flex-col min-h-0">
+    <div
+      className="flex flex-1 flex-col min-h-0 transition-opacity duration-200"
+      style={{ opacity: ready ? 1 : 0 }}
+    >
       <section className="flex flex-1 flex-col items-center justify-center gap-4 py-6">
         <div
           className="transition-all duration-500 ease-out"
           style={{ filter: `drop-shadow(0 12px 40px ${active.highlight}2a)` }}
         >
-          <CalendarPreview theme={active.theme} width={345} />
+          <CalendarPreview theme={active.theme} width={345} navLinks={THEMES_NAV} />
         </div>
       </section>
 

@@ -14,7 +14,7 @@ import {
   saveAppearanceId,
   type AppearanceId,
 } from "../calendar-preferences";
-import { CalendarPreview } from "../CalendarPreview";
+import { CalendarPreview, APPEARANCE_NAV } from "../CalendarPreview";
 
 type AppearancePreset = {
   id: AppearanceId;
@@ -88,6 +88,7 @@ const N = APPEARANCES.length;
 export function AppearanceClient() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeCenterRaw, setActiveCenterRaw] = useState(N);
+  const [ready, setReady] = useState(false);
 
   const infiniteAppearances = useMemo(
     () => [...APPEARANCES, ...APPEARANCES, ...APPEARANCES],
@@ -124,6 +125,7 @@ export function AppearanceClient() {
       if (el) {
         el.scrollLeft = raw * SLOT + CARD_W / 2 - el.clientWidth / 2;
       }
+      setReady(true);
     });
 
     return () => cancelAnimationFrame(frame);
@@ -295,7 +297,10 @@ export function AppearanceClient() {
     active.id === "loft" ? "min(70vw, 320px)" : "min(78vw, 340px)";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div
+      className="flex min-h-0 flex-1 flex-col transition-opacity duration-200"
+      style={{ opacity: ready ? 1 : 0 }}
+    >
       <section className="flex min-h-0 flex-1 items-center justify-center py-3 sm:py-6">
         <div className="flex h-[min(53dvh,440px)] min-h-[280px] w-full items-center justify-center  sm:h-[490px] sm:min-h-[399px]">
           <div
@@ -310,6 +315,7 @@ export function AppearanceClient() {
               initialDate={PREVIEW_DATE}
               useSavedAppearanceFallback={false}
               width={previewWidth}
+              navLinks={APPEARANCE_NAV}
             />
           </div>
         </div>
