@@ -1,50 +1,28 @@
 "use client";
 
-import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-  memo,
-} from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import { Check, RotateCcw, X } from "lucide-react";
+import { createTheme } from "@dateforge/react-calendar";
 import {
-  Calendar,
-  createTheme,
-  useToday,
-  type ThemeTokens,
-} from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav } from "@dateforge/react-calendar/modules";
+  DEFAULT_CUSTOM_THEME_TOKENS,
+  readSavedTheme,
+  saveCustomTheme,
+  saveThemePreset,
+} from "../calendar-preferences";
+import { CalendarPreview } from "../CalendarPreview";
 import { THEMES, type ThemePreset } from "./themes-data";
 
 type ThemeCardPreset = ThemePreset & {
   adjustable?: boolean;
 };
 
-const LIGHT_THEME_TOKENS: ThemeTokens = {
-  accent: "#fff",
-  activeText: "#fff",
-  backdrop: "#fff",
-  highlight: "#1a1a1c",
-  tone: "#f4f4f4",
-  text: "#1a1a1c",
-  stroke: "#e8e8e8",
-  shadow: "#1a1a1c14",
-  disabled: "#a0a0a2",
-  mutedText: "#6e6e6f",
-  disabledText: "#686869",
-  weekend: "#c62828",
-  range: "#4a90d9",
-  error: "#dc2626",
-};
-
-type EditableThemeTokens = typeof LIGHT_THEME_TOKENS;
+type EditableThemeTokens = typeof DEFAULT_CUSTOM_THEME_TOKENS;
 type EditableThemeTokenKey = keyof EditableThemeTokens;
 
 const CARD_W = 176;
 const CARD_GAP = 10;
 const SLOT = CARD_W + CARD_GAP;
+const CLICK_DRAG_THRESHOLD = 6;
 
 const N = THEMES.length + 1;
 
@@ -66,15 +44,15 @@ const TOKEN_LABELS: Array<{ key: EditableThemeTokenKey; label: string }> = [
 ];
 
 export function ThemesClient() {
-  const today = useToday();
-  const [date, setDate] = useState<Date | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeCenterRaw, setActiveCenterRaw] = useState(N);
   const [adjustOpen, setAdjustOpen] = useState(false);
-  const [customTokens, setCustomTokens] =
-    useState<EditableThemeTokens>(LIGHT_THEME_TOKENS);
-  const [draftTokens, setDraftTokens] =
-    useState<EditableThemeTokens>(LIGHT_THEME_TOKENS);
+  const [customTokens, setCustomTokens] = useState<EditableThemeTokens>(
+    DEFAULT_CUSTOM_THEME_TOKENS,
+  );
+  const [draftTokens, setDraftTokens] = useState<EditableThemeTokens>(
+    DEFAULT_CUSTOM_THEME_TOKENS,
+  );
 
   const customTheme = useMemo<ThemeCardPreset>(
     () => ({
@@ -98,10 +76,6 @@ export function ThemesClient() {
     () => [...themePresets, ...themePresets, ...themePresets],
     [themePresets],
   );
-
-  useEffect(() => {
-    if (today) setDate((current) => current ?? today);
-  }, [today]);
 
   useEffect(() => {
     if (!adjustOpen) return;
@@ -132,14 +106,40 @@ export function ThemesClient() {
     lastX: number;
     lastT: number;
     vel: number;
+    moved: boolean;
   } | null>(null);
   const inertiaRef = useRef<number | null>(null);
   const isSnapping = useRef(false);
+  const suppressClickRef = useRef(false);
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
-    el.scrollLeft = N * SLOT + CARD_W / 2 - el.clientWidth / 2;
+
+    const frame = requestAnimationFrame(() => {
+      const savedTheme = readSavedTheme();
+      let savedIdx = 0;
+      if (savedTheme?.type === "custom") {
+        setCustomTokens(savedTheme.tokens);
+        setDraftTokens(savedTheme.tokens);
+        savedIdx = THEMES.length;
+      } else if (savedTheme?.type === "preset") {
+        const presetIdx = THEMES.findIndex(
+          (theme) => theme.id === savedTheme.id,
+        );
+        if (presetIdx >= 0) {
+          savedIdx = presetIdx;
+        }
+      }
+
+      const raw = N + savedIdx;
+      setActiveIdx(savedIdx);
+      setActiveCenterRaw(raw);
+      if (el) {
+        el.scrollLeft = raw * SLOT + CARD_W / 2 - el.clientWidth / 2;
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const syncActive = useCallback(() => {
@@ -150,6 +150,12 @@ export function ThemesClient() {
     const real = (((raw - N) % N) + N) % N;
     setActiveCenterRaw(raw);
     setActiveIdx(real);
+    const preset = themePresets[real];
+    if (preset.adjustable) {
+      saveCustomTheme(customTokens);
+    } else {
+      saveThemePreset(preset.id);
+    }
     if (raw < N) {
       isResetting.current = true;
       el.scrollLeft += N * SLOT;
@@ -161,7 +167,7 @@ export function ThemesClient() {
       setActiveCenterRaw(raw - N);
       isResetting.current = false;
     }
-  }, []);
+  }, [customTokens, themePresets]);
 
   const snapToNearest = useCallback(() => {
     const el = scrollRef.current;
@@ -182,12 +188,48 @@ export function ThemesClient() {
     }
   }, []);
 
+  const selectRawIndex = useCallback(
+    (rawIndex: number, force = false) => {
+      if (suppressClickRef.current && !force) {
+        suppressClickRef.current = false;
+        return;
+      }
+
+      const el = scrollRef.current;
+      const real = (((rawIndex - N) % N) + N) % N;
+      const raw = N + real;
+      const preset = themePresets[real];
+      setActiveCenterRaw(raw);
+      setActiveIdx(real);
+      if (preset.adjustable) {
+        saveCustomTheme(customTokens);
+      } else {
+        saveThemePreset(preset.id);
+      }
+
+      if (!el) return;
+      if (inertiaRef.current) cancelAnimationFrame(inertiaRef.current);
+      inertiaRef.current = null;
+      isSnapping.current = true;
+      const target = raw * SLOT + CARD_W / 2 - el.clientWidth / 2;
+      el.scrollTo({ left: target, behavior: "smooth" });
+      el.addEventListener(
+        "scrollend",
+        () => {
+          isSnapping.current = false;
+        },
+        { once: true },
+      );
+    },
+    [customTokens, themePresets],
+  );
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     let snapTimer: ReturnType<typeof setTimeout>;
     const onScroll = () => {
-      if (dragRef.current) return;
+      if (dragRef.current || isSnapping.current) return;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(syncActive);
       clearTimeout(snapTimer);
@@ -214,7 +256,9 @@ export function ThemesClient() {
       lastX: e.clientX,
       lastT: performance.now(),
       vel: 0,
+      moved: false,
     };
+    suppressClickRef.current = false;
   }, []);
 
   const onPointerMove = useCallback(
@@ -222,6 +266,9 @@ export function ThemesClient() {
       const el = scrollRef.current;
       const drag = dragRef.current;
       if (!el || !drag) return;
+      if (Math.abs(e.clientX - drag.startX) > CLICK_DRAG_THRESHOLD) {
+        drag.moved = true;
+      }
       el.scrollLeft = drag.startScroll + (drag.startX - e.clientX);
       const now = performance.now();
       const dt = now - drag.lastT;
@@ -239,6 +286,12 @@ export function ThemesClient() {
     const drag = dragRef.current;
     if (!el || !drag) return;
     dragRef.current = null;
+    if (drag.moved) {
+      suppressClickRef.current = true;
+      window.setTimeout(() => {
+        suppressClickRef.current = false;
+      }, 120);
+    }
     let v = drag.vel * 16;
     const FRICTION = 0.88;
     const MIN_VEL = 0.4;
@@ -260,32 +313,12 @@ export function ThemesClient() {
 
   return (
     <div className="flex flex-1 flex-col min-h-0">
-      <section className="flex flex-1 flex-col items-center justify-center gap-5 py-6">
+      <section className="flex flex-1 flex-col items-center justify-center gap-4 py-6">
         <div
           className="transition-all duration-500 ease-out"
           style={{ filter: `drop-shadow(0 12px 40px ${active.highlight}2a)` }}
         >
-          <Calendar
-            value={date}
-            onChange={setDate}
-            width={300}
-            theme={active.theme}
-          >
-            <CalendarNav showMonthPicker compactYears />
-            <CalendarDays />
-          </Calendar>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-block w-2 h-2 rounded-full transition-colors duration-500"
-            style={{ backgroundColor: active.highlight }}
-          />
-          <span className="text-sm font-semibold capitalize text-zinc-800">
-            {active.id}
-          </span>
-          <span className="text-[11px] text-zinc-300">·</span>
-          <span className="text-xs text-zinc-400">{active.mood}</span>
+          <CalendarPreview theme={active.theme} width={325} />
         </div>
       </section>
 
@@ -317,6 +350,7 @@ export function ThemesClient() {
                 preset={preset}
                 isCenter={i === activeCenterRaw}
                 onAdjust={openAdjust}
+                onSelect={(force) => selectRawIndex(i, force)}
               />
             ))}
           </div>
@@ -327,9 +361,12 @@ export function ThemesClient() {
         open={adjustOpen}
         tokens={draftTokens}
         onClose={() => setAdjustOpen(false)}
-        onReset={() => setDraftTokens(LIGHT_THEME_TOKENS)}
+        onReset={() => setDraftTokens(DEFAULT_CUSTOM_THEME_TOKENS)}
         onApply={() => {
           setCustomTokens(draftTokens);
+          if (active.adjustable) {
+            saveCustomTheme(draftTokens);
+          }
           setAdjustOpen(false);
         }}
         onTokenChange={(key, value) =>
@@ -344,14 +381,17 @@ const ThemeCard = memo(function ThemeCard({
   preset,
   isCenter,
   onAdjust,
+  onSelect,
 }: {
   preset: ThemeCardPreset;
   isCenter: boolean;
   onAdjust: () => void;
+  onSelect: (force?: boolean) => void;
 }) {
   return (
     <div
-      aria-hidden={preset.adjustable ? undefined : true}
+      role="button"
+      tabIndex={0}
       className="shrink-0 flex items-center gap-3 px-3.5 rounded-2xl border bg-white transition-all duration-300 ease-out"
       style={{
         width: CARD_W,
@@ -365,6 +405,12 @@ const ThemeCard = memo(function ThemeCard({
           : "0 1px 2px rgb(0 0 0 / 0.04)",
         opacity: isCenter ? 1 : 0.52,
         transform: isCenter ? "scale(1)" : "scale(0.93)",
+      }}
+      onClick={() => onSelect()}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        onSelect(true);
       }}
     >
       <div

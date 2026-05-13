@@ -56,6 +56,11 @@ export default async function Home() {
             <BranchLink href="/docs" title="Read docs" text="Complete API" />
             <BranchLink href="/themes" title="Theming" text="Explore themes" />
             <BranchLink
+              href="/appearance"
+              title="Appearance"
+              text="Visual representation"
+            />
+            <BranchLink
               href={STORYBOOK_URL}
               title="Open Storybook"
               text="Interactive playground"

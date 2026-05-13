@@ -1,0 +1,258 @@
+"use client";
+
+import { useMemo, useSyncExternalStore } from "react";
+import {
+  createTheme,
+  type CalendarAppearance,
+  type CalendarTheme,
+  type ThemeTokens,
+} from "@dateforge/react-calendar";
+import {
+  bubble,
+  compact,
+  loft,
+  soft,
+  square,
+} from "@dateforge/react-calendar/appearances";
+import { THEMES } from "./themes/themes-data";
+
+const APPEARANCE_STORAGE_KEY = "dateforge:appearance";
+const THEME_STORAGE_KEY = "dateforge:theme";
+const PREFERENCE_EVENT = "dateforge:calendar-preferences";
+
+export type AppearanceId =
+  | "default"
+  | "soft"
+  | "compact"
+  | "square"
+  | "bubble"
+  | "loft";
+
+export type SavedTheme =
+  | { type: "preset"; id: string }
+  | { type: "custom"; tokens: ThemeTokens };
+
+export const DEFAULT_CUSTOM_THEME_TOKENS: ThemeTokens = {
+  accent: "#fff",
+  activeText: "#fff",
+  backdrop: "#fff",
+  highlight: "#1a1a1c",
+  tone: "#f4f4f4",
+  text: "#1a1a1c",
+  stroke: "#e8e8e8",
+  shadow: "#1a1a1c14",
+  disabled: "#a0a0a2",
+  mutedText: "#6e6e6f",
+  disabledText: "#686869",
+  weekend: "#c62828",
+  range: "#4a90d9",
+  error: "#dc2626",
+};
+
+const APPEARANCE_MAP: Record<
+  Exclude<AppearanceId, "default">,
+  CalendarAppearance
+> = {
+  soft,
+  compact,
+  square,
+  bubble,
+  loft,
+};
+
+const APPEARANCE_IDS: AppearanceId[] = [
+  "default",
+  "soft",
+  "compact",
+  "square",
+  "bubble",
+  "loft",
+];
+
+const THEME_TOKEN_KEYS: Array<keyof ThemeTokens> = [
+  "accent",
+  "activeText",
+  "backdrop",
+  "highlight",
+  "tone",
+  "text",
+  "stroke",
+  "shadow",
+  "disabled",
+  "mutedText",
+  "disabledText",
+  "weekend",
+  "range",
+  "error",
+];
+
+function canUseStorage() {
+  return typeof window !== "undefined" && "localStorage" in window;
+}
+
+function readStorageValue(key: string) {
+  if (!canUseStorage()) return "";
+
+  try {
+    return window.localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function notifyPreferenceChange() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(PREFERENCE_EVENT));
+}
+
+function subscribePreferences(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(PREFERENCE_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(PREFERENCE_EVENT, onChange);
+  };
+}
+
+export function getAppearanceById(
+  id: AppearanceId,
+): CalendarAppearance | undefined {
+  if (id === "default") return undefined;
+  return APPEARANCE_MAP[id];
+}
+
+export function readSavedAppearanceId(): AppearanceId {
+  if (!canUseStorage()) return "default";
+
+  try {
+    const saved = window.localStorage.getItem(APPEARANCE_STORAGE_KEY);
+    return APPEARANCE_IDS.includes(saved as AppearanceId)
+      ? (saved as AppearanceId)
+      : "default";
+  } catch {
+    return "default";
+  }
+}
+
+export function saveAppearanceId(id: AppearanceId) {
+  if (!canUseStorage()) return;
+
+  try {
+    window.localStorage.setItem(APPEARANCE_STORAGE_KEY, id);
+    notifyPreferenceChange();
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+}
+
+export function readSavedAppearance(): CalendarAppearance | undefined {
+  return getAppearanceById(readSavedAppearanceId());
+}
+
+export function useSavedAppearance(): CalendarAppearance | undefined {
+  const id = useSyncExternalStore(
+    subscribePreferences,
+    () => readSavedAppearanceId(),
+    () => "default" as AppearanceId,
+  );
+
+  return getAppearanceById(id);
+}
+
+function isThemeTokens(value: unknown): value is ThemeTokens {
+  if (!value || typeof value !== "object") return false;
+  const tokens = value as Record<string, unknown>;
+  return THEME_TOKEN_KEYS.every((key) => typeof tokens[key] === "string");
+}
+
+export function readSavedTheme(): SavedTheme | null {
+  if (!canUseStorage()) return null;
+
+  try {
+    const raw = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return null;
+
+    const value = parsed as Record<string, unknown>;
+    if (value.type === "preset" && typeof value.id === "string") {
+      return { type: "preset", id: value.id };
+    }
+    if (value.type === "custom" && isThemeTokens(value.tokens)) {
+      return { type: "custom", tokens: value.tokens };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveThemePreset(id: string) {
+  if (!canUseStorage()) return;
+
+  try {
+    window.localStorage.setItem(
+      THEME_STORAGE_KEY,
+      JSON.stringify({ type: "preset", id } satisfies SavedTheme),
+    );
+    notifyPreferenceChange();
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+}
+
+export function saveCustomTheme(tokens: ThemeTokens) {
+  if (!canUseStorage()) return;
+
+  try {
+    window.localStorage.setItem(
+      THEME_STORAGE_KEY,
+      JSON.stringify({ type: "custom", tokens } satisfies SavedTheme),
+    );
+    notifyPreferenceChange();
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+}
+
+export function resolveSavedTheme(
+  saved = readSavedTheme(),
+): CalendarTheme | undefined {
+  if (!saved) return undefined;
+  if (saved.type === "custom") return createTheme(saved.tokens);
+
+  return THEMES.find((theme) => theme.id === saved.id)?.theme;
+}
+
+function parseSavedThemeSnapshot(snapshot: string): SavedTheme | null {
+  if (!snapshot) return null;
+
+  try {
+    const parsed = JSON.parse(snapshot) as unknown;
+    if (!parsed || typeof parsed !== "object") return null;
+
+    const value = parsed as Record<string, unknown>;
+    if (value.type === "preset" && typeof value.id === "string") {
+      return { type: "preset", id: value.id };
+    }
+    if (value.type === "custom" && isThemeTokens(value.tokens)) {
+      return { type: "custom", tokens: value.tokens };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function useSavedTheme(): CalendarTheme | undefined {
+  const snapshot = useSyncExternalStore(
+    subscribePreferences,
+    () => readStorageValue(THEME_STORAGE_KEY),
+    () => "",
+  );
+
+  return useMemo(
+    () => resolveSavedTheme(parseSavedThemeSnapshot(snapshot)),
+    [snapshot],
+  );
+}

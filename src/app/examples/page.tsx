@@ -1,10 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
-  ArrowLeft,
-  ArrowUpRight,
   Check,
   ChevronDown,
   Clipboard,
@@ -50,11 +47,11 @@ import {
   temporal,
 } from "@dateforge/react-calendar/themes";
 import { InstallSnippet } from "../InstallSnippet";
+import { SiteHeader } from "../SiteHeader";
 
 type RangeValue = { from: Date | null; to: Date | null };
 
 const emptyRange = (): RangeValue => ({ from: null, to: null });
-const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
 
 const MEETING_ZONES = [
   { city: "New York", tz: "America/New_York" },
@@ -275,40 +272,25 @@ export default function ExamplesPage() {
   return (
     <main className="min-h-screen bg-[#fbfbfd] text-zinc-950">
       <div className="mx-auto w-full px-5 py-4 sm:px-8 xl:px-10">
-        <header className="flex h-9 items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-950"
-          >
-            <ArrowLeft size={16} />
-            DateForge
-          </Link>
-          <Link
-            href={STORYBOOK_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="flex h-9 items-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white"
-          >
-            Storybook
-            <ArrowUpRight size={15} />
-          </Link>
-        </header>
+        <div className="mx-auto max-w-6xl">
+          <SiteHeader />
 
-        <section className="py-10 text-center sm:py-12">
-          <p className="text-sm font-medium text-zinc-500">Examples</p>
-          <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl lg:max-w-none lg:whitespace-nowrap">
-            Likely one of these fits your case.
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-            These are just starting points. Mix the modules however you like —
-            booking, dashboards, forms, scheduling, whatever your product needs.
-            Storybook is the open playground; this page is finished recipes you
-            can copy and tweak.
-          </p>
-          <div className="mx-auto mt-6 max-w-md">
-            <InstallSnippet />
-          </div>
-        </section>
+          <section className="py-10 text-center sm:py-12">
+            <p className="text-sm font-medium text-zinc-500">Examples</p>
+            <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl lg:max-w-none lg:whitespace-nowrap">
+              Likely one of these fits your case.
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+              These are just starting points. Mix the modules however you like —
+              booking, dashboards, forms, scheduling, whatever your product needs.
+              Storybook is the open playground; this page is finished recipes you
+              can copy and tweak.
+            </p>
+            <div className="mx-auto mt-6 max-w-md">
+              <InstallSnippet />
+            </div>
+          </section>
+        </div>
 
         <div className="-mx-5 flex flex-col gap-5 sm:mx-auto sm:max-w-[1720px]">
           <ExampleCard
@@ -348,10 +330,11 @@ const noPast = useMemo(() => {
   return createDisabled({ before: today });
 }, []);
 
-<Calendar mode="range" value={stayRange} onChange={setStayRange} disabled={noPast} theme={snow} appearance={soft}>
+<Calendar mode="range" value={stayRange} onChange={setStayRange} disabled={noPast} appearance={soft}>
   <CalendarNav showMonthPicker compactYears clear />
   <CalendarPresets presets={basicPresets.slice(4, 9)} />
   <CalendarDays />
+  <CalendarNav compactYears clear home themeToggle />
   <CalendarSelectedDates allowClear allowNavigate animated />
 </Calendar>`}
           >
@@ -1635,7 +1618,6 @@ import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/rea
     "Stay booking": `import { useMemo, useState } from "react";
 import { Calendar, basicPresets, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
-import { snow } from "@dateforge/react-calendar/themes";
 import { soft } from "@dateforge/react-calendar/appearances";`,
     "Flight search": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
