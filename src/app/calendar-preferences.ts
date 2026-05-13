@@ -35,6 +35,7 @@ export type SavedTheme =
 export const DEFAULT_CUSTOM_THEME_TOKENS: ThemeTokens = {
   accent: "#fff",
   activeText: "#fff",
+  todayDot: "#1a1a1c",
   backdrop: "#fff",
   highlight: "#1a1a1c",
   tone: "#f4f4f4",
@@ -72,6 +73,7 @@ const APPEARANCE_IDS: AppearanceId[] = [
 const THEME_TOKEN_KEYS: Array<keyof ThemeTokens> = [
   "accent",
   "activeText",
+  "todayDot",
   "backdrop",
   "highlight",
   "tone",
@@ -162,7 +164,20 @@ export function useSavedAppearance(): CalendarAppearance | undefined {
 function isThemeTokens(value: unknown): value is ThemeTokens {
   if (!value || typeof value !== "object") return false;
   const tokens = value as Record<string, unknown>;
-  return THEME_TOKEN_KEYS.every((key) => typeof tokens[key] === "string");
+  return THEME_TOKEN_KEYS.every(
+    (key) =>
+      typeof tokens[key] === "string" ||
+      typeof DEFAULT_CUSTOM_THEME_TOKENS[key] === "string",
+  );
+}
+
+function hydrateTokens(tokens: Record<string, unknown>): ThemeTokens {
+  const out = { ...DEFAULT_CUSTOM_THEME_TOKENS };
+  for (const key of THEME_TOKEN_KEYS) {
+    const v = tokens[key];
+    if (typeof v === "string") out[key] = v;
+  }
+  return out;
 }
 
 export function readSavedTheme(): SavedTheme | null {
@@ -179,7 +194,10 @@ export function readSavedTheme(): SavedTheme | null {
       return { type: "preset", id: value.id };
     }
     if (value.type === "custom" && isThemeTokens(value.tokens)) {
-      return { type: "custom", tokens: value.tokens };
+      return {
+        type: "custom",
+        tokens: hydrateTokens(value.tokens as Record<string, unknown>),
+      };
     }
     return null;
   } catch {
@@ -236,7 +254,10 @@ function parseSavedThemeSnapshot(snapshot: string): SavedTheme | null {
       return { type: "preset", id: value.id };
     }
     if (value.type === "custom" && isThemeTokens(value.tokens)) {
-      return { type: "custom", tokens: value.tokens };
+      return {
+        type: "custom",
+        tokens: hydrateTokens(value.tokens as Record<string, unknown>),
+      };
     }
     return null;
   } catch {

@@ -37,6 +37,7 @@ function getSliderIndex(target: EventTarget | null) {
 const TOKEN_LABELS: Array<{ key: EditableThemeTokenKey; label: string }> = [
   { key: "accent", label: "Accent" },
   { key: "activeText", label: "Active text" },
+  { key: "todayDot", label: "Today dot" },
   { key: "backdrop", label: "Backdrop" },
   { key: "highlight", label: "Highlight" },
   { key: "tone", label: "Tone" },
@@ -472,6 +473,44 @@ const ThemeCard = memo(function ThemeCard({
   );
 });
 
+function ColorSwatchField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hex = value.slice(0, 7);
+  return (
+    <button
+      type="button"
+      onClick={() => inputRef.current?.click()}
+      className="group flex flex-col items-center gap-2 rounded-2xl px-2 py-3 transition hover:bg-zinc-50"
+    >
+      <span
+        aria-hidden
+        className="block h-11 w-11 rounded-full ring-1 ring-inset ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition group-hover:scale-[1.04] group-active:scale-95 sm:h-12 sm:w-12"
+        style={{ backgroundColor: hex }}
+      />
+      <span className="block w-full truncate text-center text-[11px] font-medium text-zinc-700 sm:text-xs">
+        {label}
+      </span>
+      <input
+        ref={inputRef}
+        type="color"
+        value={hex}
+        onChange={(event) => onChange(event.target.value)}
+        className="sr-only"
+        tabIndex={-1}
+        aria-label={label}
+      />
+    </button>
+  );
+}
+
 function CustomThemeModal({
   open,
   tokens,
@@ -501,14 +540,7 @@ function CustomThemeModal({
         className="relative flex h-dvh max-h-dvh w-screen flex-col overflow-hidden rounded-none border-0 bg-white shadow-[0_30px_100px_rgba(24,24,27,0.32)] sm:h-auto sm:max-h-[calc(100dvh-32px)] sm:min-h-[60dvh] sm:w-[min(980px,calc(100vw-32px))] sm:rounded-[28px] sm:border sm:border-white/70 md:min-w-[60vw]"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-32"
-          style={{
-            background: `linear-gradient(135deg, ${tokens.highlight}1f, ${tokens.range}24 46%, transparent)`,
-          }}
-        />
-        <div className="relative flex items-center justify-between gap-3 border-b border-zinc-200/80 px-4 py-3 sm:items-start sm:gap-6 sm:px-6 sm:py-5">
+        <div className="relative flex items-center justify-between gap-3 px-4 py-3 sm:items-start sm:gap-6 sm:px-6 sm:py-5">
           <div className="min-w-0">
             <p className="hidden text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400 sm:block">
               Theme editor
@@ -541,31 +573,18 @@ function CustomThemeModal({
         </div>
 
         <div className="relative grid flex-1 gap-4 overflow-y-auto p-4 sm:gap-6 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="grid grid-cols-2 content-start gap-2 sm:gap-3">
+          <div className="grid grid-cols-3 content-start gap-2 sm:grid-cols-4 sm:gap-3">
             {TOKEN_LABELS.map(({ key, label }) => (
-              <label
+              <ColorSwatchField
                 key={key}
-                className="flex min-h-12 items-center gap-2 rounded-2xl border border-zinc-200 bg-white/80 px-2.5 shadow-sm transition focus-within:border-zinc-400 sm:min-h-14 sm:gap-3 sm:px-3"
-              >
-                <input
-                  type="color"
-                  value={tokens[key].slice(0, 7)}
-                  className="h-8 w-8 shrink-0 cursor-pointer rounded-xl border-0 bg-transparent p-0 sm:h-9 sm:w-9"
-                  onChange={(event) => onTokenChange(key, event.target.value)}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-semibold text-zinc-800 sm:text-sm">
-                    {label}
-                  </span>
-                  <span className="block font-mono text-[10px] uppercase text-zinc-400 sm:text-[11px]">
-                    {tokens[key]}
-                  </span>
-                </span>
-              </label>
+                label={label}
+                value={tokens[key]}
+                onChange={(value) => onTokenChange(key, value)}
+              />
             ))}
           </div>
 
-          <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-3 sm:p-4">
+          <div className="rounded-3xl border border-zinc-200 bg-white p-3 sm:p-4">
             <div
               className="overflow-hidden rounded-2xl border"
               style={{
@@ -613,7 +632,7 @@ function CustomThemeModal({
           </div>
         </div>
 
-        <div className="relative flex items-center justify-end gap-2 border-t border-zinc-200/80 bg-white px-4 py-3 sm:px-6">
+        <div className="relative flex items-center justify-end gap-2 bg-white px-4 py-3 sm:px-6">
           <button
             type="button"
             className="h-10 rounded-full border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50"
