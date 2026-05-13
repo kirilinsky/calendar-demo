@@ -465,6 +465,7 @@ Renders the current selection as chips. In range mode shows from/to bounds; in m
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | \`allowClear\` | \`boolean\` | \`false\` | Show per-chip clear button |
+| \`allowClearPerChip\` | \`boolean\` | \`false\` | Allow removing individual chips independently |
 | \`allowNavigate\` | \`boolean\` | \`false\` | Clicking chip navigates to that date |
 | \`showTime\` | \`boolean\` | \`false\` | Show time in chip labels |
 | \`animated\` | \`boolean\` | \`true\` | Animate chip entrance |
