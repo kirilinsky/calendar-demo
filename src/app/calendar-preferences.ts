@@ -18,6 +18,7 @@ import { THEMES } from "./themes/themes-data";
 
 const APPEARANCE_STORAGE_KEY = "dateforge:appearance";
 const THEME_STORAGE_KEY = "dateforge:theme";
+const GRADIENT_STORAGE_KEY = "dateforge:gradient";
 const PREFERENCE_EVENT = "dateforge:calendar-preferences";
 
 export type AppearanceId =
@@ -61,7 +62,7 @@ const APPEARANCE_MAP: Record<
   loft,
 };
 
-const APPEARANCE_IDS: AppearanceId[] = [
+export const APPEARANCE_IDS: AppearanceId[] = [
   "default",
   "soft",
   "compact",
@@ -263,6 +264,75 @@ function parseSavedThemeSnapshot(snapshot: string): SavedTheme | null {
   } catch {
     return null;
   }
+}
+
+export function clearSavedTheme() {
+  if (!canUseStorage()) return;
+  try {
+    window.localStorage.removeItem(THEME_STORAGE_KEY);
+    notifyPreferenceChange();
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+}
+
+export function resetAllPreferences() {
+  if (!canUseStorage()) return;
+  try {
+    window.localStorage.removeItem(THEME_STORAGE_KEY);
+    window.localStorage.removeItem(APPEARANCE_STORAGE_KEY);
+    window.localStorage.removeItem(GRADIENT_STORAGE_KEY);
+    notifyPreferenceChange();
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+}
+
+export function useHasNonDefaultPreferences(): boolean {
+  const appearanceId = useSyncExternalStore(
+    subscribePreferences,
+    () => readSavedAppearanceId(),
+    () => "default" as AppearanceId,
+  );
+  const themeRaw = useSyncExternalStore(
+    subscribePreferences,
+    () => readStorageValue(THEME_STORAGE_KEY),
+    () => "",
+  );
+  const gradient = useSyncExternalStore(
+    subscribePreferences,
+    () => readSavedGradient(),
+    () => false,
+  );
+  return appearanceId !== "default" || themeRaw !== "" || gradient;
+}
+
+export function readSavedGradient(): boolean {
+  if (!canUseStorage()) return false;
+  try {
+    const val = window.localStorage.getItem(GRADIENT_STORAGE_KEY);
+    return val === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function saveGradient(enabled: boolean) {
+  if (!canUseStorage()) return;
+  try {
+    window.localStorage.setItem(GRADIENT_STORAGE_KEY, enabled ? "1" : "0");
+    notifyPreferenceChange();
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+}
+
+export function useSavedGradient(): boolean {
+  return useSyncExternalStore(
+    subscribePreferences,
+    () => readSavedGradient(),
+    () => false,
+  );
 }
 
 export function useSavedTheme(): CalendarTheme | undefined {

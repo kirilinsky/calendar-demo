@@ -7,7 +7,9 @@ import {
   DEFAULT_CUSTOM_THEME_TOKENS,
   readSavedTheme,
   saveCustomTheme,
+  saveGradient,
   saveThemePreset,
+  useSavedGradient,
 } from "../calendar-preferences";
 import { CalendarPreview, THEMES_NAV } from "../CalendarPreview";
 import { THEMES, type ThemePreset } from "./themes-data";
@@ -53,6 +55,7 @@ const TOKEN_LABELS: Array<{ key: EditableThemeTokenKey; label: string }> = [
 ];
 
 export function ThemesClient() {
+  const gradient = useSavedGradient();
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeCenterRaw, setActiveCenterRaw] = useState(N);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -342,14 +345,22 @@ export function ThemesClient() {
           className="transition-all duration-500 ease-out"
           style={{ filter: `drop-shadow(0 12px 40px ${active.highlight}2a)` }}
         >
-          <CalendarPreview theme={active.theme} width={345} navLinks={THEMES_NAV} />
+          <CalendarPreview
+            theme={active.theme}
+            gradient={gradient}
+            width={320}
+            navLinks={THEMES_NAV}
+            navTrailing={
+              <GradientToggle
+                enabled={gradient}
+                onToggle={(v: boolean) => saveGradient(v)}
+              />
+            }
+          />
         </div>
       </section>
 
       <section className="pb-8 select-none">
-        <p className="mb-3 px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-          Themes
-        </p>
         <div className="relative">
           <div
             aria-hidden
@@ -656,5 +667,35 @@ function CustomThemeModal({
         </div>
       </div>
     </div>
+  );
+}
+
+function GradientToggle({
+  enabled,
+  onToggle,
+}: {
+  enabled: boolean;
+  onToggle: (value: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(!enabled)}
+      className="group inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-[11px] font-medium leading-none tracking-tight text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-white"
+      aria-pressed={enabled}
+    >
+      <span
+        className="relative inline-flex h-3 w-5 shrink-0 items-center rounded-full transition-colors duration-200"
+        style={{ backgroundColor: enabled ? "#18181b" : "#d4d4d8" }}
+      >
+        <span
+          className="absolute h-2 w-2 rounded-full bg-white shadow-sm transition-transform duration-200"
+          style={{
+            transform: enabled ? "translateX(11px)" : "translateX(1px)",
+          }}
+        />
+      </span>
+      Gradient
+    </button>
   );
 }

@@ -293,8 +293,7 @@ export function AppearanceClient() {
   }, []);
 
   const active = APPEARANCES[activeIdx];
-  const previewWidth =
-    active.id === "loft" ? "min(70vw, 320px)" : "min(78vw, 340px)";
+  const previewWidth = "min(78vw, 320px)";
 
   return (
     <div
@@ -322,9 +321,6 @@ export function AppearanceClient() {
       </section>
 
       <section className="shrink-0 select-none pb-4 sm:pb-8">
-        <p className="mb-3 px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-          Appearances - you can decide
-        </p>
         <div className="relative">
           <div
             aria-hidden

@@ -24,15 +24,22 @@ import {
   type CalendarTheme,
 } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarNav } from "@dateforge/react-calendar/modules";
-import { useSavedAppearance, useSavedTheme } from "./calendar-preferences";
+import {
+  useSavedAppearance,
+  useSavedGradient,
+  useSavedTheme,
+} from "./calendar-preferences";
 
 type CalendarPreviewProps = {
   appearance?: CalendarAppearance;
   defaultViewDate?: Date;
+  gradient?: boolean;
   initialDate?: Date | null;
   navLinks?: NavLink[];
+  navTrailing?: React.ReactNode;
   theme?: CalendarTheme;
   useSavedAppearanceFallback?: boolean;
+  useSavedGradientFallback?: boolean;
   useSavedThemeFallback?: boolean;
   width?: string | number;
 };
@@ -40,15 +47,19 @@ type CalendarPreviewProps = {
 export function CalendarPreview({
   appearance,
   defaultViewDate,
+  gradient,
   initialDate,
   navLinks = HOME_NAV,
+  navTrailing,
   theme,
   useSavedAppearanceFallback = true,
+  useSavedGradientFallback = true,
   useSavedThemeFallback = true,
   width = "100%",
 }: CalendarPreviewProps) {
   const savedAppearance = useSavedAppearance();
   const savedTheme = useSavedTheme();
+  const savedGradient = useSavedGradient();
   const [date, setDate] = useState<Date | null>(() =>
     initialDate === undefined ? new Date() : initialDate,
   );
@@ -79,23 +90,27 @@ export function CalendarPreview({
 
   return (
     <div>
-      <Calendar
-        mode="single"
-        value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
-        width={width}
-        theme={calendarTheme}
-        appearance={calendarAppearance}
-      >
-        <CalendarNav showMonthPicker compactYears />
-        <CalendarDays />
-      </Calendar>
-      {navLinks.length > 0 && (
+      <div className="flex h-[382px] items-center overflow-hidden lg:h-[392px]">
+        <Calendar
+          mode="single"
+          value={date}
+          onChange={setDate}
+          defaultViewDate={defaultViewDate}
+          width={width}
+          theme={calendarTheme}
+          appearance={calendarAppearance}
+          gradient={useSavedGradientFallback ? gradient ?? savedGradient : gradient}
+        >
+          <CalendarNav showMonthPicker compactYears />
+          <CalendarDays />
+        </Calendar>
+      </div>
+      {(navLinks.length > 0 || navTrailing) && (
         <div className="mt-2.5 flex items-center justify-center gap-2">
           {navLinks.map((link) => (
             <PageLink key={link.href} {...link} />
           ))}
+          {navTrailing}
         </div>
       )}
     </div>
