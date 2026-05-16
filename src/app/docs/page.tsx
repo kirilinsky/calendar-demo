@@ -15,6 +15,7 @@ import {
 import {
   CalendarDays,
   CalendarDaysTrack,
+  CalendarInfo,
   CalendarManualInput,
   CalendarMonthsGrid,
   CalendarMonthsTrack,
@@ -169,7 +170,7 @@ Modules read calendar context directly, so there is no prop drilling. They can b
 | ------------ | ------- | ------------ |
 | Navigation | \`CalendarNav\`, \`CalendarMonthsGrid\`, \`CalendarYearsGrid\` | Move the internal \`viewDate\` without committing selection |
 | Selection | \`CalendarDays\`, \`CalendarTimeGrid\`, \`CalendarManualInput\`, \`CalendarPresets\` | Commit dates, ranges, arrays, or time changes |
-| Feedback | \`CalendarSelectedDates\` | Render current selection as chips or summary UI |
+| Feedback | \`CalendarSelectedDates\`, \`CalendarInfo\` | Render current selection as chips, summary, or info readout |
 | Tracks | \`CalendarDaysTrack\`, \`CalendarMonthsTrack\`, \`CalendarYearsTrack\` | Mobile/drum-style navigation or bound range editing |
 | Custom | Context hooks from \`@dateforge/react-calendar/context\` | Build your own modules on top of the same state |
 
@@ -200,6 +201,7 @@ Start from the product workflow, then pick modules. The calendar does not force 
 | Month-only or year-only picker | \`CalendarMonthsGrid\` or \`CalendarYearsGrid\` without \`CalendarDays\` |
 | Mobile drum picker | \`CalendarDaysTrack\`, \`CalendarMonthsTrack\`, \`CalendarYearsTrack\` |
 | Selection summary | \`CalendarSelectedDates\` |
+| Date facts, range duration, relative time | \`CalendarInfo\` |
 
 ## Import strategy
 
@@ -431,8 +433,12 @@ Drum-scroll time picker for hours, minutes, and optionally seconds. Pairs with \
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | \`seconds\` | \`boolean\` | \`false\` | Show seconds drum |
-| \`labels\` | \`"short" \\| "long"\` | \`"short"\` | Label format above drums |
-| \`onTimeSelect\` | \`(date: Date) => void\` | — | Fires on every time change |
+| \`labels\` | \`"short" \\| "long"\` | — | Label format above drums; omit to hide |
+| \`bound\` | \`"from" \\| "to"\` | — | Range-mode only: edit time on explicit boundary instead of relying on \`viewDate\` matching \`rangeStart\`/\`rangeEnd\` |
+| \`showBoundDate\` | \`boolean\` | \`true\` | Render localized date header above the track for the bound's current date. Requires \`bound\`; hidden when bound has no date |
+| \`showReset\` | \`boolean\` | \`false\` | Render a "now" reset button below the track. Click resets time fields on active date or bound to current hour/minute (and second if \`seconds\` enabled) |
+| \`resetLabel\` | \`React.ReactNode\` | clock icon + localized "now" | Override reset button content |
+| \`onTimeSelect\` | \`(date: Date) => void\` | — | Fires on every drum change with a Date built from \`viewDate\` and the new time |
 | \`col\` | \`number \\| string\` | — | Grid column span |
 
 ### CalendarPresets
@@ -488,6 +494,32 @@ Free-text date input that parses typed values and syncs them with calendar state
 | ---- | ---- | ------- | ----------- |
 | \`allowClear\` | \`boolean\` | \`false\` | Show clear button in input |
 | \`align\` | \`"left" \\| "center" \\| "right"\` | \`"left"\` | Input text alignment |
+| \`label\` | \`React.ReactNode\` | — | Custom label rendered next to the input |
+| \`col\` | \`number \\| string\` | — | Grid column span |
+
+### CalendarInfo
+
+Read-only summary of the current selection. In \`single\` mode prints the date; in \`multiple\` prints a count and list; in \`range\` prints the bounds plus a duration or day count. Use to surface "facts about the value" — relative time, range length, ISO summary — without rebuilding selection chips. Pass a \`formatter\` for fully custom output.
+
+\`\`\`tsx
+<Calendar mode="range" value={range} onChange={setRange}>
+  <CalendarDays />
+  <CalendarInfo showRelative showSummary rangeStyle="duration" />
+</Calendar>
+\`\`\`
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| \`allowClear\` | \`boolean\` | \`false\` | Show clear button next to the readout |
+| \`align\` | \`"left" \\| "center" \\| "right"\` | \`"left"\` | Text alignment |
+| \`animated\` | \`boolean\` | \`true\` | Animate value transitions |
+| \`emptyLabel\` | \`React.ReactNode\` | — | Content shown when selection is empty |
+| \`formatter\` | \`(value: CalendarInfoValue) => React.ReactNode\` | — | Fully custom renderer; overrides built-in formatting |
+| \`prefix\` | \`React.ReactNode\` | — | Static prefix rendered before the value |
+| \`rangeStyle\` | \`"days" \\| "duration"\` | \`"days"\` | Range mode only: show day count or full duration string |
+| \`showHome\` | \`boolean\` | \`false\` | Render a "go to current month" button; disabled when viewDate already matches today's month |
+| \`showRelative\` | \`boolean\` | \`false\` | Add localized relative-time hint (e.g. "in 3 days") via \`Intl.RelativeTimeFormat\` |
+| \`showSummary\` | \`boolean\` | \`true\` | Print main summary line: day count for multi/range, count for multiple, formatted single date |
 | \`col\` | \`number \\| string\` | — | Grid column span |
 
 ### CalendarDaysTrack
@@ -1075,14 +1107,21 @@ function renderDocBlocks(blocks: Block[]) {
     }
 
     if (block.type === "table") {
-      nodes.push(
-        <PropsTableAccordion
-          key={`${block.type}-${index}`}
-          table={block}
-          context={findNearestHeading(blocks, index)}
-          index={index}
-        />,
-      );
+      const nearestHeading = findNearestHeading(blocks, index);
+      const isModulePropsTable =
+        nearestHeading !== undefined && isModuleName(nearestHeading.text);
+      if (isModulePropsTable) {
+        nodes.push(
+          <PropsTableAccordion
+            key={`${block.type}-${index}`}
+            table={block}
+            context={nearestHeading}
+            index={index}
+          />,
+        );
+        continue;
+      }
+      nodes.push(<MarkdownBlock key={`${block.type}-${index}`} block={block} />);
       continue;
     }
 
@@ -1628,6 +1667,7 @@ const MODULE_NAMES = [
   "CalendarPresets",
   "CalendarSelectedDates",
   "CalendarManualInput",
+  "CalendarInfo",
   "CalendarDaysTrack",
   "CalendarMonthsTrack",
   "CalendarYearsTrack",
@@ -1766,6 +1806,21 @@ function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
         appearance={soft}
       >
         <CalendarManualInput allowClear />
+      </Calendar>
+    );
+  }
+
+  if (moduleName === "CalendarInfo") {
+    return (
+      <Calendar
+        mode="range"
+        value={range}
+        onChange={setRange}
+        defaultViewDate={defaultViewDate}
+        appearance={soft}
+      >
+        <CalendarDays />
+        <CalendarInfo showRelative showSummary rangeStyle="duration" />
       </Calendar>
     );
   }

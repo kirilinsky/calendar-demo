@@ -67,9 +67,9 @@ export function CalendarPreview({
   useEffect(() => setHydrated(true), []);
 
   const calendarAppearance = useSavedAppearanceFallback
-    ? appearance ?? savedAppearance
+    ? (appearance ?? savedAppearance)
     : appearance;
-  const calendarTheme = useSavedThemeFallback ? theme ?? savedTheme : theme;
+  const calendarTheme = useSavedThemeFallback ? (theme ?? savedTheme) : theme;
 
   const navHeight = navLinks.length > 0 ? 36 : 0;
 
@@ -81,16 +81,14 @@ export function CalendarPreview({
           className="animate-pulse rounded-xl bg-muted/40"
           style={{ width: "100%", aspectRatio: "5 / 6" }}
         />
-        {navHeight > 0 && (
-          <div style={{ height: navHeight }} />
-        )}
+        {navHeight > 0 && <div style={{ height: navHeight }} />}
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex h-[382px] items-center overflow-hidden lg:h-[392px]">
+      <div className="flex h-[382px] items-center   lg:h-[392px]">
         <Calendar
           mode="single"
           value={date}
@@ -99,7 +97,9 @@ export function CalendarPreview({
           width={width}
           theme={calendarTheme}
           appearance={calendarAppearance}
-          gradient={useSavedGradientFallback ? gradient ?? savedGradient : gradient}
+          gradient={
+            useSavedGradientFallback ? (gradient ?? savedGradient) : gradient
+          }
         >
           <CalendarNav showMonthPicker compactYears />
           <CalendarDays />

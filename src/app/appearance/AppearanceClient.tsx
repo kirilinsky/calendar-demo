@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CalendarAppearance } from "@dateforge/react-calendar";
 import {
+  airy,
   bubble,
   compact,
   loft,
@@ -79,6 +80,13 @@ const APPEARANCES: AppearancePreset[] = [
     mood: "Spacious",
     appearance: loft,
     radius: "1em",
+    spacing: "1em",
+  },
+  {
+    id: "airy",
+    mood: "Light",
+    appearance: airy,
+    radius: "0.4em",
     spacing: "1em",
   },
 ];

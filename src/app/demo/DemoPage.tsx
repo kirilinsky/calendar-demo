@@ -31,7 +31,7 @@ import {
   snow,
   temporal,
 } from "@dateforge/react-calendar/themes";
-import { bubble, compact, loft, soft, square } from "@dateforge/react-calendar/appearances";
+import { airy, bubble, compact, loft, soft, square } from "@dateforge/react-calendar/appearances";
 import {
   ArrowLeft,
   Check,
@@ -143,6 +143,7 @@ const appearanceObjects = {
   square,
   bubble,
   loft,
+  airy,
 };
 
 const moduleMeta: Record<ModuleKind, Pick<DemoModule, "label" | "role">> = {
@@ -1001,7 +1002,7 @@ function ThemeLab({ state, patch }: { state: DemoState; patch: (next: Partial<De
 }
 
 function AppearanceLab({ state, patch }: { state: DemoState; patch: (next: Partial<DemoState>, event?: string) => void }) {
-  const options: AppearanceId[] = ["default", "soft", "compact", "square", "bubble", "loft", "custom"];
+  const options: AppearanceId[] = ["default", "soft", "compact", "square", "bubble", "loft", "airy", "custom"];
   return (
     <PanelCard title="Appearance Lab" icon={<SlidersHorizontal size={16} />}>
       <div className="grid grid-cols-3 gap-2">

@@ -5,7 +5,6 @@ import { SiteHeader } from "./SiteHeader";
 import { CalendarPreview } from "./CalendarPreview";
 import { RandomizeButton } from "./RandomizeButton";
 
-
 const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
 const CODECOV_BADGE =
   "https://codecov.io/gh/kirilinsky/dateforge-react-calendar/branch/main/graph/badge.svg";
@@ -28,7 +27,6 @@ export default async function Home() {
   const coverage = await getCoverage();
   return (
     <main className="h-[100dvh] snap-y snap-mandatory overflow-y-auto bg-[#fbfbfd] text-zinc-950 lg:overflow-hidden lg:snap-none">
-
       {/* screen 1 */}
       <div className="flex h-[100dvh] w-full snap-start flex-col">
         <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
@@ -39,7 +37,6 @@ export default async function Home() {
             </h1>
 
             <div className="flex flex-1 flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-0">
-
               {/* calendar */}
               <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 lg:order-2 lg:flex-none lg:items-end">
                 <div className="w-full max-w-[320px] lg:max-w-[330px]">
@@ -47,7 +44,10 @@ export default async function Home() {
                 </div>
                 <div className="flex flex-col items-center gap-2">
                   <RandomizeButton />
-                  <Link href="/themes" className="text-sm font-medium text-zinc-400 transition hover:text-zinc-700">
+                  <Link
+                    href="/themes"
+                    className="text-sm font-medium text-zinc-400 transition hover:text-zinc-700"
+                  >
                     Themes &amp; Looks →
                   </Link>
                 </div>
@@ -56,21 +56,33 @@ export default async function Home() {
               {/* content — desktop only in screen 1 */}
               <div className="order-2 hidden lg:order-1 lg:flex lg:flex-col lg:items-center lg:mt-0 lg:pr-12 lg:gap-4">
                 <span className="text-[11px] font-medium tracking-tight text-zinc-500 lg:text-sm">
-                  Monolithic pickers ship everything. DateForge ships only what you use.
+                  Monolithic pickers ship everything. DateForge ships only what
+                  you use.
                 </span>
                 <div className="hidden w-full max-w-md lg:block">
                   <InstallSnippet />
                 </div>
                 <p className="hidden max-w-xl text-sm leading-6 text-zinc-600 lg:block lg:text-base">
-                  Start minimal. Scale infinitely. Add only the modules you need.
+                  Start minimal. Scale infinitely. Add only the modules you
+                  need.
                 </p>
                 <div className="flex w-full flex-row gap-1.5 lg:max-w-sm lg:flex-col lg:gap-2">
-                  <BranchLink href="/examples" title="Examples" text="Polished recipes" variant="secondary" />
-                  <BranchLink href={STORYBOOK_URL} title="Storybook" text="Interactive playground" external variant="primary" />
+                  <BranchLink
+                    href={STORYBOOK_URL}
+                    title="Storybook"
+                    text="Interactive playground"
+                    external
+                    variant="primary"
+                  />
                   <BranchLink href="/docs" title="Docs" text="Complete API" />
+                  <BranchLink
+                    href="/examples"
+                    title="Examples"
+                    text="Polished recipes"
+                    variant="secondary"
+                  />
                 </div>
               </div>
-
             </div>
           </section>
         </div>
@@ -88,12 +100,22 @@ export default async function Home() {
           Start minimal. Scale infinitely. Add only the modules you need.
         </p>
         <div className="flex w-full flex-col gap-2">
-          <BranchLink href="/examples" title="Examples" text="Polished recipes" variant="secondary" />
-          <BranchLink href={STORYBOOK_URL} title="Storybook" text="Interactive playground" external variant="primary" />
+          <BranchLink
+            href={STORYBOOK_URL}
+            title="Storybook"
+            text="Interactive playground"
+            external
+            variant="primary"
+          />
           <BranchLink href="/docs" title="Docs" text="Complete API" />
+          <BranchLink
+            href="/examples"
+            title="Examples"
+            text="Polished recipes"
+            variant="secondary"
+          />
         </div>
       </div>
-
     </main>
   );
 }
