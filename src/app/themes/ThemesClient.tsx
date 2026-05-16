@@ -594,7 +594,7 @@ function CustomThemeModal({
               <ColorSwatchField
                 key={key}
                 label={label}
-                value={tokens[key]}
+                value={tokens[key] ?? ""}
                 onChange={(value) => onTokenChange(key, value)}
               />
             ))}
