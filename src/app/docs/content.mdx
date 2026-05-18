@@ -296,6 +296,7 @@ The main day grid. Renders a month view and commits selection on click. Works ac
 | `lockDeselection` | `boolean` | `false` | Prevent deselecting already-selected date |
 | `blockNavigation` | `boolean` | `false` | Prevent month navigation |
 | `offset` | `number` | `0` | Render a month offset from the shared `viewDate` |
+| `syncViewOnSelect` | `boolean` | `offset === 0` | On day click, also move `viewDate` to that day's month. Defaults to `true` for the primary grid and `false` for offset grids, so clicking a day in a side month of a multi-month layout does not steal the primary view. Set explicitly to override. Works in both controlled and uncontrolled mode (controlled-value round-trip is suppressed for the click that requested keepView) |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
 </PropsTableAccordion>
