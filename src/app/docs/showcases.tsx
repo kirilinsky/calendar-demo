@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -103,14 +103,17 @@ const holidayPresets: PresetEntry[] = [
   {
     id: "holiday-season",
     label: "Holiday season",
-    getValue: () => ({ from: new Date(2026, 11, 24), to: new Date(2027, 0, 2) }),
+    getValue: () => ({
+      from: new Date(2026, 11, 24),
+      to: new Date(2027, 0, 2),
+    }),
   },
   {
     id: "next-weekend",
     label: "Next weekend",
     getValue: () => {
       const today = new Date();
-      const daysToSat = ((6 - today.getDay() + 7) % 7) || 7;
+      const daysToSat = (6 - today.getDay() + 7) % 7 || 7;
       const sat = new Date(today);
       sat.setDate(today.getDate() + daysToSat);
       const sun = new Date(sat);
@@ -167,7 +170,10 @@ export function SimplePresetShowcase({
 }) {
   return (
     <section className="mb-10 space-y-4">
-      <ShowcaseFrame previewSlug="quick-start" innerClass="w-full max-w-[300px]">
+      <ShowcaseFrame
+        previewSlug="quick-start"
+        innerClass="w-full max-w-[300px]"
+      >
         <CalendarPreview
           width="100%"
           navLinks={[]}
@@ -266,7 +272,10 @@ export function ModuleShowcase({
 }
 
 export function recipeSlug(kind: RecipeKind) {
-  return kind.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return kind
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export function MultiMonthCalendar() {
@@ -274,21 +283,14 @@ export function MultiMonthCalendar() {
     from: new Date(2026, 6, 8),
     to: new Date(2026, 10, 16),
   });
+
   const rowStarts = [0, 3, 6, 9];
 
-  return (
-    <Calendar
-      mode="range"
-      value={range}
-      onChange={setRange}
-      defaultViewDate={new Date(2026, 0, 1)}
-      cols={3}
-      width="100%"
-      appearance={compact}
-    >
-      {rowStarts.flatMap((start) => [
-        ...Array.from({ length: 3 }, (_, index) => {
-          const offset = start + index;
+  const children = useMemo(
+    () =>
+      rowStarts.flatMap((start) => [
+        ...Array.from({ length: 3 }, (_, i) => {
+          const offset = start + i;
           return (
             <CalendarNav
               key={`nav-${offset}`}
@@ -300,8 +302,8 @@ export function MultiMonthCalendar() {
             />
           );
         }),
-        ...Array.from({ length: 3 }, (_, index) => {
-          const offset = start + index;
+        ...Array.from({ length: 3 }, (_, i) => {
+          const offset = start + i;
           return (
             <CalendarDays
               key={`days-${offset}`}
@@ -312,7 +314,21 @@ export function MultiMonthCalendar() {
             />
           );
         }),
-      ])}
+      ]),
+    [],
+  );
+
+  return (
+    <Calendar
+      mode="range"
+      value={range}
+      onChange={setRange}
+      defaultViewDate={new Date(2026, 0, 1)}
+      cols={3}
+      width="100%"
+      appearance={compact}
+    >
+      {children}
       <CalendarSelectedDates col={3} />
     </Calendar>
   );
