@@ -26,7 +26,7 @@ import {
   CalendarYearsGrid,
   CalendarYearsTrack,
 } from "@dateforge/react-calendar/modules";
-import { bubble, soft } from "@dateforge/react-calendar/appearances";
+import { bubble, compact, soft } from "@dateforge/react-calendar/appearances";
 import { monsoon } from "@dateforge/react-calendar/themes";
 import {
   ArrowLeft,
@@ -158,9 +158,22 @@ DateForge is a stateful composition wrapper with self-contained modules. The \`<
 
 Visible behavior comes from modules placed as children: \`CalendarNav\`, \`CalendarDays\`, \`CalendarTimeGrid\`, \`CalendarPresets\`, \`CalendarSelectedDates\`, manual input, and track modules. You mount only the UI your product needs.
 
-The wrapper also provides a small grid contract: \`cols\` defines equal parent tracks, child \`col={number}\` spans tracks, and \`col="2 / 4"\` can be used for explicit advanced placement.
+The wrapper also provides a small grid contract: \`cols\` defines equal parent tracks, and child \`col={number}\` spans that many tracks. For example, inside \`cols={4}\`, a module with \`col={2}\` takes half the row. \`col\` is a span count, not CSS grid-line syntax.
 
 ![Calendar core architecture](/calendar-core.png)
+
+## When not to use DateForge
+
+DateForge is a picker composition kit, not a full calendar application or a date utility library. It is strongest when your product needs a custom date, range, or date-time picker built from small React modules.
+
+Choose something simpler or more specialized when:
+
+- You only need a native browser field like \`<input type="date">\`, \`<input type="time">\`, or \`<input type="datetime-local">\`.
+- You want one prebuilt picker with almost no composition decisions, styling decisions, or module choices.
+- You need event-calendar features: drag-and-drop events, resource columns, agenda views, recurring events, ICS import/export, or meeting scheduling logic.
+- You need general date math, timezone conversion, parsing, or formatting utilities. Pair DateForge with \`Temporal\`, \`date-fns\`, \`dayjs\`, or your app's existing date layer for that work.
+- You need a non-React widget, a server-rendered-only calendar, or a framework-agnostic web component.
+- You need a full form field abstraction with labels, validation messages, popovers, input masks, and form-library bindings already bundled.
 
 ## Modules
 
@@ -216,6 +229,82 @@ The package is split into tree-shakeable subpaths. The aggregate module paths ar
 | \`@dateforge/react-calendar/themes/<name>\` | One theme object | Production bundle hygiene |
 | \`@dateforge/react-calendar/appearances\` | All appearance objects together | Prototyping |
 | \`@dateforge/react-calendar/appearances/<name>\` | One appearance object | Production bundle hygiene |
+
+## Performance with multiple calendars
+
+Three or more visible calendars are reasonable, but treat them as a layout and state-design decision. Most slowdowns come from mounting more modules than the screen needs, recreating config objects on every parent render, or rendering several independent providers when one shared calendar state would do.
+
+For a year-style picker, prefer one \`<Calendar>\` with multiple offset nav/day pairs instead of twelve separate calendars:
+
+\`\`\`tsx
+<Calendar mode="range" value={range} onChange={setRange} cols={3} appearance={compact}>
+  <CalendarNav col={1} showMonthPicker compactYears />
+  <CalendarNav col={1} offset={1} monthLabel yearLabel />
+  <CalendarNav col={1} offset={2} monthLabel yearLabel />
+  <CalendarDays col={1} currentMonthOnly fixedRows={false} />
+  <CalendarDays col={1} offset={1} currentMonthOnly fixedRows={false} />
+  <CalendarDays col={1} offset={2} currentMonthOnly fixedRows={false} />
+  <CalendarNav col={1} offset={3} monthLabel yearLabel />
+  <CalendarNav col={1} offset={4} monthLabel yearLabel />
+  <CalendarNav col={1} offset={5} monthLabel yearLabel />
+  <CalendarDays col={1} offset={3} currentMonthOnly fixedRows={false} />
+  <CalendarDays col={1} offset={4} currentMonthOnly fixedRows={false} />
+  <CalendarDays col={1} offset={5} currentMonthOnly fixedRows={false} />
+  <CalendarNav col={1} offset={6} monthLabel yearLabel />
+  <CalendarNav col={1} offset={7} monthLabel yearLabel />
+  <CalendarNav col={1} offset={8} monthLabel yearLabel />
+  <CalendarDays col={1} offset={6} currentMonthOnly fixedRows={false} />
+  <CalendarDays col={1} offset={7} currentMonthOnly fixedRows={false} />
+  <CalendarDays col={1} offset={8} currentMonthOnly fixedRows={false} />
+  <CalendarNav col={1} offset={9} monthLabel yearLabel />
+  <CalendarNav col={1} offset={10} monthLabel yearLabel />
+  <CalendarNav col={1} offset={11} monthLabel yearLabel />
+  <CalendarDays col={1} offset={9} currentMonthOnly fixedRows={false} />
+  <CalendarDays col={1} offset={10} currentMonthOnly fixedRows={false} />
+  <CalendarDays col={1} offset={11} currentMonthOnly fixedRows={false} />
+  <CalendarSelectedDates col={3} />
+</Calendar>
+\`\`\`
+
+Keep expensive props stable when the parent rerenders:
+
+- Create \`disabled\` rules with \`useMemo(() => createDisabled(...), [...])\`.
+- Keep custom \`presets\`, \`theme\`, and \`appearance\` objects outside render or behind \`useMemo\`.
+- Mount only the modules the current surface needs; avoid three \`CalendarTimeGrid\` or track stacks unless all are visible and interactive.
+- Use per-subpath imports for themes and appearances in production bundles.
+- In long forms, consider mounting the picker only when its popover, tab, or step is active.
+
+Measure in production mode on the target device class. Dev mode and React Strict Mode exaggerate render work.
+
+\`\`\`tsx
+import { Profiler } from "react";
+
+function onCalendarRender(
+  id: string,
+  phase: "mount" | "update" | "nested-update",
+  actualDuration: number,
+  baseDuration: number,
+) {
+  console.table({
+    id,
+    phase,
+    actualDuration: \`\${actualDuration.toFixed(1)}ms\`,
+    baseDuration: \`\${baseDuration.toFixed(1)}ms\`,
+  });
+}
+
+<Profiler id="booking-calendar" onRender={onCalendarRender}>
+  <BookingCalendar />
+</Profiler>
+\`\`\`
+
+Useful checks:
+
+- React DevTools Profiler: record initial mount, next/previous month, day selection, range hover, and preset click.
+- Chrome Performance panel: throttle CPU, record the same interactions, and watch scripting time plus input delay.
+- Browser Performance API: wrap product-specific work inside \`performance.mark()\` and \`performance.measure()\` around handlers that react to \`onChange\`.
+- Bundle inspection: compare aggregate imports against per-theme and per-appearance subpaths when bundle size matters.
+- Real user metrics: watch INP and long tasks on pages where calendars are visible by default.
 
 ## When does each action fire onChange?
 
@@ -285,8 +374,14 @@ These are starting points rather than exported presets. Copy the shape, then add
 ### Analytics range with presets
 
 \`\`\`tsx
+const analyticsPresets = [
+  { label: "Last 7 days", value: -6, range: 6 },
+  { label: "Last 30 days", value: -29, range: 29 },
+  { label: "Next sprint", value: 0, range: 13 },
+];
+
 <Calendar mode="range" value={range} onChange={setRange}>
-  <CalendarPresets />
+  <CalendarPresets presets={analyticsPresets} />
   <CalendarNav compactMonths compactYears />
   <CalendarDays />
   <CalendarSelectedDates />
@@ -382,15 +477,16 @@ Navigation bar that controls the internal \`viewDate\`. Does not commit selectio
 | \`showNowTime\` | \`boolean\` | \`false\` | Jump-to-current-time button |
 | \`seconds\` | \`boolean\` | \`false\` | Include seconds in time display |
 | \`animateTime\` | \`boolean\` | \`false\` | Animate time transitions |
+| \`compactTime\` | \`boolean\` | \`false\` | Render nav time controls in a tighter layout |
 | \`clear\` | \`boolean\` | \`false\` | Clear selection button |
 | \`home\` | \`boolean\` | \`false\` | Reset to today button |
 | \`themeToggle\` | \`boolean\` | \`false\` | Theme toggle button |
-| \`monthLabel\` | \`boolean\` | \`true\` | Show month label |
-| \`yearLabel\` | \`boolean\` | \`true\` | Show year label |
+| \`monthLabel\` | \`boolean\` | \`false\` | Show month label |
+| \`yearLabel\` | \`boolean\` | \`false\` | Show year label |
 | \`label\` | \`string\` | — | Custom label text |
 | \`bound\` | \`"from" \\| "to"\` | — | Range bound for dual-nav layouts |
 | \`offset\` | \`number\` | — | View offset in months |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarDays
 
@@ -404,21 +500,22 @@ The main day grid. Renders a month view and commits selection on click. Works ac
 
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
-| \`highlightWeekends\` | \`boolean\` | \`false\` | Highlight weekend cells |
+| \`highlightWeekends\` | \`boolean\` | \`true\` | Highlight weekend cells |
 | \`boldWeekends\` | \`boolean\` | \`false\` | Bold weekend day labels |
 | \`weekNumbers\` | \`boolean\` | \`false\` | Show ISO week numbers |
 | \`todayDot\` | \`boolean\` | \`true\` | Dot marker on today |
 | \`highlightToday\` | \`boolean\` | \`true\` | Highlight today cell |
 | \`hideWeekdays\` | \`boolean\` | \`false\` | Hide weekday header row |
-| \`weekdayFormat\` | \`"narrow" \\| "short" \\| "long"\` | \`"narrow"\` | Weekday label format |
+| \`weekdayFormat\` | \`"narrow" \\| "short" \\| "long"\` | \`"short"\` | Weekday label format |
 | \`startOfWeek\` | \`0–6\` | \`1\` | First day of week (0 = Sun) |
 | \`currentMonthOnly\` | \`boolean\` | \`false\` | Hide days from adjacent months |
-| \`fixedRows\` | \`boolean\` | \`false\` | Always render 6 rows |
-| \`swipe\` | \`boolean\` | \`false\` | Swipe gesture navigation |
+| \`fixedRows\` | \`boolean\` | \`true\` | Always render 6 rows |
+| \`swipe\` | \`boolean\` | \`true\` | Swipe gesture navigation |
 | \`hideOutOfRange\` | \`boolean\` | \`false\` | Hide disabled out-of-range days |
 | \`lockDeselection\` | \`boolean\` | \`false\` | Prevent deselecting already-selected date |
 | \`blockNavigation\` | \`boolean\` | \`false\` | Prevent month navigation |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`offset\` | \`number\` | \`0\` | Render a month offset from the shared \`viewDate\` |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarTimeGrid
 
@@ -439,13 +536,16 @@ Drum-scroll time picker for hours, minutes, and optionally seconds. Pairs with \
 | \`showReset\` | \`boolean\` | \`false\` | Render a "now" reset button below the track. Click resets time fields on active date or bound to current hour/minute (and second if \`seconds\` enabled) |
 | \`resetLabel\` | \`React.ReactNode\` | clock icon + localized "now" | Override reset button content |
 | \`onTimeSelect\` | \`(date: Date) => void\` | — | Fires on every drum change with a Date built from \`viewDate\` and the new time |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarPresets
 
-Shortcut buttons that jump to predefined dates or ranges with a single click. Accepts simple offset-based entries or advanced function-based entries for dynamic values.
+Shortcut buttons that jump to predefined dates or ranges with a single click. Presets are explicit: pass your own array or import \`basicPresets\`. If \`presets\` is omitted or empty, the module renders no buttons.
 
 \`\`\`tsx
+import { Calendar, basicPresets } from "@dateforge/react-calendar";
+import { CalendarPresets } from "@dateforge/react-calendar/modules";
+
 <Calendar mode="range" value={range} onChange={setRange}>
   <CalendarPresets presets={basicPresets} />
 </Calendar>
@@ -453,8 +553,8 @@ Shortcut buttons that jump to predefined dates or ranges with a single click. Ac
 
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
-| \`presets\` | \`PresetEntry[]\` | built-in set | Array of preset definitions. Import \`basicPresets\` or define custom entries |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`presets\` | \`PresetEntry[]\` | \`[]\` | Array of preset definitions. Import \`basicPresets\` or define custom entries |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 > [See custom presets — simple and advanced definitions →](#custom-presets)
 
@@ -478,7 +578,7 @@ Renders the current selection as chips. In range mode shows from/to bounds; in m
 | \`align\` | \`"left" \\| "center" \\| "right"\` | \`"left"\` | Chip alignment |
 | \`maxVisibleChips\` | \`number\` | — | Collapse chips beyond this count |
 | \`overflowLabel\` | \`string\` | — | Label shown on overflow indicator |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarManualInput
 
@@ -495,7 +595,7 @@ Free-text date input that parses typed values and syncs them with calendar state
 | \`allowClear\` | \`boolean\` | \`false\` | Show clear button in input |
 | \`align\` | \`"left" \\| "center" \\| "right"\` | \`"left"\` | Input text alignment |
 | \`label\` | \`React.ReactNode\` | — | Custom label rendered next to the input |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarInfo
 
@@ -520,7 +620,7 @@ Read-only summary of the current selection. In \`single\` mode prints the date; 
 | \`showHome\` | \`boolean\` | \`false\` | Render a "go to current month" button; disabled when viewDate already matches today's month |
 | \`showRelative\` | \`boolean\` | \`false\` | Add localized relative-time hint (e.g. "in 3 days") via \`Intl.RelativeTimeFormat\` |
 | \`showSummary\` | \`boolean\` | \`true\` | Print main summary line: day count for multi/range, count for multiple, formatted single date |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarDaysTrack
 
@@ -537,7 +637,7 @@ Horizontal drum scroller for day selection. Designed for mobile-first layouts. U
 | ---- | ---- | ------- | ----------- |
 | \`bound\` | \`"from" \\| "to"\` | — | Range bound this drum controls |
 | \`showMonthLabel\` | \`boolean\` | \`false\` | Show month name above drum |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarMonthsTrack
 
@@ -555,7 +655,7 @@ Drum scroller for month navigation. Scrolling moves the internal \`viewDate\` wi
 | \`showYearLabel\` | \`boolean\` | \`false\` | Show year above drum |
 | \`bound\` | \`"from" \\| "to"\` | — | Range bound |
 | \`onMonthSelect\` | \`(date: Date) => void\` | — | Fires when user lands on a month |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarYearsTrack
 
@@ -571,7 +671,7 @@ Drum scroller for year navigation. Works the same way as \`CalendarMonthsTrack\`
 | ---- | ---- | ------- | ----------- |
 | \`bound\` | \`"from" \\| "to"\` | — | Range bound |
 | \`onYearSelect\` | \`(date: Date) => void\` | — | Fires when user lands on a year |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarMonthsGrid
 
@@ -589,7 +689,7 @@ Drum scroller for year navigation. Works the same way as \`CalendarMonthsTrack\`
 | \`disableOutOfRange\` | \`boolean\` | \`false\` | Disable months outside min/max |
 | \`hideOutOfRange\` | \`boolean\` | \`false\` | Hide months outside min/max |
 | \`onMonthSelect\` | \`(date: Date) => void\` | — | Fires on month cell click |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ### CalendarYearsGrid
 
@@ -609,7 +709,7 @@ Paginated year grid for year-only pickers or quick year jumps. Pairs with \`Cale
 | \`disableOutOfRange\` | \`boolean\` | \`false\` | Disable years outside min/max |
 | \`hideOutOfRange\` | \`boolean\` | \`false\` | Hide years outside min/max |
 | \`onYearSelect\` | \`(date: Date) => void\` | — | Fires on year cell click |
-| \`col\` | \`number \\| string\` | — | Grid column span |
+| \`col\` | \`number\` | — | Number of parent \`cols\` tracks to span |
 
 ## Disabled dates
 
@@ -656,7 +756,7 @@ const rules: DisabledRule[] = [
 
 ## Custom presets
 
-\`CalendarPresets\` accepts a \`presets\` array of \`PresetEntry\` objects. Two forms exist: a simple offset-based definition and an advanced function-based definition for dynamic or computed ranges.
+\`CalendarPresets\` accepts a \`presets\` array of \`PresetEntry\` objects. The package does not mount defaults for you; either import \`basicPresets\` or define your own entries. Two forms exist: a simple offset-based definition and an advanced function-based definition for dynamic or computed ranges.
 
 **Simple preset** — \`value\` is a day offset from today (negative = past) or a fixed \`Date\`. Optional \`range\` extends it into a range of that many days.
 
@@ -738,9 +838,9 @@ You can use DateForge without importing a named theme. The default theme prop ac
 
 Built-in themes are generated palette objects. They are intentionally imported, not referenced by string name, so bundlers can tree-shake unused palettes.
 
-**Light / bright:** \`tide\`, \`graphite\`, \`mint\`, \`snow\`, \`solar\`, \`slate\`, \`neon\`, \`prism\`, \`meadow\`, \`latte\`, \`split\`, \`riso\`, \`monsoon\`, \`pearl\`, \`chalk\`, \`comfy\`.
+**Light / bright:** \`mint\`, \`tide\`, \`prism\`, \`meadow\`, \`snow\`, \`slate\`, \`chalk\`, \`amethyst\`, \`pearl\`, \`rosa\`, \`neon\`, \`scarlet\`, \`graphite\`, \`solar\`, \`split\`, \`latte\`, \`comfy\`, \`monsoon\`, \`riso\`, \`mono\`.
 
-**Dark / vibrant:** \`fjord\`, \`industrial\`, \`crimson\`, \`amethyst\`, \`cyber\`, \`espresso\`, \`ember\`, \`phosphor\`, \`midnight\`, \`sandstone\`, \`rosa\`, \`dracula\`, \`nebula\`, \`aurora\`, \`forest\`, \`scarlet\`, \`temporal\`, \`flare\`, \`abyss\`.
+**Dark / vibrant:** \`midnight\`, \`aurora\`, \`cyber\`, \`abyss\`, \`nebula\`, \`phosphor\`, \`temporal\`, \`forest\`, \`sandstone\`, \`dracula\`, \`crimson\`, \`flare\`, \`industrial\`, \`espresso\`, \`ember\`, \`cobalt\`, \`fjord\`, \`velvet\`, \`eclipse\`, \`noir\`.
 
 > [Browse all themes in the interactive playground →](/themes)
 
@@ -749,7 +849,7 @@ Import from a per-theme subpath when you know what you need:
 #### Monsoon theme
 
 \`\`\`tsx
-import { monsoon } from "@dateforge/react-calendar/themes";
+import { monsoon } from "@dateforge/react-calendar/themes/monsoon";
 
 <Calendar theme={monsoon}>
   <CalendarNav showMonthPicker compactYears />
@@ -815,6 +915,7 @@ User CSS wins predictably because the package layers styles as \`cal-base, cal-c
 | \`--c-we\` | Weekend marker |
 | \`--c-r\` | Range selection background |
 | \`--c-e\` | Error / invalid state |
+| \`--c-oom\` | Out-of-month day text |
 
 ## Appearances
 
@@ -847,6 +948,7 @@ Appearances are structural presets. They are useful when the same date workflow 
 | \`soft\` | Balanced spacing and gentle rounding | Default product pickers |
 | \`bubble\` | Spacious, rounded, prominent shadows | Consumer flows and friendly surfaces |
 | \`loft\` | Airy, relaxed, large touch targets | Editorial, scheduling, touch-first UI |
+| \`airy\` | Open, minimal, low-shadow | Large surfaces and calm scheduling flows |
 
 Import appearances the same way as themes. The aggregate path is fine for demos; per-name subpaths are better in production.
 
@@ -867,9 +969,8 @@ Custom appearances are best when density, rhythm, or shape is part of the brand 
 import { createAppearance } from "@dateforge/react-calendar";
 
 const dense = createAppearance({
-  name: "dense",
-  radius: 0.35,
-  spacing: 0.45,
+  radius: "0.35em",
+  spacing: "0.45em",
   dayRatio: "1 / 0.75",
   transition: "0.14s",
 });
@@ -1070,6 +1171,23 @@ function renderDocBlocks(blocks: Block[]) {
       continue;
     }
 
+    const nearestHeading = findNearestHeading(blocks, index);
+
+    if (
+      block.type === "code" &&
+      nearestHeading?.text === "Performance with multiple calendars" &&
+      block.text.includes("cols={3}")
+    ) {
+      nodes.push(
+        <MultiMonthPerformanceShowcase
+          key={`${block.type}-${index}`}
+          code={block.text}
+          lang={block.lang}
+        />,
+      );
+      continue;
+    }
+
     const nearestModuleHeading: Heading | undefined =
       previousBlock?.type === "heading" ? previousBlock :
       blocks[index - 2]?.type === "heading" ? (blocks[index - 2] as Heading) : undefined;
@@ -1107,7 +1225,6 @@ function renderDocBlocks(blocks: Block[]) {
     }
 
     if (block.type === "table") {
-      const nearestHeading = findNearestHeading(blocks, index);
       const isModulePropsTable =
         nearestHeading !== undefined && isModuleName(nearestHeading.text);
       if (isModulePropsTable) {
@@ -1373,6 +1490,70 @@ function SimplePresetShowcase({
       </div>
       <div className="min-w-0 [&>div]:mb-0">
         <CodeBlock code={block.text} lang={block.lang} />
+      </div>
+    </section>
+  );
+}
+
+function MultiMonthPerformanceShowcase({
+  code,
+  lang,
+}: {
+  code: string;
+  lang: string;
+}) {
+  const [range, setRange] = useState<DateRange>({
+    from: new Date(2026, 6, 8),
+    to: new Date(2026, 10, 16),
+  });
+  const rowStarts = [0, 3, 6, 9];
+
+  return (
+    <section className="mb-8 space-y-4">
+      <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-4 py-7 shadow-sm">
+        <div className="min-w-[760px]">
+          <Calendar
+            mode="range"
+            value={range}
+            onChange={setRange}
+            defaultViewDate={new Date(2026, 0, 1)}
+            cols={3}
+            width="100%"
+            appearance={compact}
+          >
+            {rowStarts.flatMap((start) => [
+              ...Array.from({ length: 3 }, (_, index) => {
+                const offset = start + index;
+                return (
+                  <CalendarNav
+                    key={`nav-${offset}`}
+                    col={1}
+                    offset={offset}
+                    {...(offset === 0
+                      ? { showMonthPicker: true, compactYears: true }
+                      : { monthLabel: true, yearLabel: true })}
+                  />
+                );
+              }),
+              ...Array.from({ length: 3 }, (_, index) => {
+                const offset = start + index;
+                return (
+                  <CalendarDays
+                    key={`days-${offset}`}
+                    col={1}
+                    offset={offset}
+                    currentMonthOnly
+                    fixedRows={false}
+                  />
+                );
+              }),
+            ])}
+            <CalendarSelectedDates col={3} />
+          </Calendar>
+        </div>
+      </div>
+      <div className="min-w-0 [&>div]:mb-0">
+        <CodeBlock code={code} lang={lang} />
       </div>
     </section>
   );
@@ -2031,7 +2212,7 @@ function renderInline(text: string) {
       nodes.push(
         <code
           key={`${token}-${match.index}`}
-          className="rounded-md border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-1.5 py-0.5 font-mono text-[0.92em] text-[var(--emerald)]"
+          className="whitespace-nowrap rounded-md border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-1.5 py-0.5 font-mono text-[0.92em] text-[var(--emerald)]"
         >
           {token.slice(1, -1)}
         </code>,
