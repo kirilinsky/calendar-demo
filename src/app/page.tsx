@@ -179,7 +179,7 @@ function BranchLink({
     <Button
       asChild
       variant="outline"
-      className={`group h-8 flex-1 justify-center gap-4 rounded-full px-3 text-left shadow-sm lg:h-14 lg:justify-between lg:px-5 ${v.link}`}
+      className={`group h-10 flex-1 justify-center gap-4 rounded-full px-4 text-left shadow-sm lg:h-16 lg:justify-between lg:px-6 lg:py-3 ${v.link}`}
     >
       <Link
         href={href}
