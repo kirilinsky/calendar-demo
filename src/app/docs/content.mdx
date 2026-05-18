@@ -1,0 +1,667 @@
+import {
+  SimplePresetShowcase,
+  MultiMonthPerformanceShowcase,
+  RecipeShowcase,
+  ModuleShowcase,
+} from "./showcases";
+import { PropsTableAccordion } from "./components/PropsTableAccordion";
+
+## Quick start
+
+<SimplePresetShowcase sampleKey="quick-start" />
+
+No global CSS import is required. Every module ships its own styles and applies them on first render. In RSC frameworks, render the calendar behind a `"use client"` boundary.
+
+## Core idea
+
+DateForge is a stateful composition wrapper with self-contained modules. The `<Calendar>` shell owns mode, value, view date, locale, timezone, theme, appearance, disabled rules, range constraints, and `onChange` wiring. It renders no picker UI by itself.
+
+Visible behavior comes from modules placed as children: `CalendarNav`, `CalendarDays`, `CalendarTimeGrid`, `CalendarPresets`, `CalendarSelectedDates`, manual input, and track modules. You mount only the UI your product needs.
+
+The wrapper also provides a small grid contract: `cols` defines equal parent tracks, and child `col={number}` spans that many tracks. For example, inside `cols={4}`, a module with `col={2}` takes half the row. `col` is a span count, not CSS grid-line syntax.
+
+![Calendar core architecture](/calendar-core.png)
+
+## When not to use DateForge
+
+DateForge is a picker composition kit, not a full calendar application or a date utility library. It is strongest when your product needs a custom date, range, or date-time picker built from small React modules.
+
+Choose something simpler or more specialized when:
+
+- You only need a native browser field like `<input type="date">`, `<input type="time">`, or `<input type="datetime-local">`.
+- You want one prebuilt picker with almost no composition decisions, styling decisions, or module choices.
+- You need event-calendar features: drag-and-drop events, resource columns, agenda views, recurring events, ICS import/export, or meeting scheduling logic.
+- You need general date math, timezone conversion, parsing, or formatting utilities. Pair DateForge with `Temporal`, `date-fns`, `dayjs`, or your app's existing date layer for that work.
+- You need a non-React widget, a server-rendered-only calendar, or a framework-agnostic web component.
+- You need a full form field abstraction with labels, validation messages, popovers, input masks, and form-library bindings already bundled.
+
+## Modules
+
+Modules read calendar context directly, so there is no prop drilling. They can be reordered, repeated, or used alone. Any subset should render without crashing, but not every subset is a complete human-friendly UX.
+
+| Module group | Modules | Primary role |
+| ------------ | ------- | ------------ |
+| Navigation | `CalendarNav`, `CalendarMonthsGrid`, `CalendarYearsGrid` | Move the internal `viewDate` without committing selection |
+| Selection | `CalendarDays`, `CalendarTimeGrid`, `CalendarManualInput`, `CalendarPresets` | Commit dates, ranges, arrays, or time changes |
+| Feedback | `CalendarSelectedDates`, `CalendarInfo` | Render current selection as chips, summary, or info readout |
+| Tracks | `CalendarDaysTrack`, `CalendarMonthsTrack`, `CalendarYearsTrack` | Mobile/drum-style navigation or bound range editing |
+| Custom | Context hooks from `@dateforge/react-calendar/context` | Build your own modules on top of the same state |
+
+## Modes
+
+`mode` decides the value shape, selection semantics, and how modules interpret user input.
+
+| Mode | Value / defaultValue | onChange payload | Cleared value | Best for |
+| ---- | -------------------- | ---------------- | ------------- | -------- |
+| `"single"` | `Date \| null` | `Date \| null` | `null` | Date picker, scheduler date, time-only single picker |
+| `"multiple"` | `Date[]` | sorted `Date[]` | `[]` | Delivery days, selected shifts, events |
+| `"range"` | `{ from: Date \| null; to: Date \| null }` | same shape, partial range allowed | `{ from: null, to: null }` | Booking, reporting windows, sprint planning |
+
+For range mode, `onChange` fires when each bound changes. Guard with `if (range.from && range.to)` when downstream work only needs complete ranges.
+
+## Which modules do I need?
+
+Start from the product workflow, then pick modules. The calendar does not force one canonical picker.
+
+| You want... | Compose these modules |
+| ----------- | --------------------- |
+| Basic date picker | `CalendarNav` + `CalendarDays` |
+| Range picker | `CalendarNav` + `CalendarDays` with `mode="range"` |
+| Date and time picker | `CalendarNav showTime` + `CalendarDays`, or inline `CalendarTimeGrid` |
+| Time-only picker | `CalendarTimeGrid` in `mode="single"` |
+| Manual typing | `CalendarManualInput`, optionally with `CalendarDays` |
+| Preset shortcuts | `CalendarPresets` alongside any picker modules |
+| Month-only or year-only picker | `CalendarMonthsGrid` or `CalendarYearsGrid` without `CalendarDays` |
+| Mobile drum picker | `CalendarDaysTrack`, `CalendarMonthsTrack`, `CalendarYearsTrack` |
+| Selection summary | `CalendarSelectedDates` |
+| Date facts, range duration, relative time | `CalendarInfo` |
+
+## Import strategy
+
+The package is split into tree-shakeable subpaths. The aggregate module paths are convenient, while per-theme and per-appearance paths are best for production bundles.
+
+| Import from | What is there | When to use |
+| ----------- | ------------- | ----------- |
+| `@dateforge/react-calendar` | `Calendar`, factories, hooks, public types | Always; the root provider lives here |
+| `@dateforge/react-calendar/modules` | All `Calendar*` modules | Pull visible UI pieces |
+| `@dateforge/react-calendar/context` | Context hooks such as `useConfig`, `useNavigation`, `useSelection` | Build custom modules |
+| `@dateforge/react-calendar/themes` | All theme objects together | Prototyping |
+| `@dateforge/react-calendar/themes/<name>` | One theme object | Production bundle hygiene |
+| `@dateforge/react-calendar/appearances` | All appearance objects together | Prototyping |
+| `@dateforge/react-calendar/appearances/<name>` | One appearance object | Production bundle hygiene |
+
+## Performance with multiple calendars
+
+Three or more visible calendars are reasonable, but treat them as a layout and state-design decision. Most slowdowns come from mounting more modules than the screen needs, recreating config objects on every parent render, or rendering several independent providers when one shared calendar state would do.
+
+For a year-style picker, prefer one `<Calendar>` with multiple offset nav/day pairs instead of twelve separate calendars:
+
+<MultiMonthPerformanceShowcase sampleKey="multi-month" />
+
+Keep expensive props stable when the parent rerenders:
+
+- Create `disabled` rules with `useMemo(() => createDisabled(...), [...])`.
+- Keep custom `presets`, `theme`, and `appearance` objects outside render or behind `useMemo`.
+- Mount only the modules the current surface needs; avoid three `CalendarTimeGrid` or track stacks unless all are visible and interactive.
+- Use per-subpath imports for themes and appearances in production bundles.
+- In long forms, consider mounting the picker only when its popover, tab, or step is active.
+
+Measure in production mode on the target device class. Dev mode and React Strict Mode exaggerate render work.
+
+```tsx
+import { Profiler } from "react";
+
+function onCalendarRender(
+  id: string,
+  phase: "mount" | "update" | "nested-update",
+  actualDuration: number,
+  baseDuration: number,
+) {
+  console.table({
+    id,
+    phase,
+    actualDuration: `${actualDuration.toFixed(1)}ms`,
+    baseDuration: `${baseDuration.toFixed(1)}ms`,
+  });
+}
+
+<Profiler id="booking-calendar" onRender={onCalendarRender}>
+  <BookingCalendar />
+</Profiler>
+```
+
+Useful checks:
+
+- React DevTools Profiler: record initial mount, next/previous month, day selection, range hover, and preset click.
+- Chrome Performance panel: throttle CPU, record the same interactions, and watch scripting time plus input delay.
+- Browser Performance API: wrap product-specific work inside `performance.mark()` and `performance.measure()` around handlers that react to `onChange`.
+- Bundle inspection: compare aggregate imports against per-theme and per-appearance subpaths when bundle size matters.
+- Real user metrics: watch INP and long tasks on pages where calendars are visible by default.
+
+## When does each action fire onChange?
+
+The rule of thumb is simple: navigation changes the view, selection commits values.
+
+| Action | Changes viewDate | Changes selection | Fires onChange |
+| ------ | ---------------- | ----------------- | -------------- |
+| `CalendarNav` prev / next / home | yes | no | no |
+| Month or year picker popup | yes | no | no |
+| `CalendarDays` day click | if cross-month | yes | yes |
+| `CalendarDays` keyboard navigation | if cross-month | no | no |
+| `CalendarTimeGrid` time change | yes | yes | yes |
+| `CalendarPresets` click | yes | yes | yes |
+| `CalendarSelectedDates` chip click | yes | no | no |
+| Clear buttons | no | yes | yes |
+| Track scroll without range `bound` | yes | no | no |
+| Track item with range `bound` | yes | yes | yes |
+
+`readOnly` blocks every selection-affecting action, but navigation stays enabled. UI-only state like popup open/close and theme toggles does not fire `onChange`.
+
+## Controlled and uncontrolled
+
+Controlled mode starts when `value` is provided, including `null`. User actions fire `onChange` with the next value, but rendered selection stays tied to the value you pass back.
+
+```tsx
+const [date, setDate] = useState<Date | null>(null);
+
+<Calendar mode="single" value={date} onChange={setDate}>
+  <CalendarNav showMonthPicker compactYears />
+  <CalendarDays />
+</Calendar>
+```
+
+Uncontrolled mode starts when `value` is `undefined`. `defaultValue` seeds the reducer once on mount, internal state owns future changes, and `onChange` still fires.
+
+```tsx
+<Calendar defaultValue={new Date()} onChange={(date) => console.log(date)}>
+  <CalendarDays />
+</Calendar>
+```
+
+When both `value` and `defaultValue` are passed, `value` wins. If you change `mode` at runtime, pass a compatible `value` at the same time; selection shape is not migrated for you.
+
+## Ready-made module sets
+
+These are starting points rather than exported presets. Copy the shape, then add constraints, disabled rules, themes, or appearances.
+
+### Minimal single date
+
+<RecipeShowcase kind="Minimal single date" sampleKey="minimal-single-date" />
+
+### Booking range
+
+<RecipeShowcase kind="Booking range" sampleKey="booking-range" />
+
+### Analytics range with presets
+
+<RecipeShowcase kind="Analytics range with presets" sampleKey="analytics-presets" />
+
+### Date and time
+
+<RecipeShowcase kind="Date and time" sampleKey="date-and-time" />
+
+### Mobile tracks
+
+<RecipeShowcase kind="Mobile tracks" sampleKey="mobile-tracks" />
+
+## Module reference
+
+### Calendar
+
+The root wrapper and context provider. Owns all shared state — mode, value, view date, locale, timezone, theme, appearance, disabled rules, and range constraints — and distributes it to every child module via context. Renders no UI of its own; all visible output comes from the modules you place inside it.
+
+<ModuleShowcase moduleName="Calendar" sampleKey="calendar" />
+
+<PropsTableAccordion title="Calendar props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `mode` | `"single" \| "multiple" \| "range"` | `"single"` | Value shape and selection semantics |
+| `value` | `CalendarValue<M>` | — | Controlled value |
+| `defaultValue` | `CalendarValue<M>` | — | Uncontrolled initial value |
+| `defaultViewDate` | `Date` | today | Initial month shown on mount |
+| `onChange` | `(value: CalendarValue<M>) => void` | — | Fires on every selection change |
+| `theme` | `"auto" \| "light" \| "dark" \| ThemeObject` | `"auto"` | Color palette |
+| `appearance` | `AppearanceObject` | — | Shape, spacing, and motion preset |
+| `disabled` | `DisabledConfig` | — | Disabled date rules via `createDisabled()` |
+| `readOnly` | `boolean` | `false` | Block all selection; navigation stays active |
+| `locale` | `string` | browser | BCP 47 locale for labels and formatting |
+| `timeZone` | `string` | browser | IANA timezone for display and parsing |
+| `minDate` | `Date` | — | Earliest selectable date |
+| `maxDate` | `Date` | — | Latest selectable date |
+| `minRangeDays` | `number` | — | Minimum span for range selections |
+| `maxRangeDays` | `number` | — | Maximum span for range selections |
+| `maxDates` | `number` | — | Cap on selected dates in `multiple` mode |
+| `timeStep` | `{ hour?, minute?, second? }` | — | Snap interval for time selection |
+| `hour12` | `boolean` | locale | Force 12 or 24-hour time display |
+| `cols` | `number` | — | Equal-width column grid for child modules |
+| `width` | `string \| number` | — | Explicit width on the root element |
+| `gradient` | `boolean` | `false` | Subtle gradient overlay on the surface |
+
+</PropsTableAccordion>
+
+### CalendarNav
+
+Navigation bar that controls the internal `viewDate`. Does not commit selection — it moves the visible month or year. Optionally shows time controls, a clear button, and a home reset.
+
+<ModuleShowcase moduleName="CalendarNav" sampleKey="calendar-nav" />
+
+<PropsTableAccordion title="CalendarNav props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `showMonthPicker` | `boolean` | `false` | Month picker popup in nav |
+| `compactMonths` | `boolean` | `false` | Compact month display |
+| `showYearPicker` | `boolean` | `false` | Year picker popup in nav |
+| `compactYears` | `boolean` | `false` | Compact year display |
+| `showTime` | `boolean` | `false` | Time controls in nav |
+| `showNowTime` | `boolean` | `false` | Jump-to-current-time button |
+| `seconds` | `boolean` | `false` | Include seconds in time display |
+| `animateTime` | `boolean` | `false` | Animate time transitions |
+| `compactTime` | `boolean` | `false` | Render nav time controls in a tighter layout |
+| `clear` | `boolean` | `false` | Clear selection button |
+| `home` | `boolean` | `false` | Reset to today button |
+| `themeToggle` | `boolean` | `false` | Theme toggle button |
+| `monthLabel` | `boolean` | `false` | Show month label |
+| `yearLabel` | `boolean` | `false` | Show year label |
+| `label` | `string` | — | Custom label text |
+| `bound` | `"from" \| "to"` | — | Range bound for dual-nav layouts |
+| `offset` | `number` | — | View offset in months |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarDays
+
+The main day grid. Renders a month view and commits selection on click. Works across all three modes — single, multiple, and range — adapting highlight and click semantics automatically.
+
+<ModuleShowcase moduleName="CalendarDays" sampleKey="calendar-days" />
+
+<PropsTableAccordion title="CalendarDays props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `highlightWeekends` | `boolean` | `true` | Highlight weekend cells |
+| `boldWeekends` | `boolean` | `false` | Bold weekend day labels |
+| `weekNumbers` | `boolean` | `false` | Show ISO week numbers |
+| `todayDot` | `boolean` | `true` | Dot marker on today |
+| `highlightToday` | `boolean` | `true` | Highlight today cell |
+| `hideWeekdays` | `boolean` | `false` | Hide weekday header row |
+| `weekdayFormat` | `"narrow" \| "short" \| "long"` | `"short"` | Weekday label format |
+| `startOfWeek` | `0–6` | `1` | First day of week (0 = Sun) |
+| `currentMonthOnly` | `boolean` | `false` | Hide days from adjacent months |
+| `fixedRows` | `boolean` | `true` | Always render 6 rows |
+| `swipe` | `boolean` | `true` | Swipe gesture navigation |
+| `hideOutOfRange` | `boolean` | `false` | Hide disabled out-of-range days |
+| `lockDeselection` | `boolean` | `false` | Prevent deselecting already-selected date |
+| `blockNavigation` | `boolean` | `false` | Prevent month navigation |
+| `offset` | `number` | `0` | Render a month offset from the shared `viewDate` |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarTimeGrid
+
+Drum-scroll time picker for hours, minutes, and optionally seconds. Pairs with `CalendarDays` for a full date-time picker, or stands alone as a time-only input inside `mode="single"`.
+
+<ModuleShowcase moduleName="CalendarTimeGrid" sampleKey="calendar-time-grid" />
+
+<PropsTableAccordion title="CalendarTimeGrid props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `seconds` | `boolean` | `false` | Show seconds drum |
+| `labels` | `"short" \| "long"` | — | Label format above drums; omit to hide |
+| `bound` | `"from" \| "to"` | — | Range-mode only: edit time on explicit boundary instead of relying on `viewDate` matching `rangeStart`/`rangeEnd` |
+| `showBoundDate` | `boolean` | `true` | Render localized date header above the track for the bound's current date. Requires `bound`; hidden when bound has no date |
+| `showReset` | `boolean` | `false` | Render a "now" reset button below the track. Click resets time fields on active date or bound to current hour/minute (and second if `seconds` enabled) |
+| `resetLabel` | `React.ReactNode` | clock icon + localized "now" | Override reset button content |
+| `onTimeSelect` | `(date: Date) => void` | — | Fires on every drum change with a Date built from `viewDate` and the new time |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarPresets
+
+Shortcut buttons that jump to predefined dates or ranges with a single click. Presets are explicit: pass your own array or import `basicPresets`. If `presets` is omitted or empty, the module renders no buttons.
+
+<ModuleShowcase moduleName="CalendarPresets" sampleKey="calendar-presets" />
+
+<PropsTableAccordion title="CalendarPresets props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `presets` | `PresetEntry[]` | `[]` | Array of preset definitions. Import `basicPresets` or define custom entries |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+> [See custom presets — simple and advanced definitions →](#custom-presets)
+
+### CalendarSelectedDates
+
+Renders the current selection as chips. In range mode shows from/to bounds; in multiple mode shows one chip per date. Chips can navigate to their date or clear individual entries.
+
+<ModuleShowcase moduleName="CalendarSelectedDates" sampleKey="calendar-selected-dates" />
+
+<PropsTableAccordion title="CalendarSelectedDates props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `allowClear` | `boolean` | `false` | Show per-chip clear button |
+| `allowClearPerChip` | `boolean` | `false` | Allow removing individual chips independently |
+| `allowNavigate` | `boolean` | `false` | Clicking chip navigates to that date |
+| `showTime` | `boolean` | `false` | Show time in chip labels |
+| `animated` | `boolean` | `true` | Animate chip entrance |
+| `align` | `"left" \| "center" \| "right"` | `"left"` | Chip alignment |
+| `maxVisibleChips` | `number` | — | Collapse chips beyond this count |
+| `overflowLabel` | `string` | — | Label shown on overflow indicator |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarManualInput
+
+Free-text date input that parses typed values and syncs them with calendar state. Useful when users know the exact date and prefer typing over clicking.
+
+<ModuleShowcase moduleName="CalendarManualInput" sampleKey="calendar-manual-input" />
+
+<PropsTableAccordion title="CalendarManualInput props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `allowClear` | `boolean` | `false` | Show clear button in input |
+| `align` | `"left" \| "center" \| "right"` | `"left"` | Input text alignment |
+| `label` | `React.ReactNode` | — | Custom label rendered next to the input |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarInfo
+
+Read-only summary of the current selection. In `single` mode prints the date; in `multiple` prints a count and list; in `range` prints the bounds plus a duration or day count. Use to surface "facts about the value" — relative time, range length, ISO summary — without rebuilding selection chips. Pass a `formatter` for fully custom output.
+
+<ModuleShowcase moduleName="CalendarInfo" sampleKey="calendar-info" />
+
+<PropsTableAccordion title="CalendarInfo props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `allowClear` | `boolean` | `false` | Show clear button next to the readout |
+| `align` | `"left" \| "center" \| "right"` | `"left"` | Text alignment |
+| `animated` | `boolean` | `true` | Animate value transitions |
+| `emptyLabel` | `React.ReactNode` | — | Content shown when selection is empty |
+| `formatter` | `(value: CalendarInfoValue) => React.ReactNode` | — | Fully custom renderer; overrides built-in formatting |
+| `prefix` | `React.ReactNode` | — | Static prefix rendered before the value |
+| `rangeStyle` | `"days" \| "duration"` | `"days"` | Range mode only: show day count or full duration string |
+| `showHome` | `boolean` | `false` | Render a "go to current month" button; disabled when viewDate already matches today's month |
+| `showRelative` | `boolean` | `false` | Add localized relative-time hint (e.g. "in 3 days") via `Intl.RelativeTimeFormat` |
+| `showSummary` | `boolean` | `true` | Print main summary line: day count for multi/range, count for multiple, formatted single date |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarDaysTrack
+
+Horizontal drum scroller for day selection. Designed for mobile-first layouts. Use `bound` to tie each drum to the `from` or `to` side of a range independently.
+
+<ModuleShowcase moduleName="CalendarDaysTrack" sampleKey="calendar-days-track" />
+
+<PropsTableAccordion title="CalendarDaysTrack props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `bound` | `"from" \| "to"` | — | Range bound this drum controls |
+| `showMonthLabel` | `boolean` | `false` | Show month name above drum |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarMonthsTrack
+
+Drum scroller for month navigation. Scrolling moves the internal `viewDate` without committing selection. Combine with `CalendarDaysTrack` for a full mobile drum picker.
+
+<ModuleShowcase moduleName="CalendarMonthsTrack" sampleKey="calendar-months-track" />
+
+<PropsTableAccordion title="CalendarMonthsTrack props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `short` | `boolean` | `false` | Use abbreviated month names |
+| `showYearLabel` | `boolean` | `false` | Show year above drum |
+| `bound` | `"from" \| "to"` | — | Range bound |
+| `onMonthSelect` | `(date: Date) => void` | — | Fires when user lands on a month |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarYearsTrack
+
+Drum scroller for year navigation. Works the same way as `CalendarMonthsTrack` but scrolls through years. Stack all three track modules for a compact iOS-style date picker.
+
+<ModuleShowcase moduleName="CalendarYearsTrack" sampleKey="calendar-years-track" />
+
+<PropsTableAccordion title="CalendarYearsTrack props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `bound` | `"from" \| "to"` | — | Range bound |
+| `onYearSelect` | `(date: Date) => void` | — | Fires when user lands on a year |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarMonthsGrid
+
+12-cell month grid for month-only pickers or fast month navigation. Clicking a cell moves `viewDate` to that month. Use `onMonthSelect` to build a standalone month picker without `CalendarDays`.
+
+<ModuleShowcase moduleName="CalendarMonthsGrid" sampleKey="calendar-months-grid" />
+
+<PropsTableAccordion title="CalendarMonthsGrid props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `short` | `boolean` | `false` | Abbreviated month names |
+| `disableOutOfRange` | `boolean` | `false` | Disable months outside min/max |
+| `hideOutOfRange` | `boolean` | `false` | Hide months outside min/max |
+| `onMonthSelect` | `(date: Date) => void` | — | Fires on month cell click |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+### CalendarYearsGrid
+
+Paginated year grid for year-only pickers or quick year jumps. Pairs with `CalendarMonthsGrid` to build a full month-year selector without the day view.
+
+<ModuleShowcase moduleName="CalendarYearsGrid" sampleKey="calendar-years-grid" />
+
+<PropsTableAccordion title="CalendarYearsGrid props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `yearsPerPage` | `number` | `12` | Years displayed per page |
+| `startYear` | `number` | — | First year in grid |
+| `showControls` | `boolean` | `true` | Show prev/next page controls |
+| `disableOutOfRange` | `boolean` | `false` | Disable years outside min/max |
+| `hideOutOfRange` | `boolean` | `false` | Hide years outside min/max |
+| `onYearSelect` | `(date: Date) => void` | — | Fires on year cell click |
+| `col` | `number` | — | Number of parent `cols` tracks to span |
+
+</PropsTableAccordion>
+
+## Disabled dates
+
+Pass a `DisabledConfig` object to the `disabled` prop on `<Calendar>`. Build it with `createDisabled()` — a typed factory that accepts one or more rule keys. Rules are combined with OR logic: a date is disabled if any rule matches it.
+
+#### Disabled dates example
+
+<RecipeShowcase kind="Disabled dates example" sampleKey="disabled-dates" />
+
+| Option | Type | Description |
+| ------ | ---- | ----------- |
+| `weekends` | `boolean` | Disable Saturday and Sunday |
+| `weekdays` | `number[]` | Disable specific weekdays (0 = Sun, 6 = Sat) |
+| `before` | `Date` | Disable all dates before this date |
+| `after` | `Date` | Disable all dates after this date |
+| `dates` | `Date[]` | Disable individual dates |
+| `ranges` | `Array<{ from: Date; to: Date }>` | Disable date ranges |
+| `all` | `boolean` | Disable every date (use with `readOnly` for view-only calendars) |
+
+You can also pass raw `DisabledRule` objects directly when you need more control:
+
+```tsx
+import { Calendar, type DisabledRule } from "@dateforge/react-calendar";
+
+const rules: DisabledRule[] = [
+  { dayOfWeek: [0, 6] },
+  { before: startOfToday },
+  { from: new Date(2026, 5, 20), to: new Date(2026, 5, 25) },
+];
+```
+
+## Custom presets
+
+`CalendarPresets` accepts a `presets` array of `PresetEntry` objects. The package does not mount defaults for you; either import `basicPresets` or define your own entries. Two forms exist: a simple offset-based definition and an advanced function-based definition for dynamic or computed ranges.
+
+**Simple preset** — `value` is a day offset from today (negative = past) or a fixed `Date`. Optional `range` extends it into a range of that many days.
+
+**Advanced preset** — `getValue` receives a context object and returns a `Date`, a `{ from, to }` range, or `null` to disable the preset dynamically.
+
+#### Holiday presets example
+
+<RecipeShowcase kind="Holiday presets example" sampleKey="holiday-presets" />
+
+| Field | Simple | Advanced | Description |
+| ----- | ------ | -------- | ----------- |
+| `label` | required | required | Display text in the preset button |
+| `id` | optional | required | Stable key for active-state tracking |
+| `value` | required | — | Day offset (`number`) or fixed `Date` |
+| `range` | optional | — | Extend into a range of N days after `value` |
+| `getValue` | — | required | Function returning `Date`, `{ from, to }`, or `null` |
+
+## Design system
+
+Styling is split into two independent axes: **theme** and **appearance**. A theme controls color. An appearance controls structure: radius, spacing, density, border feel, shadows, and motion duration. Any theme can combine with any appearance, so product teams can keep one interaction model and change the surface to match different screens.
+
+The calendar wrapper exposes styling through data attributes.
+
+| Attribute | Values | What it controls |
+| --------- | ------ | ---------------- |
+| `data-theme` | `auto`, `light`, `dark`, or generated custom theme id | Palette tokens |
+| `data-appearance` | built-in or custom appearance name | Shape, density, motion, shadows |
+| `data-readonly` | present when `readOnly` is true | Disabled interaction styling |
+
+## Default theme modes
+
+You can use DateForge without importing a named theme. The default theme prop accepts three string modes.
+
+| Value | Behavior | Use when |
+| ----- | -------- | -------- |
+| `"auto"` | Follows the user's `prefers-color-scheme` with CSS, avoiding JS theme flashes | Public apps and docs |
+| `"light"` | Forces the built-in light palette | Light-only product surfaces |
+| `"dark"` | Forces the built-in dark palette | Dark dashboards, overlays, command-style tools |
+
+`auto` is the safest default: CSS resolves the palette before React hydrates. Named themes are **not** string values. Passing `theme="midnight"` is invalid; import the object instead.
+
+## Built-in themes
+
+Built-in themes are generated palette objects. They are intentionally imported, not referenced by string name, so bundlers can tree-shake unused palettes.
+
+**Light / bright:** `mint`, `tide`, `prism`, `meadow`, `snow`, `slate`, `chalk`, `amethyst`, `pearl`, `rosa`, `neon`, `scarlet`, `graphite`, `solar`, `split`, `latte`, `comfy`, `monsoon`, `riso`, `mono`.
+
+**Dark / vibrant:** `midnight`, `aurora`, `cyber`, `abyss`, `nebula`, `phosphor`, `temporal`, `forest`, `sandstone`, `dracula`, `crimson`, `flare`, `industrial`, `espresso`, `ember`, `cobalt`, `fjord`, `velvet`, `eclipse`, `noir`.
+
+> [Browse all themes in the interactive playground →](/themes)
+
+Import from a per-theme subpath when you know what you need:
+
+#### Monsoon theme
+
+<RecipeShowcase kind="Monsoon theme" sampleKey="monsoon-theme" />
+
+The aggregate `@dateforge/react-calendar/themes` export is convenient for galleries and playgrounds, but it makes every built-in theme reachable. Production apps should prefer `themes/<name>` for smaller bundles.
+
+## Creating themes
+
+Use `createTheme()` when your product has brand tokens that do not match a built-in palette. A custom theme is a typed object that maps semantic color roles to CSS variables.
+
+#### Custom theme
+
+<RecipeShowcase kind="Custom theme" sampleKey="custom-theme" />
+
+## Design tokens
+
+User CSS wins predictably because the package layers styles as `cal-base, cal-components, cal-modules, themes, appearances, user`. Themes and appearances set semantic tokens; your app can still override them in its own layer.
+
+### Color tokens
+
+| Token | Role |
+| ----- | ---- |
+| `--c-a` | Accent, primary action color |
+| `--c-at` | Text on active / selected surfaces |
+| `--c-t-d` | Dot under selected today |
+| `--c-b` | Backdrop and popup surface |
+| `--c-h` | Hover, focus, and selected highlight |
+| `--c-t` | Calendar grid tone / subtle background |
+| `--c-c` | Primary text |
+| `--c-s` | Stroke, dividers, outlines |
+| `--c-x` | Shadow tint |
+| `--c-d` | Disabled control background |
+| `--c-m` | Muted text |
+| `--c-dt` | Disabled text |
+| `--c-we` | Weekend marker |
+| `--c-r` | Range selection background |
+| `--c-e` | Error / invalid state |
+| `--c-oom` | Out-of-month day text |
+
+## Appearances
+
+Appearances are structural presets. They are useful when the same date workflow appears in different surfaces: a dense table filter, a friendly booking flow, a touch-first scheduler, or a sharp internal tool.
+
+> [Try all appearances in the interactive playground →](/appearance)
+
+### Structure tokens
+
+| Token | Role |
+| ----- | ---- |
+| `--cal-font-size` | Container-relative base font size |
+| `--cal-text-day` | Adaptive day-cell text size |
+| `--cal-radius` | Base radius used across controls |
+| `--cal-container-radius` | Outer shell radius |
+| `--cal-spacing` | Base spacing unit |
+| `--cal-border` | Border width |
+| `--cal-days-padding` | Day-cell padding |
+| `--cal-track-height` | Track/drum height |
+| `--cal-day-ratio` | Day-cell aspect ratio |
+| `--cal-transition` | Motion duration |
+| `--cal-shadow-sm`, `--cal-shadow-md`, `--cal-shadow-lg` | Depth scale using `--c-x` |
+
+### Built-in appearances
+
+| Appearance | Character | Good for |
+| ---------- | --------- | -------- |
+| `compact` | Dense, tight, minimal padding | Dashboards, sidebars, data-heavy tools |
+| `square` | Sharp corners, minimal shadows | Enterprise UI, grids, internal tools |
+| `soft` | Balanced spacing and gentle rounding | Default product pickers |
+| `bubble` | Spacious, rounded, prominent shadows | Consumer flows and friendly surfaces |
+| `loft` | Airy, relaxed, large touch targets | Editorial, scheduling, touch-first UI |
+| `airy` | Open, minimal, low-shadow | Large surfaces and calm scheduling flows |
+
+Import appearances the same way as themes. The aggregate path is fine for demos; per-name subpaths are better in production.
+
+#### Bubble appearance
+
+<RecipeShowcase kind="Bubble appearance" sampleKey="bubble-appearance" />
+
+Custom appearances are best when density, rhythm, or shape is part of the brand system.
+
+```tsx
+import { createAppearance } from "@dateforge/react-calendar";
+
+const dense = createAppearance({
+  radius: "0.35em",
+  spacing: "0.45em",
+  dayRatio: "1 / 0.75",
+  transition: "0.14s",
+});
+```

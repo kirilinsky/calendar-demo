@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { APPEARANCE_IDS, saveAppearanceId, saveGradient, saveThemePreset } from "./calendar-preferences";
 import { THEMES } from "./themes/themes-data";
 
@@ -13,12 +14,13 @@ export function RandomizeButton() {
   }
 
   return (
-    <button
+    <Button
       type="button"
       onClick={randomize}
-      className="inline-flex h-12 items-center gap-2 rounded-full bg-zinc-950 px-8 text-sm font-semibold text-white shadow-lg shadow-zinc-950/20 transition hover:bg-zinc-800 active:scale-95"
+      size="lg"
+      className="h-12 px-8 text-sm font-semibold shadow-lg shadow-zinc-950/20"
     >
       Surprise Me ✨
-    </button>
+    </Button>
   );
 }

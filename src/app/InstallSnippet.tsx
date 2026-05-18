@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const COMMAND = "npm i @dateforge/react-calendar";
 
@@ -22,14 +23,16 @@ export function InstallSnippet({ className = "" }: { className?: string }) {
       <code className="flex-1 truncate font-mono text-xs text-zinc-100 sm:text-sm">
         {COMMAND}
       </code>
-      <button
+      <Button
         type="button"
         onClick={copy}
         aria-label="Copy install command"
-        className="flex h-7 items-center gap-1.5 rounded-md bg-white/10 px-2 text-xs font-semibold text-zinc-100 transition hover:bg-white/20"
+        variant="ghost"
+        size="icon-sm"
+        className="text-zinc-100 hover:bg-white/10 hover:text-white"
       >
         {copied ? <Check size={13} /> : <Copy size={13} />}
-      </button>
+      </Button>
     </div>
   );
 }

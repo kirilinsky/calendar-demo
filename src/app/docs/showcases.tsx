@@ -1,6 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Calendar,
   createDisabled,
@@ -26,6 +35,7 @@ import { bubble, compact, soft } from "@dateforge/react-calendar/appearances";
 import { monsoon } from "@dateforge/react-calendar/themes";
 import { CalendarPreview } from "../CalendarPreview";
 import { CodeBlock } from "./CodeBlock";
+import { codeSamples, type CodeSampleKey } from "./code-samples";
 
 export type RecipeKind =
   | "Minimal single date"
@@ -110,110 +120,108 @@ const holidayPresets: PresetEntry[] = [
   },
 ];
 
-export function isModuleName(text: string): text is ModuleName {
-  return MODULE_NAMES.includes(text as ModuleName);
-}
-
-export function isRecipeKind(text: string): text is RecipeKind {
+function ShowcaseFrame({
+  children,
+  previewSlug,
+  innerClass = "w-full max-w-[340px]",
+}: {
+  children: React.ReactNode;
+  previewSlug: string;
+  innerClass?: string;
+}) {
   return (
-    text === "Minimal single date" ||
-    text === "Booking range" ||
-    text === "Analytics range with presets" ||
-    text === "Date and time" ||
-    text === "Mobile tracks" ||
-    text === "Bubble appearance" ||
-    text === "Custom theme" ||
-    text === "Monsoon theme" ||
-    text === "Disabled dates example" ||
-    text === "Holiday presets example"
+    <div className="relative">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            asChild
+            variant="outline"
+            size="xs"
+            className="absolute right-3 top-3 z-10 border-[var(--border)] bg-[var(--doc-bg-secondary)] font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] shadow-sm hover:border-[var(--nav-active-border)] hover:text-[var(--text-primary)]"
+          >
+            <Link
+              href={`/docs/preview/${previewSlug}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open
+              <ExternalLink size={11} />
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Open in standalone page</TooltipContent>
+      </Tooltip>
+      <Card className="border-[var(--border)] bg-[var(--doc-bg-secondary)] py-0 ring-0 shadow-sm">
+        <CardContent className="flex justify-center px-4 py-7">
+          <div className={innerClass}>{children}</div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
 export function SimplePresetShowcase({
-  block,
+  sampleKey = "quick-start",
 }: {
-  block: { lang: string; text: string };
+  sampleKey?: CodeSampleKey;
 }) {
   return (
     <section className="mb-10 space-y-4">
-      <div className="flex justify-center rounded-lg border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-4 py-7 shadow-sm">
-        <div className="w-full max-w-[300px]">
-          <CalendarPreview
-            width="100%"
-            navLinks={[]}
-            initialDate={new Date(2026, 4, 13)}
-            defaultViewDate={new Date(2026, 4, 1)}
-            useSavedAppearanceFallback={false}
-            useSavedThemeFallback={false}
-          />
-        </div>
-      </div>
+      <ShowcaseFrame previewSlug="quick-start" innerClass="w-full max-w-[300px]">
+        <CalendarPreview
+          width="100%"
+          navLinks={[]}
+          initialDate={new Date(2026, 4, 13)}
+          defaultViewDate={new Date(2026, 4, 1)}
+          useSavedAppearanceFallback={false}
+          useSavedThemeFallback={false}
+        />
+      </ShowcaseFrame>
       <div className="min-w-0 [&>div]:mb-0">
-        <CodeBlock code={block.text} lang={block.lang} />
+        <CodeBlock code={codeSamples[sampleKey]} lang="tsx" />
       </div>
     </section>
   );
 }
 
 export function MultiMonthPerformanceShowcase({
-  code,
-  lang,
+  sampleKey = "multi-month",
 }: {
-  code: string;
-  lang: string;
+  sampleKey?: CodeSampleKey;
 }) {
-  const [range, setRange] = useState<DateRange>({
-    from: new Date(2026, 6, 8),
-    to: new Date(2026, 10, 16),
-  });
-  const rowStarts = [0, 3, 6, 9];
-
   return (
     <section className="mb-8 space-y-4">
-      <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-4 py-7 shadow-sm">
-        <div className="min-w-[760px]">
-          <Calendar
-            mode="range"
-            value={range}
-            onChange={setRange}
-            defaultViewDate={new Date(2026, 0, 1)}
-            cols={3}
-            width="100%"
-            appearance={compact}
-          >
-            {rowStarts.flatMap((start) => [
-              ...Array.from({ length: 3 }, (_, index) => {
-                const offset = start + index;
-                return (
-                  <CalendarNav
-                    key={`nav-${offset}`}
-                    col={1}
-                    offset={offset}
-                    {...(offset === 0
-                      ? { showMonthPicker: true, compactYears: true }
-                      : { monthLabel: true, yearLabel: true })}
-                  />
-                );
-              }),
-              ...Array.from({ length: 3 }, (_, index) => {
-                const offset = start + index;
-                return (
-                  <CalendarDays
-                    key={`days-${offset}`}
-                    col={1}
-                    offset={offset}
-                    currentMonthOnly
-                    fixedRows={false}
-                  />
-                );
-              }),
-            ])}
-            <CalendarSelectedDates col={3} />
-          </Calendar>
-        </div>
+      <div className="relative">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              asChild
+              variant="outline"
+              size="xs"
+              className="absolute right-3 top-3 z-10 border-[var(--border)] bg-[var(--doc-bg-secondary)] font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] shadow-sm hover:border-[var(--nav-active-border)] hover:text-[var(--text-primary)]"
+            >
+              <Link
+                href="/docs/preview/multi-month"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open
+                <ExternalLink size={11} />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Open in standalone page</TooltipContent>
+        </Tooltip>
+        <Card className="border-[var(--border)] bg-[var(--doc-bg-secondary)] py-0 ring-0 shadow-sm">
+          <CardContent className="overflow-x-auto px-4 py-7">
+            <div className="min-w-[760px]">
+              <MultiMonthCalendar />
+            </div>
+          </CardContent>
+        </Card>
       </div>
       <div className="min-w-0 [&>div]:mb-0">
-        <CodeBlock code={code} lang={lang} />
+        <CodeBlock code={codeSamples[sampleKey]} lang="tsx" />
       </div>
     </section>
   );
@@ -221,22 +229,18 @@ export function MultiMonthPerformanceShowcase({
 
 export function RecipeShowcase({
   kind,
-  code,
-  lang,
+  sampleKey,
 }: {
   kind: RecipeKind;
-  code: string;
-  lang: string;
+  sampleKey: CodeSampleKey;
 }) {
   return (
     <section className="mb-8 space-y-4">
-      <div className="flex justify-center rounded-lg border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-4 py-7 shadow-sm">
-        <div className="w-full max-w-[340px]">
-          <RecipeCalendar kind={kind} />
-        </div>
-      </div>
+      <ShowcaseFrame previewSlug={`recipe/${recipeSlug(kind)}`}>
+        <RecipeCalendar kind={kind} />
+      </ShowcaseFrame>
       <div className="min-w-0 [&>div]:mb-0">
-        <CodeBlock code={code} lang={lang} />
+        <CodeBlock code={codeSamples[sampleKey]} lang="tsx" />
       </div>
     </section>
   );
@@ -244,28 +248,77 @@ export function RecipeShowcase({
 
 export function ModuleShowcase({
   moduleName,
-  code,
-  lang,
+  sampleKey,
 }: {
   moduleName: ModuleName;
-  code: string;
-  lang: string;
+  sampleKey: CodeSampleKey;
 }) {
   return (
     <section className="mb-8 space-y-4">
-      <div className="flex justify-center rounded-lg border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-4 py-7 shadow-sm">
-        <div className="w-full max-w-[340px]">
-          <ModuleCalendar moduleName={moduleName} />
-        </div>
-      </div>
+      <ShowcaseFrame previewSlug={`module/${moduleName}`}>
+        <ModuleCalendar moduleName={moduleName} />
+      </ShowcaseFrame>
       <div className="min-w-0 [&>div]:mb-0">
-        <CodeBlock code={code} lang={lang} />
+        <CodeBlock code={codeSamples[sampleKey]} lang="tsx" />
       </div>
     </section>
   );
 }
 
-function RecipeCalendar({ kind }: { kind: RecipeKind }) {
+export function recipeSlug(kind: RecipeKind) {
+  return kind.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+export function MultiMonthCalendar() {
+  const [range, setRange] = useState<DateRange>({
+    from: new Date(2026, 6, 8),
+    to: new Date(2026, 10, 16),
+  });
+  const rowStarts = [0, 3, 6, 9];
+
+  return (
+    <Calendar
+      mode="range"
+      value={range}
+      onChange={setRange}
+      defaultViewDate={new Date(2026, 0, 1)}
+      cols={3}
+      width="100%"
+      appearance={compact}
+    >
+      {rowStarts.flatMap((start) => [
+        ...Array.from({ length: 3 }, (_, index) => {
+          const offset = start + index;
+          return (
+            <CalendarNav
+              key={`nav-${offset}`}
+              col={1}
+              offset={offset}
+              {...(offset === 0
+                ? { showMonthPicker: true, compactYears: true }
+                : { monthLabel: true, yearLabel: true })}
+            />
+          );
+        }),
+        ...Array.from({ length: 3 }, (_, index) => {
+          const offset = start + index;
+          return (
+            <CalendarDays
+              key={`days-${offset}`}
+              col={1}
+              offset={offset}
+              currentMonthOnly
+              fixedRows={false}
+            />
+          );
+        }),
+      ])}
+      <CalendarSelectedDates col={3} />
+    </Calendar>
+  );
+}
+
+export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   const [singleDate, setSingleDate] = useState<Date | null>(
     () => new Date(2026, 4, 13),
   );
@@ -445,7 +498,7 @@ function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   );
 }
 
-function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
+export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   const [date, setDate] = useState<Date | null>(() => new Date(2026, 4, 13));
   const [dateTime, setDateTime] = useState<Date | null>(
     () => new Date(2026, 4, 13, 10, 30),
@@ -640,5 +693,18 @@ function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
     >
       <CalendarYearsGrid showControls yearsPerPage={12} />
     </Calendar>
+  );
+}
+
+export function QuickStartCalendar() {
+  return (
+    <CalendarPreview
+      width="100%"
+      navLinks={[]}
+      initialDate={new Date(2026, 4, 13)}
+      defaultViewDate={new Date(2026, 4, 1)}
+      useSavedAppearanceFallback={false}
+      useSavedThemeFallback={false}
+    />
   );
 }
