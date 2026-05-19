@@ -6,10 +6,12 @@ import { CalendarPreview } from "./CalendarPreview";
 import { RandomizeButton } from "./RandomizeButton";
 import { Reveal } from "./Reveal";
 import { Button } from "@/components/ui/button";
+import dateForgePackage from "../../node_modules/@dateforge/react-calendar/package.json";
 
 const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
 const CODECOV_BADGE =
   "https://codecov.io/gh/kirilinsky/dateforge-react-calendar/branch/main/graph/badge.svg";
+const DATEFORGE_VERSION = dateForgePackage.version;
 
 export const revalidate = 3600;
 
@@ -30,7 +32,10 @@ export default async function Home() {
   return (
     <main className="h-[100dvh] snap-y snap-mandatory overflow-y-auto bg-[#fbfbfd] text-zinc-950 lg:overflow-hidden lg:snap-none">
       {/* screen 1 */}
-      <div className="flex h-[100dvh] w-full snap-start flex-col">
+      <div className="relative flex h-[100dvh] w-full snap-start flex-col">
+        <span className="pointer-events-none absolute bottom-3 left-4 z-10 select-none font-mono text-[10px] leading-none text-zinc-300/65 sm:bottom-4 sm:left-5">
+          @dateforge/react-calendar v{DATEFORGE_VERSION}
+        </span>
         <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
           <SiteHeader coverage={coverage} />
           <section className="flex flex-1 flex-col py-2 text-center lg:gap-8 lg:py-6">
