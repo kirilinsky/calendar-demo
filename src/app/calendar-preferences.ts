@@ -12,6 +12,7 @@ import {
   bubble,
   compact,
   loft,
+  press,
   soft,
   square,
 } from "@dateforge/react-calendar/appearances";
@@ -29,7 +30,8 @@ export type AppearanceId =
   | "square"
   | "bubble"
   | "loft"
-  | "airy";
+  | "airy"
+  | "press";
 
 export type SavedTheme =
   | { type: "preset"; id: string }
@@ -63,6 +65,7 @@ const APPEARANCE_MAP: Record<
   bubble,
   loft,
   airy,
+  press,
 };
 
 export const APPEARANCE_IDS: AppearanceId[] = [
@@ -73,6 +76,7 @@ export const APPEARANCE_IDS: AppearanceId[] = [
   "bubble",
   "loft",
   "airy",
+  "press",
 ];
 
 const THEME_TOKEN_KEYS: Array<keyof ThemeTokens> = [

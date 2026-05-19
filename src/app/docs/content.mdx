@@ -180,6 +180,79 @@ Uncontrolled mode starts when `value` is `undefined`. `defaultValue` seeds the r
 
 When both `value` and `defaultValue` are passed, `value` wins. If you change `mode` at runtime, pass a compatible `value` at the same time; selection shape is not migrated for you.
 
+## Accessibility labels
+
+DateForge ships English `aria-label` defaults for icon buttons, toolbars, dialogs, spinbuttons, tracks, and overflow controls. Override them when your product is localized, when a compact icon needs product-specific wording, or when multiple calendars on the same screen need clearer screen-reader context.
+
+Every accessibility label is a plain `string`. Pass labels to `<Calendar>` to set global fallbacks for all child modules, or pass the same label prop directly to a module for a local override. Module props win over Calendar-level props.
+
+```tsx
+<Calendar
+  locale="en-GB"
+  clearLabel="Clear booking date"
+  confirmLabel="Apply booking date"
+  previousMonthLabel="Show previous booking month"
+  nextMonthLabel="Show next booking month"
+>
+  <CalendarNav
+    showMonthPicker
+    compactYears
+    calendarNavigationLabel="Booking date navigation"
+  />
+  <CalendarDays weekLabel="ISO week" />
+  <CalendarSelectedDates
+    allowClear
+    removeSelectedDateLabel="Remove booking date"
+  />
+</Calendar>
+```
+
+Templated labels keep their placeholder names. DateForge replaces `{month}`, `{year}`, `{time}`, `{period}`, `{count}`, `{from}`, and `{to}` where the module has that value available.
+
+| Prop | Default | Used by |
+| ---- | ------- | ------- |
+| `applyLabel` | `"Apply"` | `CalendarManualInput` |
+| `calendarNavigationLabel` | `"Calendar navigation"` | `CalendarNav` |
+| `changeMonthLabel` | `"Change month, currently {month}"` | `CalendarNav` |
+| `changeTimeLabel` | `"Change time, currently {time}"` | `CalendarNav`, compact time control |
+| `changeYearLabel` | `"Change year, currently {year}"` | `CalendarNav` |
+| `clearLabel` | `"Clear"` | `CalendarNav`, `CalendarInfo`, `CalendarManualInput`, `CalendarSelectedDates` |
+| `confirmLabel` | `"Confirm"` | Month, year, and time popups |
+| `dayTrackLabel` | `"Day"` | `CalendarDaysTrack` |
+| `homeLabel` | `"Go to current month"` | `CalendarNav`, `CalendarInfo` |
+| `hoursLabel` | `"Hours"` | `CalendarNav` time popup, `CalendarTimeGrid` |
+| `minutesLabel` | `"Minutes"` | `CalendarNav` time popup, `CalendarTimeGrid` |
+| `monthGridLabel` | `"Select month, {year}"` | `CalendarMonthsGrid` |
+| `monthPickerLabel` | `"Month picker"` | `CalendarNav` month picker group |
+| `monthTrackLabel` | `"Month"` | `CalendarNav` month popup, `CalendarMonthsTrack` |
+| `nextMonthLabel` | `"Next month"` | `CalendarNav` |
+| `nextYearLabel` | `"Next year"` | `CalendarNav` |
+| `nextYearsLabel` | `"Next years"` | `CalendarYearsGrid` |
+| `previousMonthLabel` | `"Previous month"` | `CalendarNav` |
+| `previousYearLabel` | `"Previous year"` | `CalendarNav` |
+| `previousYearsLabel` | `"Previous years"` | `CalendarYearsGrid` |
+| `removeLabel` | `"Remove"` | `CalendarManualInput` |
+| `removeRangeEndLabel` | `"Remove range end"` | `CalendarSelectedDates` |
+| `removeRangeStartLabel` | `"Remove range start"` | `CalendarSelectedDates` |
+| `removeSelectedDateLabel` | `"Remove selected date"` | `CalendarDaysTrack`, `CalendarSelectedDates` |
+| `resetTimeLabel` | `"Reset to {time}"` | `CalendarTimeGrid` |
+| `saveSelectedDateLabel` | `"Save selected date"` | `CalendarDaysTrack` |
+| `secondsLabel` | `"Seconds"` | `CalendarNav` time popup, `CalendarTimeGrid` |
+| `selectMonthLabel` | `"Select month"` | `CalendarNav` month popup dialog |
+| `selectTimeLabel` | `"Select time"` | `CalendarNav` time popup dialog |
+| `selectYearLabel` | `"Select year"` | `CalendarNav` year popup dialog |
+| `showMoreSelectedDatesLabel` | `"Show {count} more selected dates"` | `CalendarSelectedDates` |
+| `themeSwitchToDarkLabel` | `"Switch to dark mode"` | `CalendarNav` theme toggle |
+| `themeSwitchToLightLabel` | `"Switch to light mode"` | `CalendarNav` theme toggle |
+| `themeToggleLabel` | `"Toggle theme"` | `CalendarNav` theme toggle fallback |
+| `timePeriodLabel` | `"Time period, currently {period}"` | AM/PM switch in time controls |
+| `timePickerLabel` | `"Time picker"` | `CalendarNav` time popup, `CalendarTimeGrid` |
+| `weekLabel` | `"Week"` | `CalendarDays` week-number header |
+| `yearGridLabel` | `"Select year, showing {from} to {to}"` | `CalendarYearsGrid` |
+| `yearPageNavigationLabel` | `"Year page navigation"` | `CalendarYearsGrid` |
+| `yearPickerLabel` | `"Year picker"` | `CalendarNav` year picker group |
+| `yearTrackLabel` | `"Year"` | `CalendarNav` year popup, `CalendarYearsTrack` |
+
 ## Ready-made module sets
 
 These are starting points rather than exported presets. Copy the shape, then add constraints, disabled rules, themes, or appearances.
@@ -234,6 +307,7 @@ The root wrapper and context provider. Owns all shared state — mode, value, vi
 | `maxDates` | `number` | — | Cap on selected dates in `multiple` mode |
 | `timeStep` | `{ hour?, minute?, second? }` | — | Snap interval for time selection |
 | `hour12` | `boolean` | locale | Force 12 or 24-hour time display |
+| `...Label` props | `string` | built-in English | Global accessible/action label fallbacks; see [Accessibility labels](#accessibility-labels) |
 | `cols` | `number` | — | Equal-width column grid for child modules |
 | `width` | `string \| number` | — | Explicit width on the root element |
 | `gradient` | `boolean` | `false` | Subtle gradient overlay on the surface |
@@ -268,6 +342,32 @@ Navigation bar that controls the internal `viewDate`. Does not commit selection 
 | `bound` | `"from" \| "to"` | — | Range bound for dual-nav layouts |
 | `offset` | `number` | — | View offset in months |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
+| `calendarNavigationLabel` | `string` | `"Calendar navigation"` | Toolbar label when no visible `label` is provided |
+| `changeTimeLabel` | `string` | `"Change time, currently {time}"` | Time button aria-label |
+| `changeMonthLabel` | `string` | `"Change month, currently {month}"` | Month picker button aria-label |
+| `changeYearLabel` | `string` | `"Change year, currently {year}"` | Year picker button aria-label |
+| `clearLabel` | `string` | `"Clear"` | Clear selection button aria-label |
+| `confirmLabel` | `string` | `"Confirm"` | Popup confirm button aria-label |
+| `homeLabel` | `string` | `"Go to current month"` | Home button aria-label |
+| `hoursLabel` | `string` | `"Hours"` | Hour drum aria-label in the time popup |
+| `minutesLabel` | `string` | `"Minutes"` | Minute drum aria-label in the time popup |
+| `monthPickerLabel` | `string` | `"Month picker"` | Month picker group label |
+| `monthTrackLabel` | `string` | `"Month"` | Month popup track aria-label |
+| `nextMonthLabel` | `string` | `"Next month"` | Next month button aria-label |
+| `nextYearLabel` | `string` | `"Next year"` | Next year button aria-label |
+| `previousMonthLabel` | `string` | `"Previous month"` | Previous month button aria-label |
+| `previousYearLabel` | `string` | `"Previous year"` | Previous year button aria-label |
+| `secondsLabel` | `string` | `"Seconds"` | Seconds drum aria-label in the time popup |
+| `selectTimeLabel` | `string` | `"Select time"` | Time popup dialog label |
+| `selectMonthLabel` | `string` | `"Select month"` | Month popup dialog label |
+| `selectYearLabel` | `string` | `"Select year"` | Year popup dialog label |
+| `themeSwitchToDarkLabel` | `string` | `"Switch to dark mode"` | Theme toggle aria-label when light mode is active |
+| `themeSwitchToLightLabel` | `string` | `"Switch to light mode"` | Theme toggle aria-label when dark mode is active |
+| `themeToggleLabel` | `string` | `"Toggle theme"` | Theme toggle fallback aria-label |
+| `timePeriodLabel` | `string` | `"Time period, currently {period}"` | AM/PM switch aria-label |
+| `timePickerLabel` | `string` | `"Time picker"` | Time drum group label |
+| `yearPickerLabel` | `string` | `"Year picker"` | Year picker group label |
+| `yearTrackLabel` | `string` | `"Year"` | Year popup track aria-label |
 
 </PropsTableAccordion>
 
@@ -295,6 +395,7 @@ The main day grid. Renders a month view and commits selection on click. Works ac
 | `hideOutOfRange` | `boolean` | `false` | Hide disabled out-of-range days |
 | `lockDeselection` | `boolean` | `false` | Prevent deselecting already-selected date |
 | `blockNavigation` | `boolean` | `false` | Prevent month navigation |
+| `weekLabel` | `string` | `"Week"` | Week-number header label |
 | `offset` | `number` | `0` | Render a month offset from the shared `viewDate` |
 | `syncViewOnSelect` | `boolean` | `offset === 0` | On day click, also move `viewDate` to that day's month. Defaults to `true` for the primary grid and `false` for offset grids, so clicking a day in a side month of a multi-month layout does not steal the primary view. Set explicitly to override. Works in both controlled and uncontrolled mode (controlled-value round-trip is suppressed for the click that requested keepView) |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
@@ -317,6 +418,12 @@ Drum-scroll time picker for hours, minutes, and optionally seconds. Pairs with `
 | `showBoundDate` | `boolean` | `true` | Render localized date header above the track for the bound's current date. Requires `bound`; hidden when bound has no date |
 | `showReset` | `boolean` | `false` | Render a "now" reset button below the track. Click resets time fields on active date or bound to current hour/minute (and second if `seconds` enabled) |
 | `resetLabel` | `React.ReactNode` | clock icon + localized "now" | Override reset button content |
+| `hoursLabel` | `string` | `"Hours"` | Hour drum aria-label |
+| `minutesLabel` | `string` | `"Minutes"` | Minute drum aria-label |
+| `secondsLabel` | `string` | `"Seconds"` | Seconds drum aria-label |
+| `timePeriodLabel` | `string` | `"Time period, currently {period}"` | AM/PM switch aria-label |
+| `timePickerLabel` | `string` | `"Time picker"` | Time drum group label |
+| `resetTimeLabel` | `string` | `"Reset to {time}"` | Reset button aria-label |
 | `onTimeSelect` | `(date: Date) => void` | — | Fires on every drum change with a Date built from `viewDate` and the new time |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
@@ -357,6 +464,11 @@ Renders the current selection as chips. In range mode shows from/to bounds; in m
 | `align` | `"left" \| "center" \| "right"` | `"left"` | Chip alignment |
 | `maxVisibleChips` | `number` | — | Collapse chips beyond this count |
 | `overflowLabel` | `string` | — | Label shown on overflow indicator |
+| `clearLabel` | `string` | `"Clear"` | Clear-all button aria-label |
+| `removeRangeStartLabel` | `string` | `"Remove range start"` | Range start chip remove button aria-label |
+| `removeRangeEndLabel` | `string` | `"Remove range end"` | Range end chip remove button aria-label |
+| `removeSelectedDateLabel` | `string` | `"Remove selected date"` | Selected date chip remove button aria-label |
+| `showMoreSelectedDatesLabel` | `string` | `"Show {count} more selected dates"` | Overflow chip aria-label |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
 </PropsTableAccordion>
@@ -374,6 +486,9 @@ Free-text date input that parses typed values and syncs them with calendar state
 | `allowClear` | `boolean` | `false` | Show clear button in input |
 | `align` | `"left" \| "center" \| "right"` | `"left"` | Input text alignment |
 | `label` | `React.ReactNode` | — | Custom label rendered next to the input |
+| `applyLabel` | `string` | `"Apply"` | Apply typed value button aria-label |
+| `clearLabel` | `string` | `"Clear"` | Clear input button aria-label |
+| `removeLabel` | `string` | `"Remove"` | Remove selected value button aria-label |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
 </PropsTableAccordion>
@@ -393,6 +508,8 @@ Read-only summary of the current selection. In `single` mode prints the date; in
 | `animated` | `boolean` | `true` | Animate value transitions |
 | `emptyLabel` | `React.ReactNode` | — | Content shown when selection is empty |
 | `formatter` | `(value: CalendarInfoValue) => React.ReactNode` | — | Fully custom renderer; overrides built-in formatting |
+| `clearLabel` | `string` | `"Clear"` | Clear button aria-label |
+| `homeLabel` | `string` | `"Go to current month"` | Home button aria-label |
 | `prefix` | `React.ReactNode` | — | Static prefix rendered before the value |
 | `rangeStyle` | `"days" \| "duration"` | `"days"` | Range mode only: show day count or full duration string |
 | `showHome` | `boolean` | `false` | Render a "go to current month" button; disabled when viewDate already matches today's month |
@@ -414,6 +531,9 @@ Horizontal drum scroller for day selection. Designed for mobile-first layouts. U
 | ---- | ---- | ------- | ----------- |
 | `bound` | `"from" \| "to"` | — | Range bound this drum controls |
 | `showMonthLabel` | `boolean` | `false` | Show month name above drum |
+| `dayTrackLabel` | `string` | `"Day"` | Day track aria-label |
+| `removeSelectedDateLabel` | `string` | `"Remove selected date"` | Remove selected date button aria-label |
+| `saveSelectedDateLabel` | `string` | `"Save selected date"` | Save selected date button aria-label |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
 </PropsTableAccordion>
@@ -431,6 +551,7 @@ Drum scroller for month navigation. Scrolling moves the internal `viewDate` with
 | `short` | `boolean` | `false` | Use abbreviated month names |
 | `showYearLabel` | `boolean` | `false` | Show year above drum |
 | `bound` | `"from" \| "to"` | — | Range bound |
+| `monthTrackLabel` | `string` | `"Month"` | Month track aria-label |
 | `onMonthSelect` | `(date: Date) => void` | — | Fires when user lands on a month |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
@@ -447,6 +568,7 @@ Drum scroller for year navigation. Works the same way as `CalendarMonthsTrack` b
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | `bound` | `"from" \| "to"` | — | Range bound |
+| `yearTrackLabel` | `string` | `"Year"` | Year track aria-label |
 | `onYearSelect` | `(date: Date) => void` | — | Fires when user lands on a year |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
@@ -465,6 +587,7 @@ Drum scroller for year navigation. Works the same way as `CalendarMonthsTrack` b
 | `short` | `boolean` | `false` | Abbreviated month names |
 | `disableOutOfRange` | `boolean` | `false` | Disable months outside min/max |
 | `hideOutOfRange` | `boolean` | `false` | Hide months outside min/max |
+| `monthGridLabel` | `string` | `"Select month, {year}"` | Month grid group label |
 | `onMonthSelect` | `(date: Date) => void` | — | Fires on month cell click |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
@@ -485,6 +608,10 @@ Paginated year grid for year-only pickers or quick year jumps. Pairs with `Calen
 | `showControls` | `boolean` | `true` | Show prev/next page controls |
 | `disableOutOfRange` | `boolean` | `false` | Disable years outside min/max |
 | `hideOutOfRange` | `boolean` | `false` | Hide years outside min/max |
+| `previousYearsLabel` | `string` | `"Previous years"` | Previous year page button aria-label |
+| `nextYearsLabel` | `string` | `"Next years"` | Next year page button aria-label |
+| `yearGridLabel` | `string` | `"Select year, showing {from} to {to}"` | Year grid label |
+| `yearPageNavigationLabel` | `string` | `"Year page navigation"` | Year page controls group label |
 | `onYearSelect` | `(date: Date) => void` | — | Fires on year cell click |
 | `col` | `number` | — | Number of parent `cols` tracks to span |
 
@@ -568,9 +695,9 @@ You can use DateForge without importing a named theme. The default theme prop ac
 
 Built-in themes are generated palette objects. They are intentionally imported, not referenced by string name, so bundlers can tree-shake unused palettes.
 
-**Light / bright:** `mint`, `tide`, `prism`, `meadow`, `snow`, `slate`, `chalk`, `amethyst`, `pearl`, `rosa`, `neon`, `scarlet`, `graphite`, `solar`, `split`, `latte`, `comfy`, `monsoon`, `riso`, `mono`.
+**Light / bright:** `mint`, `tide`, `prism`, `meadow`, `snow`, `slate`, `chalk`, `amethyst`, `pearl`, `rosa`, `neon`, `scarlet`, `graphite`, `solar`, `split`, `latte`, `comfy`, `monsoon`, `riso`, `mono`, `atelier`.
 
-**Dark / vibrant:** `midnight`, `aurora`, `cyber`, `abyss`, `nebula`, `phosphor`, `temporal`, `forest`, `sandstone`, `dracula`, `crimson`, `flare`, `industrial`, `espresso`, `ember`, `cobalt`, `fjord`, `velvet`, `eclipse`, `noir`.
+**Dark / vibrant:** `midnight`, `aurora`, `cyber`, `abyss`, `nebula`, `phosphor`, `temporal`, `forest`, `sandstone`, `dracula`, `crimson`, `flare`, `industrial`, `espresso`, `ember`, `cobalt`, `fjord`, `velvet`, `eclipse`, `noir`, `bauhaus`.
 
 > [Browse all themes in the interactive playground →](/themes)
 
@@ -647,6 +774,7 @@ Appearances are structural presets. They are useful when the same date workflow 
 | `bubble` | Spacious, rounded, prominent shadows | Consumer flows and friendly surfaces |
 | `loft` | Airy, relaxed, large touch targets | Editorial, scheduling, touch-first UI |
 | `airy` | Open, minimal, low-shadow | Large surfaces and calm scheduling flows |
+| `press` | Editorial, serif, print-like rhythm | Article pages, launches, branded storytelling |
 
 Import appearances the same way as themes. The aggregate path is fine for demos; per-name subpaths are better in production.
 

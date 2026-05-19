@@ -7,6 +7,7 @@ import {
   bubble,
   compact,
   loft,
+  press,
   soft,
   square,
 } from "@dateforge/react-calendar/appearances";
@@ -88,6 +89,13 @@ const APPEARANCES: AppearancePreset[] = [
     appearance: airy,
     radius: "0.4em",
     spacing: "1em",
+  },
+  {
+    id: "press",
+    mood: "Editorial",
+    appearance: press,
+    radius: "0.05em",
+    spacing: "0.35em",
   },
 ];
 

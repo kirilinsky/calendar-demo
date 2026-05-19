@@ -3,7 +3,7 @@ import {
   midnight, sandstone, mint, tide, rosa, snow, solar, dracula, comfy, neon,
   temporal, latte, prism, meadow, forest, nebula, aurora, slate, scarlet,
   monsoon, pearl, chalk, split, riso, flare, abyss, cobalt, fjord, velvet, eclipse,
-  mono, noir,
+  mono, noir, atelier, bauhaus,
 } from "@dateforge/react-calendar/themes";
 import type { CustomTheme } from "@dateforge/react-calendar";
 
@@ -38,6 +38,7 @@ export const THEMES: ThemePreset[] = [
   { id: "velvet",     backdrop: "#120711", highlight: "#ff4da6", type: "dark",  mood: "Velvet",          theme: velvet     },
   { id: "eclipse",    backdrop: "#080d09", highlight: "#b7e000", type: "dark",  mood: "Lime Glow",       theme: eclipse    },
   { id: "noir",       backdrop: "#111111", highlight: "#ffffff", type: "dark",  mood: "Pure Black",      theme: noir       },
+  { id: "bauhaus",    backdrop: "#161420", highlight: "#d8d1b8", type: "dark",  mood: "Modernist",       theme: bauhaus    },
   // light (--c-b backdrop is light)
   { id: "mint",       backdrop: "#f8f9fc", highlight: "#60d276", type: "light", mood: "Fresh",           theme: mint       },
   { id: "tide",       backdrop: "#f0fdff", highlight: "#14b8a6", type: "light", mood: "Ocean",           theme: tide       },
@@ -59,4 +60,5 @@ export const THEMES: ThemePreset[] = [
   { id: "monsoon",    backdrop: "#d5ded9", highlight: "#244a3d", type: "light", mood: "Zen",             theme: monsoon    },
   { id: "riso",       backdrop: "#fef7e8", highlight: "#2b3fe0", type: "light", mood: "Vintage",         theme: riso       },
   { id: "mono",       backdrop: "#ffffff", highlight: "#111111", type: "light", mood: "Pure White",      theme: mono       },
+  { id: "atelier",    backdrop: "#ede2c2", highlight: "#1a1c2a", type: "light", mood: "Print Studio",    theme: atelier    },
 ];
