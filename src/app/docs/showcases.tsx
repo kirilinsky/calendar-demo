@@ -26,10 +26,10 @@ import {
   CalendarMonthsTrack,
   CalendarPresets,
   CalendarSelectedDates,
-  CalendarTimeWheel,
   CalendarYearsGrid,
   CalendarYearsTrack,
 } from "@dateforge/react-calendar/modules";
+import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
 import {
   CalendarToolbar,
   CalendarToolbarClear,
@@ -38,6 +38,7 @@ import {
   CalendarToolbarMonthTrigger,
   CalendarToolbarNext,
   CalendarToolbarPrev,
+  CalendarToolbarThemeToggle,
   CalendarToolbarTime,
   CalendarToolbarYearLabel,
   CalendarToolbarYearTrigger,
@@ -46,7 +47,7 @@ import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
 import { CalendarMonthsWheel } from "@dateforge/react-calendar/modules/months-wheel";
 import { CalendarYearsWheel } from "@dateforge/react-calendar/modules/years-wheel";
 import { bubble, compact, soft } from "@dateforge/react-calendar/appearances";
-import { monsoon } from "@dateforge/react-calendar/themes";
+import { monsoon, nebula, snow } from "@dateforge/react-calendar/themes";
 import { CalendarPreview } from "../CalendarPreview";
 import { CodeBlock } from "./CodeBlock";
 import { codeSamples, type CodeSampleKey } from "./code-samples";
@@ -61,7 +62,9 @@ export type RecipeKind =
   | "Custom theme"
   | "Monsoon theme"
   | "Disabled dates example"
-  | "Holiday presets example";
+  | "Holiday presets example"
+  | "Per-module themes"
+  | "Theme toggle";
 
 export const MODULE_NAMES = [
   "Calendar",
@@ -91,21 +94,21 @@ const disabledRules = createDisabled({
 });
 
 const brandTheme = createTheme({
-  accent: "#10b981",
-  activeText: "#ffffff",
-  todayDot: "#064e3b",
-  backdrop: "#ffffff",
-  highlight: "#d1fae5",
-  tone: "#e8eaed",
-  text: "#18181b",
-  stroke: "#d4d4d8",
-  shadow: "#18181b1f",
-  disabled: "#e4e4e7",
-  mutedText: "#71717a",
-  disabledText: "#a1a1aa",
-  weekend: "#dc2626",
-  range: "#a7f3d0",
-  error: "#ef4444",
+  highlight: "#1ad980",
+  range:     "#a7f3d0",
+  weekend:   "#dc2626",
+  light: {
+    backdrop: "#ffffff",
+    text:     "#18181b",
+    tone:     "#f0fdf4",
+    stroke:   "#d4d4d8",
+  },
+  dark: {
+    backdrop: "#0a1a12",
+    text:     "#f0fdf4",
+    tone:     "#14532d",
+    stroke:   "#166534",
+  },
 });
 
 const analyticsPresets: PresetEntry[] = [
@@ -558,6 +561,54 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         <CalendarDaysTrack bound="from" />
         <CalendarDaysTrack bound="to" />
         <CalendarSelectedDates />
+      </Calendar>
+    );
+  }
+
+  if (kind === "Theme toggle") {
+    return (
+      <Calendar
+        mode="single"
+        value={singleDate}
+        onChange={setSingleDate}
+        defaultViewDate={new Date(2026, 4, 1)}
+        theme={nebula as any}
+        appearance={soft}
+      >
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+          <CalendarToolbarThemeToggle />
+        </CalendarToolbar>
+        <CalendarDays />
+      </Calendar>
+    );
+  }
+
+  if (kind === "Per-module themes") {
+    return (
+      <Calendar
+        mode="single"
+        value={singleDate}
+        onChange={setSingleDate}
+        defaultViewDate={new Date(2026, 4, 1)}
+        theme={snow}
+        light
+        appearance={soft}
+      >
+        {/* toolbar overrides to built-in dark — dark bar on light calendar */}
+        <CalendarToolbar theme="dark">
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
+        {/* days inherit snow light from Calendar */}
+        <CalendarDays />
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <CalendarInfo theme={nebula as any} showSummary showRelative />
       </Calendar>
     );
   }

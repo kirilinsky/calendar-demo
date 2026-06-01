@@ -274,25 +274,27 @@ const holidayPresets: PresetEntry[] = [
 
   "custom-theme": `import { Calendar, createTheme } from "@dateforge/react-calendar";
 
+// Shared tokens apply to both variants.
+// light / dark keys override per variant.
 const brandTheme = createTheme({
-  accent: "#10b981",
-  activeText: "#2a2323",
-  todayDot: "#064e3b",
-  backdrop: "#ffffff",
   highlight: "#1ad980",
-  tone: "#64ec1a",
-  text: "#18181b",
-  stroke: "#d4d4d8",
-  shadow: "#18181b1f",
-  disabled: "#e4e4e7",
-  mutedText: "#71717a",
-  disabledText: "#a1a1aa",
-  weekend: "#dc2626",
-  range: "#a7f3d0",
-  error: "#ef4444",
+  range:     "#a7f3d0",
+  weekend:   "#dc2626",
+  light: {
+    backdrop: "#ffffff",
+    text:     "#18181b",
+    tone:     "#f0fdf4",
+    stroke:   "#d4d4d8",
+  },
+  dark: {
+    backdrop: "#0a1a12",
+    text:     "#f0fdf4",
+    tone:     "#14532d",
+    stroke:   "#166534",
+  },
 });
 
-<Calendar theme={brandTheme}>
+<Calendar theme={brandTheme}>          {/* auto — follows prefers-color-scheme */}
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -300,7 +302,10 @@ const brandTheme = createTheme({
     <CalendarToolbarYearTrigger compact />
   </CalendarToolbar>
   <CalendarDays />
-</Calendar>`,
+</Calendar>
+
+<Calendar theme={brandTheme} dark />   {/* always dark variant */}
+<Calendar theme={brandTheme} light />  {/* always light variant */}`,
 
   "bubble-appearance": `import { bubble } from "@dateforge/react-calendar/appearances/bubble";
 
@@ -320,6 +325,36 @@ const brandTheme = createTheme({
 
   "calendar-years-wheel": `<Calendar mode="range" value={range} onChange={setRange}>
   <CalendarYearsWheel showLabel showReset />
+</Calendar>`,
+
+  "theme-toggle": `import { nebula } from "@dateforge/react-calendar/themes/nebula";
+
+<Calendar theme={nebula} mode="single" value={date} onChange={setDate}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarThemeToggle />
+  </CalendarToolbar>
+  <CalendarDays />
+</Calendar>`,
+
+  "per-module-themes": `import { snow } from "@dateforge/react-calendar/themes/snow";
+import { nebula } from "@dateforge/react-calendar/themes/nebula";
+
+// Calendar = snow (light). Toolbar overrides to built-in dark.
+// CalendarInfo overrides to nebula. Days inherit snow from Calendar.
+// Module theme wins over Calendar-level theme.
+<Calendar theme={snow} light mode="single" value={date} onChange={setDate}>
+  <CalendarToolbar theme="dark">
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays />
+  <CalendarInfo theme={nebula} showSummary showRelative />
 </Calendar>`,
 
   "calendar-lunar": `<Calendar mode="single" value={date} onChange={setDate}>

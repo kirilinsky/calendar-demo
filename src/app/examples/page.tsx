@@ -1,13 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Check,
-  ChevronDown,
-  Clipboard,
-  Palette,
-  Sparkles,
-} from "lucide-react";
+import { Check, ChevronDown, Clipboard, Palette, Sparkles } from "lucide-react";
 import {
   Calendar,
   basicPresets,
@@ -24,7 +18,13 @@ import {
   CalendarMonthsTrack,
   CalendarPresets,
   CalendarSelectedDates,
-  CalendarTimeWheel,
+  CalendarYearsGrid,
+  CalendarYearsTrack,
+} from "@dateforge/react-calendar/modules";
+import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
+import { CalendarMonthsWheel } from "@dateforge/react-calendar/modules/months-wheel";
+import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
+import {
   CalendarToolbar,
   CalendarToolbarClear,
   CalendarToolbarHome,
@@ -37,9 +37,7 @@ import {
   CalendarToolbarTime,
   CalendarToolbarYearLabel,
   CalendarToolbarYearTrigger,
-  CalendarYearsGrid,
-  CalendarYearsTrack,
-} from "@dateforge/react-calendar/modules";
+} from "@dateforge/react-calendar/modules/toolbar";
 import {
   bubble,
   compact,
@@ -293,9 +291,9 @@ export default function ExamplesPage() {
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-600">
               These are just starting points. Mix the modules however you like —
-              booking, dashboards, forms, scheduling, whatever your product needs.
-              Storybook is the open playground; this page is finished recipes you
-              can copy and tweak.
+              booking, dashboards, forms, scheduling, whatever your product
+              needs. Storybook is the open playground; this page is finished
+              recipes you can copy and tweak.
             </p>
             <div className="mx-auto mt-6 max-w-md">
               <InstallSnippet />
@@ -325,7 +323,7 @@ export default function ExamplesPage() {
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
               </CalendarToolbar>
               <CalendarDays />
@@ -365,7 +363,7 @@ const noPast = useMemo(() => {
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -374,7 +372,7 @@ const noPast = useMemo(() => {
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarHome />
                 <CalendarToolbarClear />
@@ -423,14 +421,14 @@ const noPast = useMemo(() => {
                 <CalendarToolbarLabel label="Departure" />
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthLabel />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
               </CalendarToolbar>
               <CalendarToolbar col={1}>
                 <CalendarToolbarLabel label="Return" />
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthLabel />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -478,13 +476,13 @@ const noPast = useMemo(() => {
               <CalendarToolbar col={1}>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
               </CalendarToolbar>
               <CalendarToolbar col={1} offset={1}>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthLabel />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -544,15 +542,45 @@ const noPast = useMemo(() => {
               cols={3}
               width="100%"
             >
-              <CalendarToolbar col={1}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
-              <CalendarToolbar col={1} offset={1}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
-              <CalendarToolbar col={1} offset={2}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
+              <CalendarToolbar col={1}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearLabel />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarToolbar col={1} offset={1}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearLabel />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarToolbar col={1} offset={2}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearLabel />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
               <CalendarDays col={1} />
               <CalendarDays offset={1} col={1} />
               <CalendarDays offset={2} col={1} />
-              <CalendarToolbar col={1} offset={3}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
-              <CalendarToolbar col={1} offset={4}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
-              <CalendarToolbar col={1} offset={5}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
+              <CalendarToolbar col={1} offset={3}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearLabel />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarToolbar col={1} offset={4}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearLabel />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarToolbar col={1} offset={5}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearLabel />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
               <CalendarDays offset={3} col={1} />
               <CalendarDays offset={4} col={1} />
               <CalendarDays offset={5} col={1} />
@@ -690,7 +718,7 @@ const weekdaysOnly = useMemo(() => {
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarTime />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
@@ -731,7 +759,7 @@ const analyticsPresets = [
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -786,7 +814,7 @@ const supportPresets = useMemo<PresetEntry[]>(
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -906,7 +934,7 @@ const holidayPresets = useMemo<PresetEntry[]>(
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -958,7 +986,7 @@ const brandTheme = useMemo(
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -1004,7 +1032,7 @@ const denseAppearance = useMemo(
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -1054,7 +1082,7 @@ const weekdaysOnly = useMemo(() => {
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -1093,7 +1121,7 @@ const sprintPresets = [
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
               </CalendarToolbar>
               <CalendarPresets presets={sprintPresets} />
@@ -1138,7 +1166,7 @@ const sprintPresets = [
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
               </CalendarToolbar>
               <CalendarDays />
@@ -1162,7 +1190,7 @@ const sprintPresets = [
   >
     <CalendarYearsGrid
       yearsPerPage={12}
-      onYearSelect={(date) => setArchiveYear(date)}
+      onYearSelect={(date: Date) => setArchiveYear(date)}
     />
   </Calendar>
   {archiveYear && <p>Browsing archive · {archiveYear.getFullYear()}</p>}
@@ -1179,7 +1207,7 @@ const sprintPresets = [
             >
               <CalendarYearsGrid
                 yearsPerPage={12}
-                onYearSelect={(year) => setArchiveYear(year)}
+                onYearSelect={(year: Date) => setArchiveYear(year)}
               />
             </Calendar>
             <p
@@ -1210,7 +1238,7 @@ const sprintPresets = [
   >
     <CalendarMonthsGrid
       short
-      onMonthSelect={(date) => setCampaignMonth(date)}
+      onMonthSelect={(date: Date) => setCampaignMonth(date)}
     />
   </Calendar>
   {campaignMonth && (
@@ -1231,7 +1259,7 @@ const sprintPresets = [
             >
               <CalendarMonthsGrid
                 short
-                onMonthSelect={(date) => setCampaignMonth(date)}
+                onMonthSelect={(date: Date) => setCampaignMonth(date)}
               />
             </Calendar>
             <p
@@ -1362,7 +1390,7 @@ const noPast = useMemo(() => {
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarTime />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
@@ -1475,7 +1503,7 @@ const blackout = createDisabled({
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger compact />
-                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
                 <CalendarToolbarClear />
               </CalendarToolbar>
@@ -1514,6 +1542,80 @@ const blackout = createDisabled({
               </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowNavigate animated />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Month wheel + day grid"
+            useWhen="Compact pickers where month is spun via drum, day selected via grid."
+            demonstrates={`\`cols={2}\`, arrows navigate by year, wheel handles month, YearTrigger compact at right.`}
+            theme="temporal"
+            appearance="soft"
+            wide
+            code={`<Calendar mode="single" value={date} onChange={setDate} cols={2}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev unit="year" />
+    <CalendarToolbarYearTrigger  />
+    <CalendarToolbarNext unit="year" />
+  </CalendarToolbar>
+  <CalendarMonthsWheel col={1} showLabel />
+  <CalendarDays col={1} />
+</Calendar>`}
+          >
+            <Calendar
+              mode="single"
+              value={basicDate}
+              onChange={setBasicDate}
+              cols={2}
+              theme={temporal}
+              appearance={soft}
+              width="100%"
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev unit="year" />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext unit="year" />
+              </CalendarToolbar>
+              <CalendarMonthsWheel col={1} showLabel />
+              <CalendarDays col={1} />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Lunar phase strip"
+            useWhen="Astrology apps, farming calendars, tide trackers, or any domain where lunar phase is meaningful."
+            demonstrates={`\`CalendarLunar\` below the day grid — display-only, no interaction.`}
+            theme="nebula"
+            appearance="soft"
+            code={`import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
+
+<Calendar mode="single" value={date} onChange={setDate}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays />
+  <CalendarLunar />
+</Calendar>`}
+          >
+            <Calendar
+              mode="single"
+              value={basicDate}
+              onChange={setBasicDate}
+              theme={nebula}
+              appearance={soft}
+              width="100%"
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarYearTrigger compact />
+              </CalendarToolbar>
+              <CalendarDays />
+              <CalendarLunar />
             </Calendar>
           </ExampleCard>
         </div>

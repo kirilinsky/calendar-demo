@@ -277,16 +277,22 @@ Templated labels keep their placeholder names. DateForge replaces `{month}`, `{y
 | `changeYearLabel` | `"Change year, currently {year}"` | `{year}` | `CalendarToolbarYearTrigger` |
 | `clearLabel` | `"Clear"` | — | `CalendarToolbarClear`, `CalendarInfo`, `CalendarManualInput`, `CalendarSelectedDates` |
 | `confirmLabel` | `"Confirm"` | — | Month, year, and time popups |
+| `currentDayLabel` | `"Current day"` | — | `CalendarToolbarHome` / day reset button |
+| `currentMonthLabel` | `"Current month"` | — | `CalendarMonthsWheel` reset button |
+| `currentYearLabel` | `"Current year"` | — | `CalendarYearsWheel` reset button |
 | `dayTrackLabel` | `"Day"` | — | `CalendarDaysTrack` |
 | `homeLabel` | `"Go to current month"` | — | `CalendarToolbarHome`, `CalendarInfo` |
 | `hoursLabel` | `"Hours"` | — | `CalendarToolbarTime`, `CalendarTimeWheel` |
 | `minutesLabel` | `"Minutes"` | — | `CalendarToolbarTime`, `CalendarTimeWheel` |
 | `monthGridLabel` | `"Select month, {year}"` | `{year}` | `CalendarMonthsGrid` |
 | `monthPickerLabel` | `"Month picker"` | — | `CalendarMonthsWheel` group |
+| `monthsLabel` | — | — | `CalendarMonthsWheel` drum aria-label |
 | `monthTrackLabel` | `"Month"` | — | `CalendarToolbarMonthTrigger` popup, `CalendarMonthsTrack` |
+| `nextDayLabel` | `"Next day"` | — | `CalendarToolbarNext` in day unit mode |
 | `nextMonthLabel` | `"Next month"` | — | `CalendarToolbarNext` |
 | `nextYearLabel` | `"Next year"` | — | `CalendarToolbarNext` |
 | `nextYearsLabel` | `"Next years"` | — | `CalendarYearsGrid` |
+| `previousDayLabel` | `"Previous day"` | — | `CalendarToolbarPrev` in day unit mode |
 | `previousMonthLabel` | `"Previous month"` | — | `CalendarToolbarPrev` |
 | `previousYearLabel` | `"Previous year"` | — | `CalendarToolbarPrev` |
 | `previousYearsLabel` | `"Previous years"` | — | `CalendarYearsGrid` |
@@ -294,7 +300,9 @@ Templated labels keep their placeholder names. DateForge replaces `{month}`, `{y
 | `removeRangeEndLabel` | `"Remove range end"` | — | `CalendarSelectedDates` |
 | `removeRangeStartLabel` | `"Remove range start"` | — | `CalendarSelectedDates` |
 | `removeSelectedDateLabel` | `"Remove selected date"` | — | `CalendarDaysTrack`, `CalendarSelectedDates` |
+| `resetMonthLabel` | — | — | `CalendarMonthsWheel` reset button aria-label |
 | `resetTimeLabel` | `"Reset to {time}"` | `{time}` | `CalendarToolbarTime`, `CalendarTimeWheel` |
+| `resetYearLabel` | — | — | `CalendarYearsWheel` reset button aria-label |
 | `saveSelectedDateLabel` | `"Save selected date"` | — | `CalendarDaysTrack` |
 | `secondsLabel` | `"Seconds"` | — | `CalendarToolbarTime`, `CalendarTimeWheel` |
 | `selectMonthLabel` | `"Select month"` | — | `CalendarToolbarMonthTrigger` popup |
@@ -311,6 +319,7 @@ Templated labels keep their placeholder names. DateForge replaces `{month}`, `{y
 | `yearPageNavigationLabel` | `"Year page navigation"` | — | `CalendarYearsGrid` |
 | `yearPickerLabel` | `"Year picker"` | — | `CalendarYearsWheel` group |
 | `yearTrackLabel` | `"Year"` | — | `CalendarToolbarYearTrigger` popup, `CalendarYearsTrack` |
+| `yearsLabel` | — | — | `CalendarYearsWheel` drum aria-label |
 
 ## Ready-made module sets
 
@@ -373,6 +382,7 @@ The root wrapper and context provider. Owns all shared state — mode, value, vi
 | `cols` | `number` | — | Equal-width column grid for child modules (`repeat(cols, 1fr)`) |
 | `width` | `string \| number` | `"100%"` | Container width |
 | `gradient` | `boolean` | `false` | Subtle gradient overlay on selected cells |
+| `id` | `string` | — | `id` attribute on the calendar root wrapper |
 | `data-testid` | `string` | `"dateforge-calendar"` | Root wrapper test id. Override per-instance when mounting multiple calendars on the same page |
 
 </PropsTableAccordion>
@@ -861,6 +871,14 @@ import { nebula } from "@dateforge/react-calendar/themes/nebula";
 
 If both `light` and `dark` are passed, `dark` wins and a dev warning is emitted.
 
+### Built-in theme toggle button
+
+Add `<CalendarToolbarThemeToggle />` to your toolbar to give users a light/dark switch inside the calendar — no external state required. The toggle manages its own dark/light mode internally and switches between the two variants of whatever `ThemeFamily` is active.
+
+<RecipeShowcase kind="Theme toggle" sampleKey="theme-toggle" />
+
+The button label updates automatically: `themeSwitchToDarkLabel` when light, `themeSwitchToLightLabel` when dark. Override both on `<Calendar>` for localization, or directly on the toggle component for per-instance wording.
+
 ## Built-in themes
 
 28 theme families, each with a light **and** dark variant. Import the family, then choose the variant with `dark` / `light` props — or omit both for auto.
@@ -905,19 +923,19 @@ const brandTheme = createTheme({
 Every module accepts a `theme` prop that overrides the Calendar-level theme for that module only. Module theme wins over the Calendar `theme` prop. This lets you mix palettes inside one picker — for example a dark toolbar on a light calendar, or a branded info strip that matches your sidebar.
 
 ```tsx
-import { nebula } from "@dateforge/react-calendar/themes/nebula";
 import { snow } from "@dateforge/react-calendar/themes/snow";
-import { aurora } from "@dateforge/react-calendar/themes/aurora";
+import { nebula } from "@dateforge/react-calendar/themes/nebula";
 
-<Calendar theme={snow}>
-  <CalendarToolbar theme={nebula} dark>
+// Calendar = snow (light). Toolbar = built-in dark. Days inherit snow. Info = nebula.
+<Calendar theme={snow} light>
+  <CalendarToolbar theme="dark">
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
     <CalendarToolbarNext />
     <CalendarToolbarYearTrigger compact />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarInfo theme={aurora} showSummary showRelative />
+  <CalendarInfo theme={nebula} showSummary showRelative />
 </Calendar>
 ```
 
@@ -945,22 +963,22 @@ Unlayered app CSS still wins over all library layers. Prefer `createTheme()`, `c
 
 | Token | Role |
 | ----- | ---- |
-| `--c-a` | Accent, primary action color |
-| `--c-at` | Text on active / selected surfaces |
-| `--c-t-d` | Dot under selected today |
-| `--c-b` | Backdrop and popup surface |
-| `--c-h` | Hover, focus, and selected highlight |
-| `--c-t` | Calendar grid tone / subtle background |
-| `--c-c` | Primary text |
-| `--c-s` | Stroke, dividers, outlines |
-| `--c-x` | Shadow tint |
-| `--c-d` | Disabled control background |
-| `--c-m` | Muted text |
-| `--c-dt` | Disabled text |
-| `--c-we` | Weekend marker |
-| `--c-r` | Range selection background |
-| `--c-e` | Error / invalid state |
-| `--c-oom` | Out-of-month day text (optional — falls back to `--c-m` when omitted) |
+| `--c-a` | Inverted surface for secondary labels and decorative outlines |
+| `--c-at` | Text / icon on top of `--c-h` (highlight). Must meet 4.5:1 contrast against highlight |
+| `--c-t-d` | Fallback dot color for selected today |
+| `--c-b` | Main calendar background |
+| `--c-h` | Primary accent — selected cell, active buttons, toolbar accents |
+| `--c-t` | Secondary / muted background for rows, tracks, hover |
+| `--c-c` | Default text for labels and numbers |
+| `--c-s` | Border / divider |
+| `--c-x` | Drop-shadow tint (alpha-blended, e.g. `#6366f130`) |
+| `--c-d` | Decorative disabled surface (non-text) |
+| `--c-m` | Secondary readable foreground — outside-month, week numbers |
+| `--c-dt` | Readable disabled foreground (4.5:1+ against backdrop and tone) |
+| `--c-we` | Weekend text accent (4.5:1+ against backdrop and tone) |
+| `--c-r` | Background tint for in-range days |
+| `--c-e` | Error / destructive signal |
+| `--c-oom` | Dedicated foreground for outside-month cells. Optional — falls back to `--c-m` when omitted |
 
 ## Appearances
 
@@ -968,21 +986,37 @@ Appearances are structural presets. They are useful when the same date workflow 
 
 > [Try all appearances in the interactive playground →](/appearance)
 
-### Structure tokens
+### Appearance tokens
+
+Shape, spacing, density, and motion tokens set by `createAppearance()` and built-in appearance presets.
 
 | Token | Role |
 | ----- | ---- |
-| `--cal-font-size` | Container-relative base font size |
-| `--cal-text-day` | Adaptive day-cell text size |
-| `--cal-radius` | Base radius used across controls |
-| `--cal-container-radius` | Outer shell radius |
-| `--cal-spacing` | Base spacing unit |
-| `--cal-border` | Border width |
+| `--cal-radius` | Base border-radius |
+| `--cal-container-radius` | Outer shell radius (multiplier of `--cal-radius`) |
+| `--cal-spacing` | Base gap / padding unit |
+| `--cal-border` | Stroke width |
 | `--cal-days-padding` | Day-cell padding |
-| `--cal-track-height` | Track/drum height |
+| `--cal-track-height` | Scrollable track / drum height |
 | `--cal-day-ratio` | Day-cell aspect ratio |
-| `--cal-transition` | Motion duration |
-| `--cal-shadow-sm`, `--cal-shadow-md`, `--cal-shadow-lg` | Depth scale using `--c-x` |
+| `--cal-transition` | Animation duration |
+| `--cal-shadow-sm`, `--cal-shadow-md`, `--cal-shadow-lg` | Depth scale (uses `--c-x`) |
+| `--cal-nav-padding` | Padding inside toolbar containers |
+| `--cal-nav-min-height` | Minimum height of toolbar containers |
+| `--cal-nav-font-size` | Toolbar root font-size; cascades to children via `em` |
+| `--cal-nav-meta-font-size` | Font-size of year/month label and trigger text |
+
+### Typography tokens
+
+Set by the core layout module (`layout.module.css`), not by appearance presets. Read-only for consumers — use `createAppearance()` for size/density, not direct overrides.
+
+| Token | Role |
+| ----- | ---- |
+| `--cal-font-size` | Container-relative base: `clamp(11px, 2.7cqw, 18px)` |
+| `--cal-text-day` | Adaptive day-cell text: `clamp(0.72em, …, 1.15em)` |
+| `--cal-text-2xs` … `--cal-text-lg` | Semantic scale (0.6em – 0.95em) |
+| `--cal-weight-regular` … `--cal-weight-bold` | Font weights 400 – 700 |
+| `--cal-leading-tight` … `--cal-leading-relaxed` | Line heights 1 – 1.6 |
 
 ### Built-in appearances
 
