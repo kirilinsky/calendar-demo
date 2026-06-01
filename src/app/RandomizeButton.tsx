@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { APPEARANCE_IDS, saveAppearanceId, saveGradient, saveThemePreset } from "./calendar-preferences";
+import { APPEARANCE_IDS, saveAppearanceId, saveDarkMode, saveGradient, saveThemePreset } from "./calendar-preferences";
 import { THEMES } from "./themes/themes-data";
 
 export function RandomizeButton() {
@@ -11,6 +11,7 @@ export function RandomizeButton() {
     saveThemePreset(theme.id);
     saveAppearanceId(appearance);
     saveGradient(Math.random() < 0.5);
+    saveDarkMode(Math.random() < 0.5);
   }
 
   return (

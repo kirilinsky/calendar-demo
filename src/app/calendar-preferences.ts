@@ -21,6 +21,7 @@ import { THEMES } from "./themes/themes-data";
 const APPEARANCE_STORAGE_KEY = "dateforge:appearance";
 const THEME_STORAGE_KEY = "dateforge:theme";
 const GRADIENT_STORAGE_KEY = "dateforge:gradient";
+const DARK_MODE_STORAGE_KEY = "dateforge:dark";
 const PREFERENCE_EVENT = "dateforge:calendar-preferences";
 
 export type AppearanceId =
@@ -290,6 +291,7 @@ export function resetAllPreferences() {
     window.localStorage.removeItem(THEME_STORAGE_KEY);
     window.localStorage.removeItem(APPEARANCE_STORAGE_KEY);
     window.localStorage.removeItem(GRADIENT_STORAGE_KEY);
+    window.localStorage.removeItem(DARK_MODE_STORAGE_KEY);
     notifyPreferenceChange();
   } catch {
     // localStorage can be unavailable in private or restricted contexts.
@@ -313,6 +315,33 @@ export function useHasNonDefaultPreferences(): boolean {
     () => false,
   );
   return appearanceId !== "default" || themeRaw !== "" || gradient;
+}
+
+export function readSavedDarkMode(): boolean {
+  if (!canUseStorage()) return false;
+  try {
+    return window.localStorage.getItem(DARK_MODE_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function saveDarkMode(dark: boolean) {
+  if (!canUseStorage()) return;
+  try {
+    window.localStorage.setItem(DARK_MODE_STORAGE_KEY, dark ? "1" : "0");
+    notifyPreferenceChange();
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+}
+
+export function useSavedDarkMode(): boolean {
+  return useSyncExternalStore(
+    subscribePreferences,
+    () => readSavedDarkMode(),
+    () => false,
+  );
 }
 
 export function readSavedGradient(): boolean {

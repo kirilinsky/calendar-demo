@@ -1,44 +1,60 @@
 export const codeSamples = {
   "quick-start": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
 import {
-  CalendarDays,
-  CalendarNav,
-} from "@dateforge/react-calendar/modules";
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";
 
 export function DatePicker() {
   const [date, setDate] = useState<Date | null>(null);
 
   return (
     <Calendar mode="single" value={date} onChange={setDate}>
-      <CalendarNav showMonthPicker compactYears />
+      <CalendarToolbar>
+        <CalendarToolbarPrev />
+        <CalendarToolbarMonthTrigger />
+        <CalendarToolbarNext />
+        <CalendarToolbarYearTrigger compact />
+      </CalendarToolbar>
       <CalendarDays />
     </Calendar>
   );
 }`,
 
   "multi-month": `<Calendar mode="range" value={range} onChange={setRange} cols={3} appearance={compact}>
-  <CalendarNav col={1} showMonthPicker compactYears />
-  <CalendarNav col={1} offset={1} monthLabel yearLabel />
-  <CalendarNav col={1} offset={2} monthLabel yearLabel />
+  {/* offset 0 — only calendar with prev/next and year trigger */}
+  <CalendarToolbar col={1} offset={0}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  {/* offsets 1–11 — month + year labels only, no arrows */}
+  <CalendarToolbar col={1} offset={1}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
+  <CalendarToolbar col={1} offset={2}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
   <CalendarDays col={1} currentMonthOnly fixedRows={false} />
   <CalendarDays col={1} offset={1} currentMonthOnly fixedRows={false} />
   <CalendarDays col={1} offset={2} currentMonthOnly fixedRows={false} />
-  <CalendarNav col={1} offset={3} monthLabel yearLabel />
-  <CalendarNav col={1} offset={4} monthLabel yearLabel />
-  <CalendarNav col={1} offset={5} monthLabel yearLabel />
+  <CalendarToolbar col={1} offset={3}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
+  <CalendarToolbar col={1} offset={4}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
+  <CalendarToolbar col={1} offset={5}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
   <CalendarDays col={1} offset={3} currentMonthOnly fixedRows={false} />
   <CalendarDays col={1} offset={4} currentMonthOnly fixedRows={false} />
   <CalendarDays col={1} offset={5} currentMonthOnly fixedRows={false} />
-  <CalendarNav col={1} offset={6} monthLabel yearLabel />
-  <CalendarNav col={1} offset={7} monthLabel yearLabel />
-  <CalendarNav col={1} offset={8} monthLabel yearLabel />
+  <CalendarToolbar col={1} offset={6}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
+  <CalendarToolbar col={1} offset={7}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
+  <CalendarToolbar col={1} offset={8}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
   <CalendarDays col={1} offset={6} currentMonthOnly fixedRows={false} />
   <CalendarDays col={1} offset={7} currentMonthOnly fixedRows={false} />
   <CalendarDays col={1} offset={8} currentMonthOnly fixedRows={false} />
-  <CalendarNav col={1} offset={9} monthLabel yearLabel />
-  <CalendarNav col={1} offset={10} monthLabel yearLabel />
-  <CalendarNav col={1} offset={11} monthLabel yearLabel />
+  <CalendarToolbar col={1} offset={9}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
+  <CalendarToolbar col={1} offset={10}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
+  <CalendarToolbar col={1} offset={11}><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /></CalendarToolbar>
   <CalendarDays col={1} offset={9} currentMonthOnly fixedRows={false} />
   <CalendarDays col={1} offset={10} currentMonthOnly fixedRows={false} />
   <CalendarDays col={1} offset={11} currentMonthOnly fixedRows={false} />
@@ -46,12 +62,23 @@ export function DatePicker() {
 </Calendar>`,
 
   "minimal-single-date": `<Calendar mode="single" value={date} onChange={setDate}>
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
 </Calendar>`,
 
   "booking-range": `<Calendar mode="range" value={range} onChange={setRange}>
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`,
@@ -64,15 +91,26 @@ export function DatePicker() {
 
 <Calendar mode="range" value={range} onChange={setRange}>
   <CalendarPresets presets={analyticsPresets} />
-  <CalendarNav compactMonths compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates />
 </Calendar>`,
 
   "date-and-time": `<Calendar mode="single" value={date} onChange={setDate} timeStep={{ minute: 5 }}>
-  <CalendarNav showTime showMonthPicker />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarTime />
+  </CalendarToolbar>
   <CalendarDays />
-  <CalendarTimeGrid />
+  <CalendarTimeWheel />
 </Calendar>`,
 
   "mobile-tracks": `<Calendar mode="range" value={range} onChange={setRange}>
@@ -93,13 +131,25 @@ export function DatePicker() {
   locale="en-US"          // BCP 47 — affects month names, weekday labels, time format
   minDate={new Date()}    // nothing before today is selectable
 >
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`,
 
   "calendar-nav": `<Calendar mode="single" value={date} onChange={setDate}>
-  <CalendarNav showMonthPicker compactYears clear home />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarHome />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
 </Calendar>`,
 
   "calendar-days": `<Calendar mode="single" value={date} onChange={setDate}>
@@ -107,7 +157,7 @@ export function DatePicker() {
 </Calendar>`,
 
   "calendar-time-grid": `<Calendar mode="single" value={date} onChange={setDate} timeStep={{ minute: 5 }}>
-  <CalendarTimeGrid seconds labels="long" />
+  <CalendarTimeWheel seconds labels="long" />
 </Calendar>`,
 
   "calendar-presets": `import { Calendar, basicPresets } from "@dateforge/react-calendar";
@@ -160,7 +210,12 @@ const rules = createDisabled({
 });
 
 <Calendar mode="single" value={date} onChange={setDate} disabled={rules}>
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
 </Calendar>`,
 
@@ -196,14 +251,24 @@ const holidayPresets: PresetEntry[] = [
 
 <Calendar mode="single" value={date} onChange={setDate}>
   <CalendarPresets presets={holidayPresets} />
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
 </Calendar>`,
 
   "monsoon-theme": `import { monsoon } from "@dateforge/react-calendar/themes/monsoon";
 
 <Calendar theme={monsoon}>
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
 </Calendar>`,
 
@@ -228,15 +293,44 @@ const brandTheme = createTheme({
 });
 
 <Calendar theme={brandTheme}>
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
 </Calendar>`,
 
   "bubble-appearance": `import { bubble } from "@dateforge/react-calendar/appearances/bubble";
 
 <Calendar appearance={bubble}>
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
+</Calendar>`,
+
+  "calendar-months-wheel": `<Calendar mode="range" value={range} onChange={setRange}>
+  <CalendarMonthsWheel showLabel showReset />
+</Calendar>`,
+
+  "calendar-years-wheel": `<Calendar mode="range" value={range} onChange={setRange}>
+  <CalendarYearsWheel showLabel showReset />
+</Calendar>`,
+
+  "calendar-lunar": `<Calendar mode="single" value={date} onChange={setDate}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays />
+  <CalendarLunar />
 </Calendar>`,
 } as const;
 

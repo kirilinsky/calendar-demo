@@ -73,19 +73,22 @@ export default function DocsPage() {
       level: Number(element.tagName.slice(1)),
     }));
     setHeadings(list);
-    if (list.length && !active) setActive(list[0].id);
+    if (list.length) setActive(list[0].id);
 
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(entry.target.id);
-        });
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (!visible.length) return;
+        const topmost = visible.reduce((a, b) =>
+          a.boundingClientRect.top < b.boundingClientRect.top ? a : b,
+        );
+        setActive(topmost.target.id);
       },
       { rootMargin: "-18% 0px -72% 0px" },
     );
     elements.forEach((element) => observer.observe(element));
     return () => observer.disconnect();
-  }, [active]);
+  }, []);
 
   const scrollTo = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });

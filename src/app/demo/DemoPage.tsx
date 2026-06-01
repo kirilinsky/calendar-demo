@@ -15,17 +15,28 @@ import {
   CalendarDaysTrack,
   CalendarManualInput,
   CalendarMonthsTrack,
-  CalendarNav,
   CalendarPresets,
   CalendarSelectedDates,
-  CalendarTimeGrid,
+  CalendarTimeWheel,
+  CalendarToolbar,
+  CalendarToolbarClear,
+  CalendarToolbarHome,
+  CalendarToolbarLabel,
+  CalendarToolbarMonthLabel,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarPrev,
+  CalendarToolbarThemeToggle,
+  CalendarToolbarTime,
+  CalendarToolbarYearLabel,
+  CalendarToolbarYearTrigger,
   CalendarYearsTrack,
 } from "@dateforge/react-calendar/modules";
 import {
   aurora,
   graphite,
   industrial,
-  midnight,
+  nebula,
   mint,
   riso,
   snow,
@@ -127,7 +138,7 @@ interface Recipe {
 }
 
 const themeObjects = {
-  midnight,
+  nebula,
   snow,
   temporal,
   mint,
@@ -147,12 +158,12 @@ const appearanceObjects = {
 };
 
 const moduleMeta: Record<ModuleKind, Pick<DemoModule, "label" | "role">> = {
-  nav: { label: "CalendarNav", role: "hybrid" },
+  nav: { label: "CalendarToolbar", role: "hybrid" },
   days: { label: "CalendarDays", role: "interactive" },
   selected: { label: "CalendarSelectedDates", role: "display" },
   presets: { label: "CalendarPresets", role: "interactive" },
   manual: { label: "CalendarManualInput", role: "interactive" },
-  time: { label: "CalendarTimeGrid", role: "interactive" },
+  time: { label: "CalendarTimeWheel", role: "interactive" },
   yearsTrack: { label: "CalendarYearsTrack", role: "hybrid" },
   monthsTrack: { label: "CalendarMonthsTrack", role: "hybrid" },
   daysTrack: { label: "CalendarDaysTrack", role: "hybrid" },
@@ -260,7 +271,7 @@ const recipes: Recipe[] = [
     useCase: "Appointments with committed date and time.",
     mode: "single",
     modules: recipeModules.dateTime(),
-    themeId: "midnight",
+    themeId: "nebula",
     appearanceId: "loft",
   },
   {
@@ -669,12 +680,19 @@ function LivePreview({
 
 function renderCalendarModule(module: DemoModule, presets: PresetEntry[]) {
   const props = module.props ?? {};
-  if (module.kind === "nav") return <CalendarNav key={module.id} {...props} />;
+  if (module.kind === "nav") return (
+    <CalendarToolbar key={module.id}>
+      <CalendarToolbarPrev />
+      <CalendarToolbarMonthTrigger />
+      <CalendarToolbarNext />
+      <CalendarToolbarYearTrigger compact />
+    </CalendarToolbar>
+  );
   if (module.kind === "days") return <CalendarDays key={module.id} {...props} />;
   if (module.kind === "selected") return <CalendarSelectedDates key={module.id} {...props} />;
   if (module.kind === "presets") return <CalendarPresets key={module.id} presets={presets} {...props} />;
   if (module.kind === "manual") return <CalendarManualInput key={module.id} {...props} />;
-  if (module.kind === "time") return <CalendarTimeGrid key={module.id} {...props} />;
+  if (module.kind === "time") return <CalendarTimeWheel key={module.id} {...props} />;
   if (module.kind === "yearsTrack") return <CalendarYearsTrack key={module.id} {...props} />;
   if (module.kind === "monthsTrack") return <CalendarMonthsTrack key={module.id} {...props} />;
   return <CalendarDaysTrack key={module.id} {...props} />;
@@ -962,7 +980,7 @@ function PropsLab({
 }
 
 function ThemeLab({ state, patch }: { state: DemoState; patch: (next: Partial<DemoState>, event?: string) => void }) {
-  const themeOptions: ThemeId[] = ["auto", "light", "dark", "midnight", "snow", "temporal", "mint", "riso", "aurora", "graphite", "industrial", "custom"];
+  const themeOptions: ThemeId[] = ["auto", "light", "dark", "nebula", "snow", "temporal", "mint", "riso", "aurora", "graphite", "industrial", "custom"];
   return (
     <PanelCard title="Theme Lab" icon={<Palette size={16} />}>
       <div className="grid grid-cols-3 gap-2">
@@ -1398,7 +1416,7 @@ ${jsx}
 }
 
 function moduleCode(module: DemoModule, presetPack: PresetPackId) {
-  if (module.kind === "nav") return `<CalendarNav showMonthPicker compactYears clear />`;
+  if (module.kind === "nav") return `<CalendarToolbar>\n        <CalendarToolbarPrev />\n        <CalendarToolbarMonthTrigger />\n        <CalendarToolbarYearTrigger compact />\n        <CalendarToolbarNext />\n      </CalendarToolbar>`;
   if (module.kind === "days") return `<CalendarDays />`;
   if (module.kind === "selected") return `<CalendarSelectedDates allowClear allowNavigate animated />`;
   if (module.kind === "presets") {
@@ -1406,7 +1424,7 @@ function moduleCode(module: DemoModule, presetPack: PresetPackId) {
     return `<CalendarPresets presets={${value}} />`;
   }
   if (module.kind === "manual") return `<CalendarManualInput allowClear />`;
-  if (module.kind === "time") return `<CalendarTimeGrid />`;
+  if (module.kind === "time") return `<CalendarTimeWheel />`;
   if (module.kind === "yearsTrack") return `<CalendarYearsTrack />`;
   if (module.kind === "monthsTrack") return `<CalendarMonthsTrack />`;
   return `<CalendarDaysTrack showMonthLabel />`;

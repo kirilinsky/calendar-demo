@@ -24,13 +24,27 @@ import {
   CalendarManualInput,
   CalendarMonthsGrid,
   CalendarMonthsTrack,
-  CalendarNav,
   CalendarPresets,
   CalendarSelectedDates,
-  CalendarTimeGrid,
+  CalendarTimeWheel,
   CalendarYearsGrid,
   CalendarYearsTrack,
 } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarClear,
+  CalendarToolbarHome,
+  CalendarToolbarMonthLabel,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarPrev,
+  CalendarToolbarTime,
+  CalendarToolbarYearLabel,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";
+import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
+import { CalendarMonthsWheel } from "@dateforge/react-calendar/modules/months-wheel";
+import { CalendarYearsWheel } from "@dateforge/react-calendar/modules/years-wheel";
 import { bubble, compact, soft } from "@dateforge/react-calendar/appearances";
 import { monsoon } from "@dateforge/react-calendar/themes";
 import { CalendarPreview } from "../CalendarPreview";
@@ -51,9 +65,9 @@ export type RecipeKind =
 
 export const MODULE_NAMES = [
   "Calendar",
-  "CalendarNav",
+  "CalendarToolbar",
   "CalendarDays",
-  "CalendarTimeGrid",
+  "CalendarTimeWheel",
   "CalendarPresets",
   "CalendarSelectedDates",
   "CalendarManualInput",
@@ -63,6 +77,9 @@ export const MODULE_NAMES = [
   "CalendarYearsTrack",
   "CalendarMonthsGrid",
   "CalendarYearsGrid",
+  "CalendarMonthsWheel",
+  "CalendarYearsWheel",
+  "CalendarLunar",
 ] as const;
 
 export type ModuleName = (typeof MODULE_NAMES)[number];
@@ -291,15 +308,18 @@ export function MultiMonthCalendar() {
       rowStarts.flatMap((start) => [
         ...Array.from({ length: 3 }, (_, i) => {
           const offset = start + i;
-          return (
-            <CalendarNav
-              key={`nav-${offset}`}
-              col={1}
-              offset={offset}
-              {...(offset === 0
-                ? { showMonthPicker: true, compactYears: true }
-                : { monthLabel: true, yearLabel: true })}
-            />
+          return offset === 0 ? (
+            <CalendarToolbar key={`nav-${offset}`} col={1} offset={offset}>
+              <CalendarToolbarPrev />
+              <CalendarToolbarMonthTrigger />
+              <CalendarToolbarNext />
+              <CalendarToolbarYearTrigger compact />
+            </CalendarToolbar>
+          ) : (
+            <CalendarToolbar key={`nav-${offset}`} col={1} offset={offset}>
+              <CalendarToolbarMonthLabel />
+              <CalendarToolbarYearLabel />
+            </CalendarToolbar>
           );
         }),
         ...Array.from({ length: 3 }, (_, i) => {
@@ -363,7 +383,13 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         defaultViewDate={new Date(2026, 4, 1)}
         appearance={soft}
       >
-        <CalendarNav showMonthPicker compactYears clear />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+          <CalendarToolbarClear />
+        </CalendarToolbar>
         <CalendarDays />
         <CalendarSelectedDates allowClear allowNavigate />
       </Calendar>
@@ -380,7 +406,12 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         appearance={soft}
       >
         <CalendarPresets presets={analyticsPresets} />
-        <CalendarNav compactMonths compactYears />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
         <CalendarDays />
         <CalendarSelectedDates />
       </Calendar>
@@ -397,9 +428,15 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         timeStep={{ minute: 5 }}
         appearance={soft}
       >
-        <CalendarNav showTime showMonthPicker />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+          <CalendarToolbarTime />
+        </CalendarToolbar>
         <CalendarDays />
-        <CalendarTimeGrid />
+        <CalendarTimeWheel />
       </Calendar>
     );
   }
@@ -414,7 +451,12 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         disabled={disabledRules}
         appearance={soft}
       >
-        <CalendarNav showMonthPicker compactYears />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
         <CalendarDays />
       </Calendar>
     );
@@ -430,7 +472,12 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         appearance={soft}
       >
         <CalendarPresets presets={holidayPresets} />
-        <CalendarNav showMonthPicker compactYears />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
         <CalendarDays />
       </Calendar>
     );
@@ -445,7 +492,12 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         defaultViewDate={new Date(2026, 4, 1)}
         theme={monsoon}
       >
-        <CalendarNav showMonthPicker compactYears />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
         <CalendarDays />
       </Calendar>
     );
@@ -461,7 +513,12 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         theme={brandTheme}
         appearance={soft}
       >
-        <CalendarNav showMonthPicker compactYears />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
         <CalendarDays />
       </Calendar>
     );
@@ -476,7 +533,12 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         defaultViewDate={new Date(2026, 4, 1)}
         appearance={bubble}
       >
-        <CalendarNav showMonthPicker compactYears />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
         <CalendarDays />
       </Calendar>
     );
@@ -508,7 +570,12 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
       defaultViewDate={new Date(2026, 4, 1)}
       appearance={soft}
     >
-      <CalendarNav showMonthPicker compactYears />
+      <CalendarToolbar>
+        <CalendarToolbarPrev />
+        <CalendarToolbarMonthTrigger />
+        <CalendarToolbarNext />
+        <CalendarToolbarYearTrigger compact />
+      </CalendarToolbar>
       <CalendarDays />
     </Calendar>
   );
@@ -535,14 +602,19 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
         appearance={soft}
         minDate={new Date()}
       >
-        <CalendarNav showMonthPicker compactYears />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
         <CalendarDays />
         <CalendarSelectedDates allowClear allowNavigate />
       </Calendar>
     );
   }
 
-  if (moduleName === "CalendarNav") {
+  if (moduleName === "CalendarToolbar") {
     return (
       <Calendar
         mode="single"
@@ -551,7 +623,14 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
         defaultViewDate={defaultViewDate}
         appearance={soft}
       >
-        <CalendarNav showMonthPicker compactYears clear home />
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+          <CalendarToolbarHome />
+          <CalendarToolbarClear />
+        </CalendarToolbar>
       </Calendar>
     );
   }
@@ -570,7 +649,7 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
     );
   }
 
-  if (moduleName === "CalendarTimeGrid") {
+  if (moduleName === "CalendarTimeWheel") {
     return (
       <Calendar
         mode="single"
@@ -580,7 +659,56 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
         timeStep={{ minute: 5 }}
         appearance={soft}
       >
-        <CalendarTimeGrid seconds labels="long" />
+        <CalendarTimeWheel seconds labels="long" />
+      </Calendar>
+    );
+  }
+
+  if (moduleName === "CalendarMonthsWheel") {
+    return (
+      <Calendar
+        mode="range"
+        value={range}
+        onChange={setRange}
+        defaultViewDate={defaultViewDate}
+        appearance={soft}
+      >
+        <CalendarMonthsWheel showLabel showReset />
+      </Calendar>
+    );
+  }
+
+  if (moduleName === "CalendarYearsWheel") {
+    return (
+      <Calendar
+        mode="range"
+        value={range}
+        onChange={setRange}
+        defaultViewDate={defaultViewDate}
+        appearance={soft}
+      >
+        <CalendarYearsWheel showLabel showReset />
+      </Calendar>
+    );
+  }
+
+  if (moduleName === "CalendarLunar") {
+    return (
+      <Calendar
+        mode="single"
+        value={date}
+        onChange={setDate}
+        defaultViewDate={defaultViewDate}
+        appearance={soft}
+      >
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
+        <CalendarDays />
+        <CalendarLunar />
       </Calendar>
     );
   }

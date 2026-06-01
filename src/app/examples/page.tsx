@@ -22,10 +22,21 @@ import {
   CalendarManualInput,
   CalendarMonthsGrid,
   CalendarMonthsTrack,
-  CalendarNav,
   CalendarPresets,
   CalendarSelectedDates,
-  CalendarTimeGrid,
+  CalendarTimeWheel,
+  CalendarToolbar,
+  CalendarToolbarClear,
+  CalendarToolbarHome,
+  CalendarToolbarLabel,
+  CalendarToolbarMonthLabel,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarPrev,
+  CalendarToolbarThemeToggle,
+  CalendarToolbarTime,
+  CalendarToolbarYearLabel,
+  CalendarToolbarYearTrigger,
   CalendarYearsGrid,
   CalendarYearsTrack,
 } from "@dateforge/react-calendar/modules";
@@ -40,7 +51,7 @@ import {
   aurora,
   graphite,
   industrial,
-  midnight,
+  nebula,
   mint,
   riso,
   snow,
@@ -311,7 +322,12 @@ export default function ExamplesPage() {
               onChange={setBasicDate}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+              </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowClear={false} />
             </Calendar>
@@ -346,10 +362,24 @@ const noPast = useMemo(() => {
               appearance={soft}
               width="100%"
             >
-              <CalendarNav showMonthPicker clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarPresets presets={basicPresets.slice(4, 9)} />
               <CalendarDays />
-              <CalendarNav compactYears clear home themeToggle />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarHome />
+                <CalendarToolbarClear />
+                <CalendarToolbarThemeToggle />
+              </CalendarToolbar>
               <CalendarSelectedDates allowClear allowNavigate animated />
             </Calendar>
           </ExampleCard>
@@ -389,8 +419,21 @@ const noPast = useMemo(() => {
               width="100%"
               cols={2}
             >
-              <CalendarNav col={1} label="Departure" monthLabel />
-              <CalendarNav col={1} label="Return" monthLabel clear />
+              <CalendarToolbar col={1}>
+                <CalendarToolbarLabel label="Departure" />
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarToolbar col={1}>
+                <CalendarToolbarLabel label="Return" />
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarMonthsTrack col={1} bound="from" />
               <CalendarMonthsTrack col={1} bound="to" />
               <CalendarDaysTrack col={1} bound="from" />
@@ -432,8 +475,19 @@ const noPast = useMemo(() => {
               cols={2}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears col={1} />
-              <CalendarNav offset={1} monthLabel col={1} clear />
+              <CalendarToolbar col={1}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarToolbar col={1} offset={1}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays col={1} />
               <CalendarDays offset={1} col={1} />
               <CalendarSelectedDates allowClear allowNavigate animated />
@@ -490,15 +544,15 @@ const noPast = useMemo(() => {
               cols={3}
               width="100%"
             >
-              <CalendarNav monthLabel yearLabel col={1} />
-              <CalendarNav monthLabel yearLabel offset={1} col={1} />
-              <CalendarNav monthLabel yearLabel offset={2} col={1} />
+              <CalendarToolbar col={1}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
+              <CalendarToolbar col={1} offset={1}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
+              <CalendarToolbar col={1} offset={2}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
               <CalendarDays col={1} />
               <CalendarDays offset={1} col={1} />
               <CalendarDays offset={2} col={1} />
-              <CalendarNav monthLabel yearLabel offset={3} col={1} />
-              <CalendarNav monthLabel yearLabel offset={4} col={1} />
-              <CalendarNav monthLabel yearLabel offset={5} col={1} />
+              <CalendarToolbar col={1} offset={3}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
+              <CalendarToolbar col={1} offset={4}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
+              <CalendarToolbar col={1} offset={5}><CalendarToolbarPrev /><CalendarToolbarMonthLabel /><CalendarToolbarYearLabel /><CalendarToolbarNext /></CalendarToolbar>
               <CalendarDays offset={3} col={1} />
               <CalendarDays offset={4} col={1} />
               <CalendarDays offset={5} col={1} />
@@ -535,7 +589,13 @@ const weekdaysOnly = useMemo(() => {
               appearance={soft}
               width="100%"
             >
-              <CalendarNav compactMonths showYearPicker clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarYearTrigger compact />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowClear animated />
             </Calendar>
@@ -584,7 +644,13 @@ const dropDisabled = useMemo(
               appearance={compact}
               width="100%"
             >
-              <CalendarNav monthLabel yearLabel clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearLabel />
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays hideOutOfRange fixedRows={false} />
               <CalendarSelectedDates allowClear animated />
             </Calendar>
@@ -621,9 +687,16 @@ const weekdaysOnly = useMemo(() => {
               appearance={loft}
               width="100%"
             >
-              <CalendarNav showTime showMonthPicker compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarTime />
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays />
-              <CalendarTimeGrid />
+              <CalendarTimeWheel />
               <CalendarSelectedDates allowClear showTime />
             </Calendar>
           </ExampleCard>
@@ -655,7 +728,13 @@ const analyticsPresets = [
               theme={graphite}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarPresets presets={analyticsPresets} />
               <CalendarDays />
               <CalendarSelectedDates allowClear allowNavigate animated />
@@ -704,7 +783,13 @@ const supportPresets = useMemo<PresetEntry[]>(
               appearance={soft}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarPresets presets={supportPresets} />
               <CalendarDays />
               <CalendarSelectedDates allowClear allowNavigate animated />
@@ -818,7 +903,13 @@ const holidayPresets = useMemo<PresetEntry[]>(
               cols={2}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarPresets presets={holidayPresets} />
               <CalendarDays />
               <CalendarMonthsGrid col={1} />
@@ -864,7 +955,13 @@ const brandTheme = useMemo(
               appearance={soft}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowClear animated />
             </Calendar>
@@ -904,7 +1001,13 @@ const denseAppearance = useMemo(
               appearance={denseAppearance}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowClear animated />
             </Calendar>
@@ -948,7 +1051,13 @@ const weekdaysOnly = useMemo(() => {
               appearance={square}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowClear animated />
             </Calendar>
@@ -981,7 +1090,12 @@ const sprintPresets = [
               theme={industrial}
               width="100%"
             >
-              <CalendarNav showMonthPicker compactYears />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+              </CalendarToolbar>
               <CalendarPresets presets={sprintPresets} />
               <CalendarDays />
               <CalendarSelectedDates allowClear allowNavigate animated />
@@ -1021,7 +1135,12 @@ const sprintPresets = [
               width="100%"
             >
               <CalendarManualInput allowClear />
-              <CalendarNav showMonthPicker compactYears />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+              </CalendarToolbar>
               <CalendarDays />
             </Calendar>
           </ExampleCard>
@@ -1162,7 +1281,7 @@ const sprintPresets = [
               appearance={loft}
               width="100%"
             >
-              <CalendarTimeGrid />
+              <CalendarTimeWheel />
             </Calendar>
             <p
               aria-live="polite"
@@ -1240,9 +1359,16 @@ const noPast = useMemo(() => {
               appearance={loft}
               width="100%"
             >
-              <CalendarNav showTime showMonthPicker compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarTime />
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays />
-              <CalendarTimeGrid />
+              <CalendarTimeWheel />
             </Calendar>
             <div className="mt-4">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
@@ -1306,7 +1432,7 @@ const noPast = useMemo(() => {
               mode="single"
               value={birthday}
               onChange={setBirthday}
-              theme={midnight}
+              theme={nebula}
               appearance={bubble}
               width="100%"
             >
@@ -1346,7 +1472,13 @@ const blackout = createDisabled({
               appearance={compact}
               width="100%"
             >
-              <CalendarNav compactMonths compactYears clear />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger compact />
+                <CalendarToolbarYearTrigger/>
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowClear animated />
             </Calendar>
@@ -1374,7 +1506,12 @@ const blackout = createDisabled({
               appearance={soft}
               width="100%"
             >
-              <CalendarNav monthLabel yearLabel />
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthLabel />
+                <CalendarToolbarYearLabel />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowNavigate animated />
             </Calendar>

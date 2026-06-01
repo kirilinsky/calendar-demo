@@ -16,7 +16,7 @@ No global CSS import is required. Every module ships its own styles and applies 
 
 DateForge is a stateful composition wrapper with self-contained modules. The `<Calendar>` shell owns mode, value, view date, locale, timezone, theme, appearance, disabled rules, range constraints, and `onChange` wiring. It renders no picker UI by itself.
 
-Visible behavior comes from modules placed as children: `CalendarNav`, `CalendarDays`, `CalendarTimeGrid`, `CalendarPresets`, `CalendarSelectedDates`, manual input, and track modules. You mount only the UI your product needs.
+Visible behavior comes from modules placed as children: `CalendarToolbar`, `CalendarDays`, `CalendarTimeWheel`, `CalendarPresets`, `CalendarSelectedDates`, manual input, and track modules. You mount only the UI your product needs.
 
 The wrapper also provides a small grid contract: `cols` defines equal parent tracks, and child `col={number}` spans that many tracks. For example, inside `cols={4}`, a module with `col={2}` takes half the row. `col` is a span count, not CSS grid-line syntax.
 
@@ -41,10 +41,12 @@ Modules read calendar context directly, so there is no prop drilling. They can b
 
 | Module group | Modules | Primary role |
 | ------------ | ------- | ------------ |
-| Navigation | `CalendarNav`, `CalendarMonthsGrid`, `CalendarYearsGrid` | Move the internal `viewDate` without committing selection |
-| Selection | `CalendarDays`, `CalendarTimeGrid`, `CalendarManualInput`, `CalendarPresets` | Commit dates, ranges, arrays, or time changes |
+| Navigation | `CalendarToolbar`, `CalendarMonthsGrid`, `CalendarYearsGrid` | Move the internal `viewDate` without committing selection |
+| Selection | `CalendarDays`, `CalendarTimeWheel`, `CalendarManualInput`, `CalendarPresets` | Commit dates, ranges, arrays, or time changes |
 | Feedback | `CalendarSelectedDates`, `CalendarInfo` | Render current selection as chips, summary, or info readout |
-| Tracks | `CalendarDaysTrack`, `CalendarMonthsTrack`, `CalendarYearsTrack` | Mobile/drum-style navigation or bound range editing |
+| Tracks | `CalendarDaysTrack`, `CalendarMonthsTrack`, `CalendarYearsTrack` | Horizontal scrollable strips for compact / mobile layouts |
+| Wheels | `CalendarMonthsWheel`, `CalendarYearsWheel` | iOS-style drum pickers for month and year, range-bound aware |
+| Decorative | `CalendarLunar` | Lunar phase strip around selected date (display-only) |
 | Custom | Context hooks from `@dateforge/react-calendar/context` | Build your own modules on top of the same state |
 
 ## Modes
@@ -65,30 +67,74 @@ Start from the product workflow, then pick modules. The calendar does not force 
 
 | You want... | Compose these modules |
 | ----------- | --------------------- |
-| Basic date picker | `CalendarNav` + `CalendarDays` |
-| Range picker | `CalendarNav` + `CalendarDays` with `mode="range"` |
-| Date and time picker | `CalendarNav showTime` + `CalendarDays`, or inline `CalendarTimeGrid` |
-| Time-only picker | `CalendarTimeGrid` in `mode="single"` |
+| Basic date picker | `CalendarToolbar` + `CalendarDays` |
+| Range picker | `CalendarToolbar` + `CalendarDays` with `mode="range"` |
+| Date and time picker | `CalendarToolbar` with `CalendarToolbarTime` + `CalendarDays`, or inline `CalendarTimeWheel` |
+| Time-only picker | `CalendarTimeWheel` in `mode="single"` |
+| Month/year drum pickers | `CalendarMonthsWheel` + `CalendarYearsWheel` |
 | Manual typing | `CalendarManualInput`, optionally with `CalendarDays` |
 | Preset shortcuts | `CalendarPresets` alongside any picker modules |
 | Month-only or year-only picker | `CalendarMonthsGrid` or `CalendarYearsGrid` without `CalendarDays` |
-| Mobile drum picker | `CalendarDaysTrack`, `CalendarMonthsTrack`, `CalendarYearsTrack` |
+| Mobile / compact strips | `CalendarDaysTrack`, `CalendarMonthsTrack`, `CalendarYearsTrack` |
 | Selection summary | `CalendarSelectedDates` |
 | Date facts, range duration, relative time | `CalendarInfo` |
+| Lunar phase display | `CalendarLunar` (decorative, no interaction) |
 
 ## Import strategy
 
-The package is split into tree-shakeable subpaths. The aggregate module paths are convenient, while per-theme and per-appearance paths are best for production bundles.
+The package is split into tree-shakeable subpaths. The aggregate paths are convenient for prototyping; per-subpath imports keep production bundles small.
 
 | Import from | What is there | When to use |
 | ----------- | ------------- | ----------- |
-| `@dateforge/react-calendar` | `Calendar`, factories, hooks, public types | Always; the root provider lives here |
-| `@dateforge/react-calendar/modules` | All `Calendar*` modules | Pull visible UI pieces |
-| `@dateforge/react-calendar/context` | Context hooks such as `useConfig`, `useNavigation`, `useSelection` | Build custom modules |
-| `@dateforge/react-calendar/themes` | All theme objects together | Prototyping |
-| `@dateforge/react-calendar/themes/<name>` | One theme object | Production bundle hygiene |
+| `@dateforge/react-calendar` | `Calendar`, factories, hooks, public types | Always; root provider lives here |
+| `@dateforge/react-calendar/modules` | All `Calendar*` modules (days, tracks, wheels, info, etc.) | Prototyping; grab all at once |
+| `@dateforge/react-calendar/modules/<name>` | One module — e.g. `modules/days`, `modules/time`, `modules/lunar` | Production bundle hygiene |
+| `@dateforge/react-calendar/modules/toolbar` | All `CalendarToolbar*` sub-components together | Toolbar composition |
+| `@dateforge/react-calendar/modules/toolbar/<name>` | One toolbar piece — e.g. `toolbar/prev`, `toolbar/month-trigger` | Fine-grained splits |
+| `@dateforge/react-calendar/context` | Context hooks: `useConfig`, `useNavigation`, `useSelection` | Building custom modules |
+| `@dateforge/react-calendar/themes` | All theme families together | Prototyping |
+| `@dateforge/react-calendar/themes/<name>` | One `ThemeFamily` object | Production bundle hygiene |
 | `@dateforge/react-calendar/appearances` | All appearance objects together | Prototyping |
 | `@dateforge/react-calendar/appearances/<name>` | One appearance object | Production bundle hygiene |
+
+**Toolbar imports — two patterns:**
+
+```tsx
+// Aggregate — convenient for prototyping
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarYearTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarClear,
+  CalendarToolbarHome,
+  CalendarToolbarThemeToggle,
+  CalendarToolbarTime,
+  CalendarToolbarLabel,
+} from "@dateforge/react-calendar/modules/toolbar";
+
+// Per-piece — best for production bundles
+import { CalendarToolbar } from "@dateforge/react-calendar/modules/toolbar";
+import { CalendarToolbarPrev } from "@dateforge/react-calendar/modules/toolbar/prev";
+import { CalendarToolbarNext } from "@dateforge/react-calendar/modules/toolbar/next";
+import { CalendarToolbarMonthTrigger } from "@dateforge/react-calendar/modules/toolbar/month-trigger";
+import { CalendarToolbarYearTrigger } from "@dateforge/react-calendar/modules/toolbar/year-trigger";
+```
+
+**Module imports — two patterns:**
+
+```tsx
+// Aggregate
+import { CalendarDays, CalendarTimeWheel, CalendarLunar } from "@dateforge/react-calendar/modules";
+
+// Per-module
+import { CalendarDays } from "@dateforge/react-calendar/modules/days";
+import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
+import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
+import { CalendarMonthsWheel } from "@dateforge/react-calendar/modules/months-wheel";
+import { CalendarYearsWheel } from "@dateforge/react-calendar/modules/years-wheel";
+```
 
 ## Performance with multiple calendars
 
@@ -102,7 +148,7 @@ Keep expensive props stable when the parent rerenders:
 
 - Create `disabled` rules with `useMemo(() => createDisabled(...), [...])`.
 - Keep custom `presets`, `theme`, and `appearance` objects outside render or behind `useMemo`.
-- Mount only the modules the current surface needs; avoid three `CalendarTimeGrid` or track stacks unless all are visible and interactive.
+- Mount only the modules the current surface needs; avoid three `CalendarTimeWheel` or track stacks unless all are visible and interactive.
 - Use per-subpath imports for themes and appearances in production bundles.
 - In long forms, consider mounting the picker only when its popover, tab, or step is active.
 
@@ -144,16 +190,23 @@ The rule of thumb is simple: navigation changes the view, selection commits valu
 
 | Action | Changes viewDate | Changes selection | Fires onChange |
 | ------ | ---------------- | ----------------- | -------------- |
-| `CalendarNav` prev / next / home | yes | no | no |
-| Month or year picker popup | yes | no | no |
+| **Toolbar** | | | |
+| `CalendarToolbar` prev / next / home | yes | no | no |
+| `CalendarToolbarMonthTrigger` / `CalendarToolbarYearTrigger` popup | yes | no | no |
+| **Day grid** | | | |
 | `CalendarDays` day click | if cross-month | yes | yes |
 | `CalendarDays` keyboard navigation | if cross-month | no | no |
-| `CalendarTimeGrid` time change | yes | yes | yes |
+| `CalendarTimeWheel` drum scroll | yes | yes | yes |
+| **Tracks** (`CalendarDaysTrack`, `CalendarMonthsTrack`, `CalendarYearsTrack`) | | | |
+| Track scroll without `bound` | yes | no | no |
+| Track scroll with `bound` | yes | yes | yes |
+| **Wheels** (`CalendarMonthsWheel`, `CalendarYearsWheel`) | | | |
+| Wheel spin without `bound` | yes | no | no |
+| Wheel spin with `bound` | yes | yes | yes |
+| **Other** | | | |
 | `CalendarPresets` click | yes | yes | yes |
 | `CalendarSelectedDates` chip click | yes | no | no |
 | Clear buttons | no | yes | yes |
-| Track scroll without range `bound` | yes | no | no |
-| Track item with range `bound` | yes | yes | yes |
 
 `readOnly` blocks every selection-affecting action, but navigation stays enabled. UI-only state like popup open/close and theme toggles does not fire `onChange`.
 
@@ -165,7 +218,12 @@ Controlled mode starts when `value` is provided, including `null`. User actions 
 const [date, setDate] = useState<Date | null>(null);
 
 <Calendar mode="single" value={date} onChange={setDate}>
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
 </Calendar>
 ```
@@ -194,11 +252,12 @@ Every accessibility label is a plain `string`. Pass labels to `<Calendar>` to se
   previousMonthLabel="Show previous booking month"
   nextMonthLabel="Show next booking month"
 >
-  <CalendarNav
-    showMonthPicker
-    compactYears
-    calendarNavigationLabel="Booking date navigation"
-  />
+  <CalendarToolbar calendarNavigationLabel="Booking date navigation">
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays weekLabel="ISO week" />
   <CalendarSelectedDates
     allowClear
@@ -209,49 +268,49 @@ Every accessibility label is a plain `string`. Pass labels to `<Calendar>` to se
 
 Templated labels keep their placeholder names. DateForge replaces `{month}`, `{year}`, `{time}`, `{period}`, `{count}`, `{from}`, and `{to}` where the module has that value available.
 
-| Prop | Default | Used by |
-| ---- | ------- | ------- |
-| `applyLabel` | `"Apply"` | `CalendarManualInput` |
-| `calendarNavigationLabel` | `"Calendar navigation"` | `CalendarNav` |
-| `changeMonthLabel` | `"Change month, currently {month}"` | `CalendarNav` |
-| `changeTimeLabel` | `"Change time, currently {time}"` | `CalendarNav`, compact time control |
-| `changeYearLabel` | `"Change year, currently {year}"` | `CalendarNav` |
-| `clearLabel` | `"Clear"` | `CalendarNav`, `CalendarInfo`, `CalendarManualInput`, `CalendarSelectedDates` |
-| `confirmLabel` | `"Confirm"` | Month, year, and time popups |
-| `dayTrackLabel` | `"Day"` | `CalendarDaysTrack` |
-| `homeLabel` | `"Go to current month"` | `CalendarNav`, `CalendarInfo` |
-| `hoursLabel` | `"Hours"` | `CalendarNav` time popup, `CalendarTimeGrid` |
-| `minutesLabel` | `"Minutes"` | `CalendarNav` time popup, `CalendarTimeGrid` |
-| `monthGridLabel` | `"Select month, {year}"` | `CalendarMonthsGrid` |
-| `monthPickerLabel` | `"Month picker"` | `CalendarNav` month picker group |
-| `monthTrackLabel` | `"Month"` | `CalendarNav` month popup, `CalendarMonthsTrack` |
-| `nextMonthLabel` | `"Next month"` | `CalendarNav` |
-| `nextYearLabel` | `"Next year"` | `CalendarNav` |
-| `nextYearsLabel` | `"Next years"` | `CalendarYearsGrid` |
-| `previousMonthLabel` | `"Previous month"` | `CalendarNav` |
-| `previousYearLabel` | `"Previous year"` | `CalendarNav` |
-| `previousYearsLabel` | `"Previous years"` | `CalendarYearsGrid` |
-| `removeLabel` | `"Remove"` | `CalendarManualInput` |
-| `removeRangeEndLabel` | `"Remove range end"` | `CalendarSelectedDates` |
-| `removeRangeStartLabel` | `"Remove range start"` | `CalendarSelectedDates` |
-| `removeSelectedDateLabel` | `"Remove selected date"` | `CalendarDaysTrack`, `CalendarSelectedDates` |
-| `resetTimeLabel` | `"Reset to {time}"` | `CalendarTimeGrid` |
-| `saveSelectedDateLabel` | `"Save selected date"` | `CalendarDaysTrack` |
-| `secondsLabel` | `"Seconds"` | `CalendarNav` time popup, `CalendarTimeGrid` |
-| `selectMonthLabel` | `"Select month"` | `CalendarNav` month popup dialog |
-| `selectTimeLabel` | `"Select time"` | `CalendarNav` time popup dialog |
-| `selectYearLabel` | `"Select year"` | `CalendarNav` year popup dialog |
-| `showMoreSelectedDatesLabel` | `"Show {count} more selected dates"` | `CalendarSelectedDates` |
-| `themeSwitchToDarkLabel` | `"Switch to dark mode"` | `CalendarNav` theme toggle |
-| `themeSwitchToLightLabel` | `"Switch to light mode"` | `CalendarNav` theme toggle |
-| `themeToggleLabel` | `"Toggle theme"` | `CalendarNav` theme toggle fallback |
-| `timePeriodLabel` | `"Time period, currently {period}"` | AM/PM switch in time controls |
-| `timePickerLabel` | `"Time picker"` | `CalendarNav` time popup, `CalendarTimeGrid` |
-| `weekLabel` | `"Week"` | `CalendarDays` week-number header |
-| `yearGridLabel` | `"Select year, showing {from} to {to}"` | `CalendarYearsGrid` |
-| `yearPageNavigationLabel` | `"Year page navigation"` | `CalendarYearsGrid` |
-| `yearPickerLabel` | `"Year picker"` | `CalendarNav` year picker group |
-| `yearTrackLabel` | `"Year"` | `CalendarNav` year popup, `CalendarYearsTrack` |
+| Prop | Default | Placeholders | Used by |
+| ---- | ------- | ------------ | ------- |
+| `applyLabel` | `"Apply"` | — | `CalendarManualInput` |
+| `calendarNavigationLabel` | `"Calendar navigation"` | — | `CalendarToolbar` |
+| `changeMonthLabel` | `"Change month, currently {month}"` | `{month}` | `CalendarToolbarMonthTrigger` |
+| `changeTimeLabel` | `"Change time, currently {time}"` | `{time}` | `CalendarToolbarTime` |
+| `changeYearLabel` | `"Change year, currently {year}"` | `{year}` | `CalendarToolbarYearTrigger` |
+| `clearLabel` | `"Clear"` | — | `CalendarToolbarClear`, `CalendarInfo`, `CalendarManualInput`, `CalendarSelectedDates` |
+| `confirmLabel` | `"Confirm"` | — | Month, year, and time popups |
+| `dayTrackLabel` | `"Day"` | — | `CalendarDaysTrack` |
+| `homeLabel` | `"Go to current month"` | — | `CalendarToolbarHome`, `CalendarInfo` |
+| `hoursLabel` | `"Hours"` | — | `CalendarToolbarTime`, `CalendarTimeWheel` |
+| `minutesLabel` | `"Minutes"` | — | `CalendarToolbarTime`, `CalendarTimeWheel` |
+| `monthGridLabel` | `"Select month, {year}"` | `{year}` | `CalendarMonthsGrid` |
+| `monthPickerLabel` | `"Month picker"` | — | `CalendarMonthsWheel` group |
+| `monthTrackLabel` | `"Month"` | — | `CalendarToolbarMonthTrigger` popup, `CalendarMonthsTrack` |
+| `nextMonthLabel` | `"Next month"` | — | `CalendarToolbarNext` |
+| `nextYearLabel` | `"Next year"` | — | `CalendarToolbarNext` |
+| `nextYearsLabel` | `"Next years"` | — | `CalendarYearsGrid` |
+| `previousMonthLabel` | `"Previous month"` | — | `CalendarToolbarPrev` |
+| `previousYearLabel` | `"Previous year"` | — | `CalendarToolbarPrev` |
+| `previousYearsLabel` | `"Previous years"` | — | `CalendarYearsGrid` |
+| `removeLabel` | `"Remove"` | — | `CalendarManualInput` |
+| `removeRangeEndLabel` | `"Remove range end"` | — | `CalendarSelectedDates` |
+| `removeRangeStartLabel` | `"Remove range start"` | — | `CalendarSelectedDates` |
+| `removeSelectedDateLabel` | `"Remove selected date"` | — | `CalendarDaysTrack`, `CalendarSelectedDates` |
+| `resetTimeLabel` | `"Reset to {time}"` | `{time}` | `CalendarToolbarTime`, `CalendarTimeWheel` |
+| `saveSelectedDateLabel` | `"Save selected date"` | — | `CalendarDaysTrack` |
+| `secondsLabel` | `"Seconds"` | — | `CalendarToolbarTime`, `CalendarTimeWheel` |
+| `selectMonthLabel` | `"Select month"` | — | `CalendarToolbarMonthTrigger` popup |
+| `selectTimeLabel` | `"Select time"` | — | `CalendarToolbarTime` popup |
+| `selectYearLabel` | `"Select year"` | — | `CalendarToolbarYearTrigger` popup |
+| `showMoreSelectedDatesLabel` | `"Show {count} more selected dates"` | `{count}` | `CalendarSelectedDates` |
+| `themeSwitchToDarkLabel` | `"Switch to dark mode"` | — | `CalendarToolbarThemeToggle` |
+| `themeSwitchToLightLabel` | `"Switch to light mode"` | — | `CalendarToolbarThemeToggle` |
+| `themeToggleLabel` | `"Toggle theme"` | — | `CalendarToolbarThemeToggle` (auto/unresolved fallback) |
+| `timePeriodLabel` | `"Time period, currently {period}"` | `{period}` | AM/PM switch |
+| `timePickerLabel` | `"Time picker"` | — | `CalendarToolbarTime`, `CalendarTimeWheel` |
+| `weekLabel` | `"Week"` | — | `CalendarDays` week-number header |
+| `yearGridLabel` | `"Select year, showing {from} to {to}"` | `{from}`, `{to}` | `CalendarYearsGrid` |
+| `yearPageNavigationLabel` | `"Year page navigation"` | — | `CalendarYearsGrid` |
+| `yearPickerLabel` | `"Year picker"` | — | `CalendarYearsWheel` group |
+| `yearTrackLabel` | `"Year"` | — | `CalendarToolbarYearTrigger` popup, `CalendarYearsTrack` |
 
 ## Ready-made module sets
 
@@ -290,84 +349,110 @@ The root wrapper and context provider. Owns all shared state — mode, value, vi
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | `mode` | `"single" \| "multiple" \| "range"` | `"single"` | Value shape and selection semantics |
-| `value` | `CalendarValue<M>` | — | Controlled value |
-| `defaultValue` | `CalendarValue<M>` | — | Uncontrolled initial value |
-| `defaultViewDate` | `Date` | today | Initial month shown on mount |
-| `onChange` | `(value: CalendarValue<M>) => void` | — | Fires on every selection change |
-| `theme` | `"auto" \| "light" \| "dark" \| ThemeObject` | `"auto"` | Color palette |
-| `appearance` | `AppearanceObject` | — | Shape, spacing, and motion preset |
-| `disabled` | `DisabledConfig` | — | Disabled date rules via `createDisabled()` |
-| `readOnly` | `boolean` | `false` | Block all selection; navigation stays active |
-| `locale` | `string` | browser | BCP 47 locale for labels and formatting |
-| `timeZone` | `string` | browser | IANA timezone for display and parsing |
+| `value` | `CalendarValue<M>` | — | Controlled value. `Date \| null` / `Date[]` / `DateRange` per mode. Pass `undefined` to use uncontrolled mode |
+| `defaultValue` | `CalendarValue<M>` | — | Uncontrolled initial value. Read once on mount; subsequent changes ignored |
+| `defaultViewDate` | `Date` | — | Initial month shown on mount when no selection seeds the view. Read once; subsequent changes ignored |
+| `onChange` | `(value: CalendarValue<M>) => void` | — | Fires on every selection change in both controlled and uncontrolled modes |
+| `theme` | `"auto" \| "light" \| "dark" \| ThemeFamily` | `"auto"` | Base palette or imported theme family. Named strings like `"nebula"` are not supported — import the family object |
+| `light` | `boolean` | `false` | Force light variant of the theme family |
+| `dark` | `boolean` | `false` | Force dark variant. If both `light` and `dark` passed, `dark` wins (dev warning) |
+| `appearance` | `AppearanceObject` | — | Shape, spacing, and radius preset from `appearances/<name>` or `createAppearance()` |
+| `motion` | `"none" \| "view-transition"` | `"none"` | Opt into browser View Transitions for navigation and popups. Falls back silently in unsupported browsers. Disabled under `prefers-reduced-motion` |
+| `disabled` | `DisabledConfig` | — | Disabled date rules via `createDisabled()`. Rules combine with OR logic |
+| `readOnly` | `boolean` | `false` | Block all selection; navigation stays active. Adds `data-readonly` and `aria-disabled` on interactive cells |
+| `locale` | `string` | `"en"` | BCP 47 locale for month names, weekday labels, and time formatting |
+| `timeZone` | `string \| "auto"` | `"auto"` | IANA timezone or fixed offset (`"UTC+2"`). `"auto"` detects from `Intl` after mount (SSR-safe) |
 | `minDate` | `Date` | — | Earliest selectable date |
 | `maxDate` | `Date` | — | Latest selectable date |
-| `minRangeDays` | `number` | — | Minimum span for range selections |
-| `maxRangeDays` | `number` | — | Maximum span for range selections |
-| `maxDates` | `number` | — | Cap on selected dates in `multiple` mode |
-| `timeStep` | `{ hour?, minute?, second? }` | — | Snap interval for time selection |
-| `hour12` | `boolean` | locale | Force 12 or 24-hour time display |
-| `...Label` props | `string` | built-in English | Global accessible/action label fallbacks; see [Accessibility labels](#accessibility-labels) |
-| `cols` | `number` | — | Equal-width column grid for child modules |
-| `width` | `string \| number` | — | Explicit width on the root element |
-| `gradient` | `boolean` | `false` | Subtle gradient overlay on the surface |
+| `minRangeDays` | `number` | — | Minimum number of days in a range selection |
+| `maxRangeDays` | `number` | — | Maximum number of days in a range selection |
+| `maxDates` | `number` | — | Cap on selected dates (`mode="multiple"` only). Selecting beyond cap is silently ignored; deselect still works |
+| `timeStep` | `{ hour?, minute?, second? }` | `{1,1,1}` | Snap interval for time drums. `timeStep={{ minute: 5 }}` snaps to 0/5/10/…/55. Affects `CalendarTimeWheel` and `CalendarToolbarTime` |
+| `hour12` | `boolean` | `false` | Use 12-hour time format instead of 24-hour |
+| `...Label` props | `string` | built-in English | Global aria-label fallbacks; module props override per-instance. See [Accessibility labels](#accessibility-labels) |
+| `cols` | `number` | — | Equal-width column grid for child modules (`repeat(cols, 1fr)`) |
+| `width` | `string \| number` | `"100%"` | Container width |
+| `gradient` | `boolean` | `false` | Subtle gradient overlay on selected cells |
+| `data-testid` | `string` | `"dateforge-calendar"` | Root wrapper test id. Override per-instance when mounting multiple calendars on the same page |
 
 </PropsTableAccordion>
 
-### CalendarNav
+### CalendarToolbar
 
-Navigation bar that controls the internal `viewDate`. Does not commit selection — it moves the visible month or year. Optionally shows time controls, a clear button, and a home reset.
+Composable navigation bar. Place sub-components as children to compose exactly the toolbar your product needs. Controls the internal `viewDate` — does not commit selection.
 
-<ModuleShowcase moduleName="CalendarNav" sampleKey="calendar-nav" />
+```tsx
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarYearTrigger,
+  CalendarToolbarNext,
+} from "@dateforge/react-calendar/modules/toolbar";
 
-<PropsTableAccordion title="CalendarNav props">
+<CalendarToolbar>
+  <CalendarToolbarPrev />
+  <CalendarToolbarMonthTrigger />
+  <CalendarToolbarNext />
+  <CalendarToolbarYearTrigger compact />
+</CalendarToolbar>
+```
+
+<ModuleShowcase moduleName="CalendarToolbar" sampleKey="calendar-nav" />
+
+**Sub-components** (all imported from `@dateforge/react-calendar/modules/toolbar`):
+
+| Component | Description |
+| --------- | ----------- |
+| `CalendarToolbarPrev` | Navigate to previous month/year |
+| `CalendarToolbarNext` | Navigate to next month/year |
+| `CalendarToolbarMonthTrigger` | Clickable month label with picker popup. `compact` for drum picker |
+| `CalendarToolbarYearTrigger` | Clickable year label with picker popup. `compact` for drum picker |
+| `CalendarToolbarMonthLabel` | Read-only month display (no popup) |
+| `CalendarToolbarYearLabel` | Read-only year display (no popup) |
+| `CalendarToolbarTime` | Time picker trigger (popup with hour/minute drums) |
+| `CalendarToolbarClear` | Clear selection button |
+| `CalendarToolbarHome` | Reset to current month button |
+| `CalendarToolbarThemeToggle` | Dark/light mode toggle |
+| `CalendarToolbarClock` | Live clock display (ticks every second; isolated re-render) |
+| `CalendarToolbarDayLabel` | Read-only current day-of-week label |
+| `CalendarToolbarLabel` | Static text label |
+| `CalendarToolbarGroup` | Flex group wrapper — use `grow` to fill remaining space |
+
+<PropsTableAccordion title="CalendarToolbar props">
 
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
-| `showMonthPicker` | `boolean` | `false` | Month picker popup in nav |
-| `compactMonths` | `boolean` | `false` | Compact month display |
-| `showYearPicker` | `boolean` | `false` | Year picker popup in nav |
-| `compactYears` | `boolean` | `false` | Compact year display |
-| `showTime` | `boolean` | `false` | Time controls in nav |
-| `showNowTime` | `boolean` | `false` | Jump-to-current-time button |
-| `seconds` | `boolean` | `false` | Include seconds in time display |
-| `animateTime` | `boolean` | `false` | Animate time transitions |
-| `compactTime` | `boolean` | `false` | Render nav time controls in a tighter layout |
-| `clear` | `boolean` | `false` | Clear selection button |
-| `home` | `boolean` | `false` | Reset to today button |
-| `themeToggle` | `boolean` | `false` | Theme toggle button |
-| `monthLabel` | `boolean` | `false` | Show month label |
-| `yearLabel` | `boolean` | `false` | Show year label |
-| `label` | `string` | — | Custom label text |
-| `bound` | `"from" \| "to"` | — | Range bound for dual-nav layouts |
-| `offset` | `number` | — | View offset in months |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
-| `calendarNavigationLabel` | `string` | `"Calendar navigation"` | Toolbar label when no visible `label` is provided |
-| `changeTimeLabel` | `string` | `"Change time, currently {time}"` | Time button aria-label |
-| `changeMonthLabel` | `string` | `"Change month, currently {month}"` | Month picker button aria-label |
-| `changeYearLabel` | `string` | `"Change year, currently {year}"` | Year picker button aria-label |
-| `clearLabel` | `string` | `"Clear"` | Clear selection button aria-label |
-| `confirmLabel` | `string` | `"Confirm"` | Popup confirm button aria-label |
-| `homeLabel` | `string` | `"Go to current month"` | Home button aria-label |
-| `hoursLabel` | `string` | `"Hours"` | Hour drum aria-label in the time popup |
-| `minutesLabel` | `string` | `"Minutes"` | Minute drum aria-label in the time popup |
-| `monthPickerLabel` | `string` | `"Month picker"` | Month picker group label |
-| `monthTrackLabel` | `string` | `"Month"` | Month popup track aria-label |
-| `nextMonthLabel` | `string` | `"Next month"` | Next month button aria-label |
-| `nextYearLabel` | `string` | `"Next year"` | Next year button aria-label |
-| `previousMonthLabel` | `string` | `"Previous month"` | Previous month button aria-label |
-| `previousYearLabel` | `string` | `"Previous year"` | Previous year button aria-label |
-| `secondsLabel` | `string` | `"Seconds"` | Seconds drum aria-label in the time popup |
-| `selectTimeLabel` | `string` | `"Select time"` | Time popup dialog label |
-| `selectMonthLabel` | `string` | `"Select month"` | Month popup dialog label |
-| `selectYearLabel` | `string` | `"Select year"` | Year popup dialog label |
-| `themeSwitchToDarkLabel` | `string` | `"Switch to dark mode"` | Theme toggle aria-label when light mode is active |
-| `themeSwitchToLightLabel` | `string` | `"Switch to light mode"` | Theme toggle aria-label when dark mode is active |
-| `themeToggleLabel` | `string` | `"Toggle theme"` | Theme toggle fallback aria-label |
-| `timePeriodLabel` | `string` | `"Time period, currently {period}"` | AM/PM switch aria-label |
-| `timePickerLabel` | `string` | `"Time picker"` | Time drum group label |
-| `yearPickerLabel` | `string` | `"Year picker"` | Year picker group label |
-| `yearTrackLabel` | `string` | `"Year"` | Year popup track aria-label |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `cols` | `number \| string` | — | Equal-width column grid for children |
+| `offset` | `number` | — | View offset in months (for multi-month layouts) |
+| `bound` | `"from" \| "to"` | — | Range bound for dual-toolbar layouts |
+| `justify` | `string` | — | CSS `justify-content` for the toolbar row |
+| `label` | `string` | — | Accessible label for the toolbar landmark |
+| `calendarNavigationLabel` | `string` | `"Calendar navigation"` | Toolbar landmark label fallback |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
+
+</PropsTableAccordion>
+
+<PropsTableAccordion title="CalendarToolbarMonthTrigger / CalendarToolbarYearTrigger props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `compact` | `boolean` | `false` | Use drum-style picker instead of grid popup |
+| `offset` | `number` | — | Display offset in months relative to toolbar view date |
+| `col` | `number \| string` | — | Span in parent toolbar grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
+
+</PropsTableAccordion>
+
+<PropsTableAccordion title="CalendarToolbarTime props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `compact` | `boolean` | `false` | Compact layout |
+| `seconds` | `boolean` | `false` | Include seconds drum |
+| `col` | `number \| string` | — | Span in parent toolbar grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -398,17 +483,18 @@ The main day grid. Renders a month view and commits selection on click. Works ac
 | `weekLabel` | `string` | `"Week"` | Week-number header label |
 | `offset` | `number` | `0` | Render a month offset from the shared `viewDate` |
 | `syncViewOnSelect` | `boolean` | `offset === 0` | On day click, also move `viewDate` to that day's month. Defaults to `true` for the primary grid and `false` for offset grids, so clicking a day in a side month of a multi-month layout does not steal the primary view. Set explicitly to override. Works in both controlled and uncontrolled mode (controlled-value round-trip is suppressed for the click that requested keepView) |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
-### CalendarTimeGrid
+### CalendarTimeWheel
 
 Drum-scroll time picker for hours, minutes, and optionally seconds. Pairs with `CalendarDays` for a full date-time picker, or stands alone as a time-only input inside `mode="single"`.
 
-<ModuleShowcase moduleName="CalendarTimeGrid" sampleKey="calendar-time-grid" />
+<ModuleShowcase moduleName="CalendarTimeWheel" sampleKey="calendar-time-grid" />
 
-<PropsTableAccordion title="CalendarTimeGrid props">
+<PropsTableAccordion title="CalendarTimeWheel props">
 
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
@@ -416,7 +502,7 @@ Drum-scroll time picker for hours, minutes, and optionally seconds. Pairs with `
 | `labels` | `"short" \| "long"` | — | Label format above drums; omit to hide |
 | `bound` | `"from" \| "to"` | — | Range-mode only: edit time on explicit boundary instead of relying on `viewDate` matching `rangeStart`/`rangeEnd` |
 | `showBoundDate` | `boolean` | `true` | Render localized date header above the track for the bound's current date. Requires `bound`; hidden when bound has no date |
-| `showReset` | `boolean` | `false` | Render a "now" reset button below the track. Click resets time fields on active date or bound to current hour/minute (and second if `seconds` enabled) |
+| `showReset` | `boolean` | `false` | Render a "now" reset button below the track |
 | `resetLabel` | `React.ReactNode` | clock icon + localized "now" | Override reset button content |
 | `hoursLabel` | `string` | `"Hours"` | Hour drum aria-label |
 | `minutesLabel` | `string` | `"Minutes"` | Minute drum aria-label |
@@ -425,7 +511,8 @@ Drum-scroll time picker for hours, minutes, and optionally seconds. Pairs with `
 | `timePickerLabel` | `string` | `"Time picker"` | Time drum group label |
 | `resetTimeLabel` | `string` | `"Reset to {time}"` | Reset button aria-label |
 | `onTimeSelect` | `(date: Date) => void` | — | Fires on every drum change with a Date built from `viewDate` and the new time |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -440,7 +527,8 @@ Shortcut buttons that jump to predefined dates or ranges with a single click. Pr
 | Prop | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | `presets` | `PresetEntry[]` | `[]` | Array of preset definitions. Import `basicPresets` or define custom entries |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -469,7 +557,8 @@ Renders the current selection as chips. In range mode shows from/to bounds; in m
 | `removeRangeEndLabel` | `string` | `"Remove range end"` | Range end chip remove button aria-label |
 | `removeSelectedDateLabel` | `string` | `"Remove selected date"` | Selected date chip remove button aria-label |
 | `showMoreSelectedDatesLabel` | `string` | `"Show {count} more selected dates"` | Overflow chip aria-label |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -485,11 +574,13 @@ Free-text date input that parses typed values and syncs them with calendar state
 | ---- | ---- | ------- | ----------- |
 | `allowClear` | `boolean` | `false` | Show clear button in input |
 | `align` | `"left" \| "center" \| "right"` | `"left"` | Input text alignment |
+| `format` | `string` | `"DD.MM.YYYY"` | Date input format. Tokens: `DD`, `MM`, `YYYY` + any single-char separator. E.g. `"MM/DD/YYYY"`, `"YYYY-MM-DD"`. Also used as placeholder. Invalid strings fall back to default |
 | `label` | `React.ReactNode` | — | Custom label rendered next to the input |
 | `applyLabel` | `string` | `"Apply"` | Apply typed value button aria-label |
 | `clearLabel` | `string` | `"Clear"` | Clear input button aria-label |
 | `removeLabel` | `string` | `"Remove"` | Remove selected value button aria-label |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -515,7 +606,8 @@ Read-only summary of the current selection. In `single` mode prints the date; in
 | `showHome` | `boolean` | `false` | Render a "go to current month" button; disabled when viewDate already matches today's month |
 | `showRelative` | `boolean` | `false` | Add localized relative-time hint (e.g. "in 3 days") via `Intl.RelativeTimeFormat` |
 | `showSummary` | `boolean` | `true` | Print main summary line: day count for multi/range, count for multiple, formatted single date |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -534,7 +626,8 @@ Horizontal drum scroller for day selection. Designed for mobile-first layouts. U
 | `dayTrackLabel` | `string` | `"Day"` | Day track aria-label |
 | `removeSelectedDateLabel` | `string` | `"Remove selected date"` | Remove selected date button aria-label |
 | `saveSelectedDateLabel` | `string` | `"Save selected date"` | Save selected date button aria-label |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -553,7 +646,8 @@ Drum scroller for month navigation. Scrolling moves the internal `viewDate` with
 | `bound` | `"from" \| "to"` | — | Range bound |
 | `monthTrackLabel` | `string` | `"Month"` | Month track aria-label |
 | `onMonthSelect` | `(date: Date) => void` | — | Fires when user lands on a month |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -570,7 +664,8 @@ Drum scroller for year navigation. Works the same way as `CalendarMonthsTrack` b
 | `bound` | `"from" \| "to"` | — | Range bound |
 | `yearTrackLabel` | `string` | `"Year"` | Year track aria-label |
 | `onYearSelect` | `(date: Date) => void` | — | Fires when user lands on a year |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -589,7 +684,8 @@ Drum scroller for year navigation. Works the same way as `CalendarMonthsTrack` b
 | `hideOutOfRange` | `boolean` | `false` | Hide months outside min/max |
 | `monthGridLabel` | `string` | `"Select month, {year}"` | Month grid group label |
 | `onMonthSelect` | `(date: Date) => void` | — | Fires on month cell click |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -613,7 +709,69 @@ Paginated year grid for year-only pickers or quick year jumps. Pairs with `Calen
 | `yearGridLabel` | `string` | `"Select year, showing {from} to {to}"` | Year grid label |
 | `yearPageNavigationLabel` | `string` | `"Year page navigation"` | Year page controls group label |
 | `onYearSelect` | `(date: Date) => void` | — | Fires on year cell click |
-| `col` | `number` | — | Number of parent `cols` tracks to span |
+| `col` | `number \| string` | — | Span in parent `cols` grid |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
+
+</PropsTableAccordion>
+
+### CalendarMonthsWheel
+
+iOS-style drum picker for months. Range-bound aware — pass `bound="from"` or `bound="to"` to edit one boundary independently.
+
+<ModuleShowcase moduleName="CalendarMonthsWheel" sampleKey="calendar-months-wheel" />
+
+<PropsTableAccordion title="CalendarMonthsWheel props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `bound` | `"from" \| "to"` | — | Range mode: edit one boundary instead of global `viewDate` |
+| `shortMonths` | `boolean` | `false` | Use short month names in drum ("Jan" vs "January") |
+| `showLabel` | `boolean` | `false` | Show localized label above drum |
+| `showBoundDate` | `boolean` | `true` | Render localized date header above drum. Requires `bound` |
+| `showReset` | `boolean` | `false` | Render a reset button below drum |
+| `col` | `number \| string` | — | Number of parent `cols` tracks to span |
+| `monthsLabel` | `string` | — | aria-label for months drum |
+| `monthPickerLabel` | `string` | `"Month picker"` | aria-label for wheel group wrapper |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
+
+</PropsTableAccordion>
+
+### CalendarYearsWheel
+
+iOS-style drum picker for years. Range-bound aware.
+
+<ModuleShowcase moduleName="CalendarYearsWheel" sampleKey="calendar-years-wheel" />
+
+<PropsTableAccordion title="CalendarYearsWheel props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `bound` | `"from" \| "to"` | — | Range mode: edit one boundary instead of global `viewDate` |
+| `showLabel` | `boolean` | `false` | Show localized label above drum |
+| `showBoundDate` | `boolean` | `true` | Render localized date header above drum. Requires `bound` |
+| `showReset` | `boolean` | `false` | Render a reset button below drum |
+| `col` | `number \| string` | — | Number of parent `cols` tracks to span |
+| `yearsLabel` | `string` | — | aria-label for years drum |
+| `yearPickerLabel` | `string` | `"Year picker"` | aria-label for wheel group wrapper |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
+
+</PropsTableAccordion>
+
+### CalendarLunar
+
+Informational lunar phase strip centered around the selected date. Display-only — no interaction, no `onChange`.
+
+<ModuleShowcase moduleName="CalendarLunar" sampleKey="calendar-lunar" />
+
+<PropsTableAccordion title="CalendarLunar props">
+
+| Prop | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
+| `phaseLabels` | `false \| Partial<Record<LunarPhaseKey, string>>` | NASA abbreviations | Short visible phase labels per cell. Pass `false` to hide |
+| `phaseAriaLabels` | `Partial<Record<LunarPhaseKey, string>>` | English long names | Long names used in `aria-label`. Override per locale |
+| `lunarLabel` | `string` | `"Lunar phases"` | aria-label for the strip wrapper |
+| `col` | `number \| string` | — | Number of parent `cols` tracks to span |
+| `theme` | `CalendarTheme` | — | Per-instance theme override |
 
 </PropsTableAccordion>
 
@@ -681,23 +839,33 @@ The calendar wrapper exposes styling through data attributes.
 
 ## Default theme modes
 
-You can use DateForge without importing a named theme. The default theme prop accepts three string modes.
+Without importing a named theme, pass a string mode or leave `theme` at its default `"auto"`.
 
 | Value | Behavior | Use when |
 | ----- | -------- | -------- |
-| `"auto"` | Follows the user's `prefers-color-scheme` with CSS, avoiding JS theme flashes | Public apps and docs |
-| `"light"` | Forces the built-in light palette | Light-only product surfaces |
-| `"dark"` | Forces the built-in dark palette | Dark dashboards, overlays, command-style tools |
+| `"auto"` | CSS resolves light/dark from `prefers-color-scheme` — no flash | Public apps and docs |
+| `"light"` | Forces built-in light palette | Light-only surfaces |
+| `"dark"` | Forces built-in dark palette | Dark dashboards, command tools |
 
-`auto` is the safest default: CSS resolves the palette before React hydrates. Named themes are **not** string values. Passing `theme="midnight"` is invalid; import the object instead.
+Named themes are **not** string values — passing `theme="nebula"` is invalid and emits a dev warning. Import the family object.
+
+With a `ThemeFamily` (imported or from `createTheme()`), the `light` and `dark` props on `<Calendar>` choose which variant to render:
+
+```tsx
+import { nebula } from "@dateforge/react-calendar/themes/nebula";
+
+<Calendar theme={nebula} />        // auto — follows prefers-color-scheme
+<Calendar theme={nebula} dark />   // always dark variant
+<Calendar theme={nebula} light />  // always light variant
+```
+
+If both `light` and `dark` are passed, `dark` wins and a dev warning is emitted.
 
 ## Built-in themes
 
-Built-in themes are generated palette objects. They are intentionally imported, not referenced by string name, so bundlers can tree-shake unused palettes.
+28 theme families, each with a light **and** dark variant. Import the family, then choose the variant with `dark` / `light` props — or omit both for auto.
 
-**Light / bright:** `mint`, `tide`, `prism`, `meadow`, `snow`, `slate`, `chalk`, `amethyst`, `pearl`, `rosa`, `neon`, `scarlet`, `graphite`, `solar`, `split`, `latte`, `comfy`, `monsoon`, `riso`, `mono`, `atelier`.
-
-**Dark / vibrant:** `midnight`, `aurora`, `cyber`, `abyss`, `nebula`, `phosphor`, `temporal`, `forest`, `sandstone`, `dracula`, `crimson`, `flare`, `industrial`, `espresso`, `ember`, `cobalt`, `fjord`, `velvet`, `eclipse`, `noir`, `bauhaus`.
+`noir`, `espresso`, `meadow`, `fjord`, `velvet`, `crimson`, `solar`, `nebula`, `neon`, `prism`, `slate`, `pearl`, `sandstone`, `bauhaus`, `monsoon`, `industrial`, `snow`, `eclipse`, `chalk`, `temporal`, `riso`, `cyber`, `split`, `aurora`, `graphite`, `dracula`, `mint`, `abyss`
 
 > [Browse all themes in the interactive playground →](/themes)
 
@@ -711,15 +879,67 @@ The aggregate `@dateforge/react-calendar/themes` export is convenient for galler
 
 ## Creating themes
 
-Use `createTheme()` when your product has brand tokens that do not match a built-in palette. A custom theme is a typed object that maps semantic color roles to CSS variables.
+Use `createTheme()` when your product has brand tokens that do not match a built-in palette. Pass shared tokens at the root level and override per-variant with `light` / `dark` keys:
+
+```tsx
+import { Calendar, createTheme } from "@dateforge/react-calendar";
+
+const brandTheme = createTheme({
+  highlight: "#2563eb",
+  range: "#22c55e",
+  weekend: "#ef4444",
+  light: { backdrop: "#f8fafc", text: "#18181b" },
+  dark:  { backdrop: "#0f172a", text: "#f8fafc" },
+});
+
+<Calendar theme={brandTheme} />       // auto
+<Calendar theme={brandTheme} dark />  // always dark
+```
 
 #### Custom theme
 
 <RecipeShowcase kind="Custom theme" sampleKey="custom-theme" />
 
+## Per-module theme override
+
+Every module accepts a `theme` prop that overrides the Calendar-level theme for that module only. Module theme wins over the Calendar `theme` prop. This lets you mix palettes inside one picker — for example a dark toolbar on a light calendar, or a branded info strip that matches your sidebar.
+
+```tsx
+import { nebula } from "@dateforge/react-calendar/themes/nebula";
+import { snow } from "@dateforge/react-calendar/themes/snow";
+import { aurora } from "@dateforge/react-calendar/themes/aurora";
+
+<Calendar theme={snow}>
+  <CalendarToolbar theme={nebula} dark>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays />
+  <CalendarInfo theme={aurora} showSummary showRelative />
+</Calendar>
+```
+
+<RecipeShowcase kind="Per-module themes" sampleKey="per-module-themes" />
+
+Priority chain: **module `theme`** → Calendar `theme` → built-in `"auto"`.
+
 ## Design tokens
 
-User CSS wins predictably because the package layers styles as `cal-base, cal-components, cal-modules, themes, appearances, user`. Themes and appearances set semantic tokens; your app can still override them in its own layer.
+Styles layer in this order — each outer layer refines without accidentally overriding inner ones:
+
+```
+@layer cal-base, cal-themes, cal-appearances, cal-modules, cal-user;
+```
+
+- `cal-base` — reset, token declarations, defaults, shell layout
+- `cal-themes` — color tokens (`--c-*`) per family, light + dark variants
+- `cal-appearances` — shape/spacing/motion tokens (`--cal-*`) per appearance
+- `cal-modules` — module layout, selection/hover state
+- `cal-user` — supported consumer escape hatch
+
+Unlayered app CSS still wins over all library layers. Prefer `createTheme()`, `createAppearance()`, and stable `data-*` attributes before reaching for `cal-user`. The library uses zero `!important`.
 
 ### Color tokens
 
@@ -740,7 +960,7 @@ User CSS wins predictably because the package layers styles as `cal-base, cal-co
 | `--c-we` | Weekend marker |
 | `--c-r` | Range selection background |
 | `--c-e` | Error / invalid state |
-| `--c-oom` | Out-of-month day text |
+| `--c-oom` | Out-of-month day text (optional — falls back to `--c-m` when omitted) |
 
 ## Appearances
 

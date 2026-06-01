@@ -23,15 +23,24 @@ import {
   type CalendarAppearance,
   type CalendarTheme,
 } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav } from "@dateforge/react-calendar/modules";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarPrev,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";
 import {
   useSavedAppearance,
+  useSavedDarkMode,
   useSavedGradient,
   useSavedTheme,
 } from "./calendar-preferences";
 
 type CalendarPreviewProps = {
   appearance?: CalendarAppearance;
+  dark?: boolean;
   defaultViewDate?: Date;
   gradient?: boolean;
   initialDate?: Date | null;
@@ -39,6 +48,7 @@ type CalendarPreviewProps = {
   navTrailing?: React.ReactNode;
   theme?: CalendarTheme;
   useSavedAppearanceFallback?: boolean;
+  useSavedDarkFallback?: boolean;
   useSavedGradientFallback?: boolean;
   useSavedThemeFallback?: boolean;
   width?: string | number;
@@ -46,6 +56,7 @@ type CalendarPreviewProps = {
 
 export function CalendarPreview({
   appearance,
+  dark,
   defaultViewDate,
   gradient,
   initialDate,
@@ -53,6 +64,7 @@ export function CalendarPreview({
   navTrailing,
   theme,
   useSavedAppearanceFallback = true,
+  useSavedDarkFallback = true,
   useSavedGradientFallback = true,
   useSavedThemeFallback = true,
   width = "100%",
@@ -60,6 +72,7 @@ export function CalendarPreview({
   const savedAppearance = useSavedAppearance();
   const savedTheme = useSavedTheme();
   const savedGradient = useSavedGradient();
+  const savedDark = useSavedDarkMode();
   const [date, setDate] = useState<Date | null>(() =>
     initialDate === undefined ? new Date() : initialDate,
   );
@@ -70,6 +83,7 @@ export function CalendarPreview({
     ? (appearance ?? savedAppearance)
     : appearance;
   const calendarTheme = useSavedThemeFallback ? (theme ?? savedTheme) : theme;
+  const calendarDark = useSavedDarkFallback ? (dark ?? savedDark) : dark;
 
   const navHeight = navLinks.length > 0 ? 36 : 0;
 
@@ -97,11 +111,18 @@ export function CalendarPreview({
           width={width}
           theme={calendarTheme}
           appearance={calendarAppearance}
+          dark={calendarDark}
+          light={!calendarDark}
           gradient={
             useSavedGradientFallback ? (gradient ?? savedGradient) : gradient
           }
         >
-          <CalendarNav showMonthPicker compactYears />
+          <CalendarToolbar>
+            <CalendarToolbarPrev />
+            <CalendarToolbarMonthTrigger />
+            <CalendarToolbarNext />
+            <CalendarToolbarYearTrigger compact />
+          </CalendarToolbar>
           <CalendarDays />
         </Calendar>
       </div>

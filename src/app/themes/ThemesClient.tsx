@@ -6,9 +6,11 @@ import { createTheme } from "@dateforge/react-calendar";
 import {
   DEFAULT_CUSTOM_THEME_TOKENS,
   readSavedTheme,
+  saveDarkMode,
   saveCustomTheme,
   saveGradient,
   saveThemePreset,
+  useSavedDarkMode,
   useSavedGradient,
 } from "../calendar-preferences";
 import { CalendarPreview, THEMES_NAV } from "../CalendarPreview";
@@ -56,6 +58,7 @@ const TOKEN_LABELS: Array<{ key: EditableThemeTokenKey; label: string }> = [
 
 export function ThemesClient() {
   const gradient = useSavedGradient();
+  const dark = useSavedDarkMode();
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeCenterRaw, setActiveCenterRaw] = useState(N);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -72,7 +75,6 @@ export function ThemesClient() {
       id: "custom theme",
       backdrop: customTokens.backdrop,
       highlight: customTokens.highlight,
-      type: "light",
       mood: "Light base",
       theme: createTheme(customTokens),
       adjustable: true,
@@ -347,14 +349,18 @@ export function ThemesClient() {
         >
           <CalendarPreview
             theme={active.theme}
+            dark={dark}
             gradient={gradient}
             width={320}
             navLinks={THEMES_NAV}
             navTrailing={
-              <GradientToggle
-                enabled={gradient}
-                onToggle={(v: boolean) => saveGradient(v)}
-              />
+              <>
+                <DarkToggle enabled={dark} onToggle={saveDarkMode} />
+                <GradientToggle
+                  enabled={gradient}
+                  onToggle={(v: boolean) => saveGradient(v)}
+                />
+              </>
             }
           />
         </div>
@@ -406,7 +412,7 @@ export function ThemesClient() {
           setAdjustOpen(false);
         }}
         onTokenChange={(key, value) =>
-          setDraftTokens((current) => ({ ...current, [key]: value }))
+          setDraftTokens((current: EditableThemeTokens) => ({ ...current, [key]: value }))
         }
       />
     </div>
@@ -592,7 +598,7 @@ function CustomThemeModal({
           <div className="grid grid-cols-3 content-start gap-2 sm:grid-cols-4 sm:gap-3">
             {TOKEN_LABELS.map(({ key, label }) => (
               <ColorSwatchField
-                key={key}
+                key={String(key)}
                 label={label}
                 value={tokens[key] ?? ""}
                 onChange={(value) => onTokenChange(key, value)}
@@ -667,6 +673,36 @@ function CustomThemeModal({
         </div>
       </div>
     </div>
+  );
+}
+
+function DarkToggle({
+  enabled,
+  onToggle,
+}: {
+  enabled: boolean;
+  onToggle: (value: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(!enabled)}
+      className="group inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-[11px] font-medium leading-none tracking-tight text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-white"
+      aria-pressed={enabled}
+    >
+      <span
+        className="relative inline-flex h-3 w-5 shrink-0 items-center rounded-full transition-colors duration-200"
+        style={{ backgroundColor: enabled ? "#18181b" : "#d4d4d8" }}
+      >
+        <span
+          className="absolute h-2 w-2 rounded-full bg-white shadow-sm transition-transform duration-200"
+          style={{
+            transform: enabled ? "translateX(11px)" : "translateX(1px)",
+          }}
+        />
+      </span>
+      Dark
+    </button>
   );
 }
 
