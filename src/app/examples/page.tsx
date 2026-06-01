@@ -13,6 +13,7 @@ import {
 import {
   CalendarDays,
   CalendarDaysTrack,
+  CalendarInfo,
   CalendarManualInput,
   CalendarMonthsGrid,
   CalendarMonthsTrack,
@@ -255,14 +256,22 @@ export default function ExamplesPage() {
   const brandTheme = useMemo(
     () =>
       createTheme({
-        highlight: "#f4f96f",
-        accent: "#27a925",
-        backdrop: "#eae0f1",
-        tone: "#ee1818",
-        text: "#282626",
-        stroke: "#cbd5e1",
-        range: "#ccfbf1",
-        shadow: "#b9c2cc",
+        highlight: "#7c3aed",
+        accent: "#ede9fe",
+        range: "#ddd6fe",
+        weekend: "#db2777",
+        light: {
+          backdrop: "#faf5ff",
+          tone: "#f3e8ff",
+          text: "#3b0764",
+          stroke: "#e9d5ff",
+        },
+        dark: {
+          backdrop: "#1a0b2e",
+          tone: "#2e1065",
+          text: "#f5f3ff",
+          stroke: "#4c1d95",
+        },
       }),
     [],
   );
@@ -309,7 +318,12 @@ export default function ExamplesPage() {
             code={`const [basicDate, setBasicDate] = useState<Date | null>(new Date());
 
 <Calendar mode="single" value={basicDate} onChange={setBasicDate}>
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates allowClear={false} />
 </Calendar>`}
@@ -334,7 +348,7 @@ export default function ExamplesPage() {
           <ExampleCard
             title="Stay booking"
             useWhen="Lodging or short-stay rentals where guests pick check-in and check-out."
-            demonstrates="Range mode with disabled past dates, basic stay presets, and a clear/animated selected summary."
+            demonstrates="Range mode with disabled past dates, quick-stay presets, a nights counter via CalendarInfo, and an animated summary."
             appearance="soft"
             code={`const [stayRange, setStayRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
 
@@ -345,10 +359,17 @@ const noPast = useMemo(() => {
 }, []);
 
 <Calendar mode="range" value={stayRange} onChange={setStayRange} disabled={noPast} appearance={soft}>
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarHome />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarPresets presets={basicPresets.slice(4, 9)} />
   <CalendarDays />
-  <CalendarNav compactYears clear home themeToggle />
+  <CalendarInfo showSummary rangeStyle="duration" />
   <CalendarSelectedDates allowClear allowNavigate animated />
 </Calendar>`}
           >
@@ -363,21 +384,14 @@ const noPast = useMemo(() => {
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
+                <CalendarToolbarYearTrigger compact />
+                <CalendarToolbarHome />
                 <CalendarToolbarClear />
               </CalendarToolbar>
               <CalendarPresets presets={basicPresets.slice(4, 9)} />
               <CalendarDays />
-              <CalendarToolbar>
-                <CalendarToolbarPrev />
-                <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger />
-                <CalendarToolbarNext />
-                <CalendarToolbarHome />
-                <CalendarToolbarClear />
-                <CalendarToolbarThemeToggle />
-              </CalendarToolbar>
+              <CalendarInfo showSummary rangeStyle="duration" />
               <CalendarSelectedDates allowClear allowNavigate animated />
             </Calendar>
           </ExampleCard>
@@ -398,10 +412,23 @@ const noPast = useMemo(() => {
 }, []);
 
 <Calendar mode="range" value={flightRange} onChange={setFlightRange} disabled={noPast} theme={temporal} appearance={compact}>
-  <CalendarNav label="Departure" monthLabel yearLabel clear />
+  <CalendarToolbar>
+    <CalendarToolbarLabel label="Departure" />
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarMonthsTrack bound="from" short />
   <CalendarDaysTrack bound="from" showMonthLabel />
-  <CalendarNav label="Return" monthLabel yearLabel />
+  <CalendarToolbar>
+    <CalendarToolbarLabel label="Return" />
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+  </CalendarToolbar>
   <CalendarMonthsTrack bound="to" short />
   <CalendarDaysTrack bound="to" showMonthLabel />
   <CalendarSelectedDates allowClear animated />
@@ -455,8 +482,19 @@ const noPast = useMemo(() => {
 }, []);
 
 <Calendar mode="range" value={twoMonthRange} onChange={setTwoMonthRange} disabled={noPast} cols={2}>
-  <CalendarNav showMonthPicker compactYears col={1} />
-  <CalendarNav offset={1} monthLabel clear col={1} />
+  <CalendarToolbar col={1}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarToolbar col={1} offset={1}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays col={1} />
   <CalendarDays offset={1} col={1} />
   <CalendarSelectedDates allowClear allowNavigate animated />
@@ -517,15 +555,45 @@ const noPast = useMemo(() => {
 );
 
 <Calendar mode="multiple" value={sixMonthDates} defaultViewDate={new Date("2026-05-01")} readOnly cols={3} appearance={compact}>
-  <CalendarNav monthLabel yearLabel col={1} />
-  <CalendarNav monthLabel yearLabel offset={1} col={1} />
-  <CalendarNav monthLabel yearLabel offset={2} col={1} />
+  <CalendarToolbar col={1}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+  </CalendarToolbar>
+  <CalendarToolbar col={1} offset={1}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+  </CalendarToolbar>
+  <CalendarToolbar col={1} offset={2}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+  </CalendarToolbar>
   <CalendarDays col={1} />
   <CalendarDays offset={1} col={1} />
   <CalendarDays offset={2} col={1} />
-  <CalendarNav monthLabel yearLabel offset={3} col={1} />
-  <CalendarNav monthLabel yearLabel offset={4} col={1} />
-  <CalendarNav monthLabel yearLabel offset={5} col={1} />
+  <CalendarToolbar col={1} offset={3}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+  </CalendarToolbar>
+  <CalendarToolbar col={1} offset={4}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+  </CalendarToolbar>
+  <CalendarToolbar col={1} offset={5}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+  </CalendarToolbar>
   <CalendarDays offset={3} col={1} />
   <CalendarDays offset={4} col={1} />
   <CalendarDays offset={5} col={1} /> 
@@ -602,7 +670,13 @@ const weekdaysOnly = useMemo(() => {
 }, []);
 
 <Calendar mode="multiple" value={deliveryDates} onChange={setDeliveryDates} maxDates={4} disabled={weekdaysOnly}>
-  <CalendarNav compactMonths showYearPicker clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger compact />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates allowClear animated />
 </Calendar>`}
@@ -655,7 +729,13 @@ const dropDisabled = useMemo(
   maxDate={new Date("2026-07-18")}
   disabled={dropDisabled}
 >
-  <CalendarNav monthLabel yearLabel clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays hideOutOfRange fixedRows={false} />
   <CalendarSelectedDates allowClear animated />
 </Calendar>`}
@@ -687,7 +767,7 @@ const dropDisabled = useMemo(
           <ExampleCard
             title="Appointment booking"
             useWhen="Doctor, salon, or restaurant reservations needing date and time in one step."
-            demonstrates={`Single mode + \`CalendarTimeGrid\` + nav with \`showTime\`.`}
+            demonstrates={`Single mode + \`CalendarTimeWheel\` + nav with \`showTime\`.`}
             theme="aurora"
             appearance="loft"
             code={`const [appointment, setAppointment] = useState<Date | null>(null);
@@ -699,9 +779,16 @@ const weekdaysOnly = useMemo(() => {
 }, []);
 
 <Calendar gradient mode="single" value={appointment} onChange={setAppointment} disabled={weekdaysOnly}>
-  <CalendarNav showTime showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarTime />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays />
-  <CalendarTimeGrid />
+  <CalendarTimeWheel />
   <CalendarSelectedDates allowClear showTime />
 </Calendar>`}
           >
@@ -743,7 +830,13 @@ const analyticsPresets = [
 ];
 
 <Calendar mode="range" value={reportRange} onChange={setReportRange}>
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarPresets presets={analyticsPresets} />
   <CalendarDays />
   <CalendarSelectedDates allowClear allowNavigate animated />
@@ -797,7 +890,13 @@ const supportPresets = useMemo<PresetEntry[]>(
 );
 
 <Calendar mode="single" value={singlePresetDate} onChange={setSinglePresetDate}>
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarPresets presets={supportPresets} />
   <CalendarDays />
   <CalendarSelectedDates allowClear allowNavigate animated />
@@ -913,7 +1012,13 @@ const holidayPresets = useMemo<PresetEntry[]>(
 );
 
 <Calendar mode="multiple" value={holidayRange} onChange={setHolidayRange} cols={2}>
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarPresets presets={holidayPresets} />
   <CalendarDays />
   <CalendarMonthsGrid col={1} />
@@ -948,29 +1053,34 @@ const holidayPresets = useMemo<PresetEntry[]>(
 
           <ExampleCard
             title="Brand theme picker"
-            useWhen="Branded checkout or onboarding where the picker has to match a custom palette."
-            demonstrates={`\`createTheme\` with full token override (highlight, accent, backdrop, range, etc.).`}
+            useWhen="Branded checkout or onboarding where the picker has to match a custom palette in both light and dark."
+            demonstrates={`\`createTheme\` with shared tokens plus \`light\`/\`dark\` variants, and a built-in theme toggle to flip between them.`}
             theme="custom"
             appearance="soft"
             code={`const [brandDate, setBrandDate] = useState<Date | null>(null);
 
+// Shared tokens apply to both variants; light/dark override per mode.
 const brandTheme = useMemo(
   () =>
     createTheme({
-        highlight: "#f4f96f",
-        accent: "#27a925",
-        backdrop: "#eae0f1",
-        tone:"#ee1818",
-        text: "#282626",
-        stroke: "#cbd5e1",
-        range: "#ccfbf1",
-        shadow:'#b9c2cc', 
+      highlight: "#7c3aed",
+      accent: "#ede9fe",
+      range: "#ddd6fe",
+      weekend: "#db2777",
+      light: { backdrop: "#faf5ff", tone: "#f3e8ff", text: "#3b0764", stroke: "#e9d5ff" },
+      dark: { backdrop: "#1a0b2e", tone: "#2e1065", text: "#f5f3ff", stroke: "#4c1d95" },
     }),
   [],
 );
 
 <Calendar mode="single" value={brandDate} onChange={setBrandDate} theme={brandTheme}>
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarThemeToggle />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates allowClear animated />
 </Calendar>`}
@@ -986,9 +1096,9 @@ const brandTheme = useMemo(
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
-                <CalendarToolbarClear />
+                <CalendarToolbarYearTrigger compact />
+                <CalendarToolbarThemeToggle />
               </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowClear animated />
@@ -1016,7 +1126,13 @@ const denseAppearance = useMemo(
 );
 
 <Calendar mode="range" value={denseRange} onChange={setDenseRange} appearance={denseAppearance}>
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates allowClear animated />
 </Calendar>`}
@@ -1044,7 +1160,7 @@ const denseAppearance = useMemo(
           <ExampleCard
             title="Vacation request"
             useWhen="HR-style time off with min and max length rules."
-            demonstrates={`Range mode with \`minRangeDays\` / \`maxRangeDays\` and weekday-only disabled rule.`}
+            demonstrates={`Range mode with \`minRangeDays\` / \`maxRangeDays\`, weekday-only rule, and \`CalendarInfo\` showing the duration as the user drags.`}
             theme="riso"
             appearance="square"
             code={`const [vacationRange, setVacationRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
@@ -1063,8 +1179,15 @@ const weekdaysOnly = useMemo(() => {
   minRangeDays={2}
   maxRangeDays={21}
 >
-  <CalendarNav showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays />
+  <CalendarInfo showSummary rangeStyle="duration" />
   <CalendarSelectedDates allowClear animated />
 </Calendar>`}
           >
@@ -1082,11 +1205,12 @@ const weekdaysOnly = useMemo(() => {
               <CalendarToolbar>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthTrigger />
-                <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext />
+                <CalendarToolbarYearTrigger compact />
                 <CalendarToolbarClear />
               </CalendarToolbar>
               <CalendarDays />
+              <CalendarInfo showSummary rangeStyle="duration" />
               <CalendarSelectedDates allowClear animated />
             </Calendar>
           </ExampleCard>
@@ -1105,7 +1229,12 @@ const sprintPresets = [
 ];
 
 <Calendar mode="range" value={sprintRange} onChange={setSprintRange}>
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarPresets presets={sprintPresets} />
   <CalendarDays />
   <CalendarSelectedDates allowClear allowNavigate animated />
@@ -1147,7 +1276,12 @@ const sprintPresets = [
   maxDate={new Date("2026-08-31")}
 >
   <CalendarManualInput allowClear />
-  <CalendarNav showMonthPicker compactYears />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
   <CalendarDays />
 </Calendar>`}
           >
@@ -1275,7 +1409,7 @@ const sprintPresets = [
           <ExampleCard
             title="Time slot picker"
             useWhen="Slot pickers, reminders, or any flow where the date is fixed and only time matters."
-            demonstrates={`Solo \`CalendarTimeGrid\` with \`timeStep={{ minute: 10 }}\` for snapped slots.`}
+            demonstrates={`Solo \`CalendarTimeWheel\` with \`timeStep={{ minute: 10 }}\` for snapped slots.`}
             theme="aurora"
             appearance="loft"
             code={`const [meetingTime, setMeetingTime] = useState<Date | null>(null);
@@ -1287,7 +1421,7 @@ const sprintPresets = [
     onChange={setMeetingTime}
     timeStep={{ minute: 10 }}
   >
-    <CalendarTimeGrid />
+    <CalendarTimeWheel />
   </Calendar>
   {meetingTime && (
     <p>
@@ -1350,9 +1484,16 @@ const noPast = useMemo(() => {
   hour12
   disabled={noPast}
 >
-  <CalendarNav showTime showMonthPicker compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarTime />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays />
-  <CalendarTimeGrid />
+  <CalendarTimeWheel />
 </Calendar>
 
 {globalMeeting && (
@@ -1486,7 +1627,13 @@ const blackout = createDisabled({
 });
 
 <Calendar mode="range" value={blackoutRange} onChange={setBlackoutRange} disabled={blackout}>
-  <CalendarNav compactMonths compactYears clear />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger compact />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates allowClear animated />
 </Calendar>`}
@@ -1521,7 +1668,12 @@ const blackout = createDisabled({
             code={`const launchDate = new Date(2026, 8, 9);
 
 <Calendar mode="single" value={launchDate} readOnly>
-  <CalendarNav monthLabel yearLabel />
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthLabel />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearLabel />
+  </CalendarToolbar>
   <CalendarDays />
   <CalendarSelectedDates allowNavigate animated />
 </Calendar>`}
@@ -1853,56 +2005,169 @@ function withImports(title: string, body: string) {
   const importsByTitle: Record<string, string> = {
     "The basics": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Stay booking": `import { useMemo, useState } from "react";
 import { Calendar, basicPresets, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";
 import { soft } from "@dateforge/react-calendar/appearances";`,
     "Flight search": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDaysTrack, CalendarMonthsTrack, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import { CalendarDaysTrack, CalendarMonthsTrack, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";
 import { temporal } from "@dateforge/react-calendar/themes";
 import { compact } from "@dateforge/react-calendar/appearances";`,
     "Two-month stay search": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Six-month availability": `import { useMemo } from "react";
 import { Calendar } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";
 import { compact } from "@dateforge/react-calendar/appearances";`,
     "Delivery slots": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Limited drop window": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Appointment booking": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates, CalendarTimeGrid } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Analytics dashboard": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Support quick dates": `import { useMemo, useState } from "react";
 import { Calendar, type PresetEntry } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Holiday planner": `import { useMemo, useState } from "react";
 import { Calendar, type PresetEntry } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarMonthsGrid, CalendarNav, CalendarPresets, CalendarSelectedDates, CalendarYearsGrid } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarMonthsGrid, CalendarPresets, CalendarSelectedDates, CalendarYearsGrid } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Brand theme picker": `import { useMemo, useState } from "react";
 import { Calendar, createTheme } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Dense product filter": `import { useMemo, useState } from "react";
 import { Calendar, createAppearance } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Vacation request": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Sprint planning": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Invoice due date": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarManualInput, CalendarNav } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarManualInput } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Archive year browser": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
 import { CalendarYearsGrid } from "@dateforge/react-calendar/modules";`,
@@ -1911,19 +2176,41 @@ import { Calendar } from "@dateforge/react-calendar";
 import { CalendarMonthsGrid } from "@dateforge/react-calendar/modules";`,
     "Time slot picker": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
-import { CalendarTimeGrid } from "@dateforge/react-calendar/modules";`,
+import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";`,
     "Global meeting time": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates, CalendarTimeGrid } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Profile birthday": `import { useState } from "react";
 import { Calendar } from "@dateforge/react-calendar";
 import { CalendarDaysTrack, CalendarMonthsTrack, CalendarSelectedDates, CalendarYearsTrack } from "@dateforge/react-calendar/modules";
 import { bubble } from "@dateforge/react-calendar/appearances";`,
     "Blackout calendar": `import { useMemo, useState } from "react";
 import { Calendar, createDisabled } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Launch day": `import { Calendar } from "@dateforge/react-calendar";
-import { CalendarDays, CalendarNav, CalendarSelectedDates } from "@dateforge/react-calendar/modules";`,
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
   };
 
   const imports =
