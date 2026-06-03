@@ -891,6 +891,67 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   );
 }
 
+const WEATHER_ICONS = ["☀️", "⛅", "☁️", "🌧", "⛈", "❄️"];
+
+// Stable per-day value so a given date always renders the same icon.
+const weatherSeed = (d: Date) => {
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+const weatherFor = (d: Date) =>
+  WEATHER_ICONS[Math.floor(weatherSeed(d) * WEATHER_ICONS.length)];
+
+export function WeatherRenderDayShowcase() {
+  const [date, setDate] = useState<Date | null>(() => new Date(2026, 4, 13));
+  return (
+    <section className="mb-8">
+      <Card className="border-[var(--border)] bg-[var(--doc-bg-secondary)] py-0 ring-0 shadow-sm">
+        <CardContent className="flex justify-center px-4 py-7">
+          <div className="w-full max-w-[340px]">
+            <Calendar
+              mode="single"
+              value={date}
+              onChange={setDate}
+              defaultViewDate={new Date(2026, 4, 1)}
+              appearance={soft}
+              width="100%"
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarYearTrigger compact />
+              </CalendarToolbar>
+              <CalendarDays
+                renderDay={(d, state) => {
+                  if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+                  return (
+                    <span
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 2,
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      <span style={{ fontSize: 13 }}>{d.getDate()}</span>
+                      <span aria-hidden style={{ fontSize: 13 }}>
+                        {weatherFor(d)}
+                      </span>
+                    </span>
+                  );
+                }}
+              />
+            </Calendar>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
 export function QuickStartCalendar() {
   return (
     <CalendarPreview

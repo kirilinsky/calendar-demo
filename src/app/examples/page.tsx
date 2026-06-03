@@ -22,6 +22,7 @@ import {
   CalendarYearsGrid,
   CalendarYearsTrack,
 } from "@dateforge/react-calendar/modules";
+import type { DayState } from "@dateforge/react-calendar/modules/days";
 import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
 import { CalendarMonthsWheel } from "@dateforge/react-calendar/modules/months-wheel";
 import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
@@ -57,6 +58,7 @@ import {
   temporal,
 } from "@dateforge/react-calendar/themes";
 import { InstallSnippet } from "../InstallSnippet";
+import { ScrollToTop } from "../ScrollToTop";
 import { SiteHeader } from "../SiteHeader";
 
 type RangeValue = { from: Date | null; to: Date | null };
@@ -69,6 +71,68 @@ const MEETING_ZONES = [
   { city: "Berlin", tz: "Europe/Berlin" },
   { city: "Tokyo", tz: "Asia/Tokyo" },
 ] as const;
+
+// ── renderDay helpers (from compositions/days-render-day stories) ─────────────
+
+// Deterministic per-day pseudo-random in [0, 1) — same date always yields the
+// same value so demos are stable across reloads.
+const seededRandom = (d: Date): number => {
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const dayContainerStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 2,
+  width: "100%",
+  height: "100%",
+  fontSize: 11,
+  lineHeight: 1.1,
+};
+
+const dayNumberStyle = (state: DayState): React.CSSProperties => ({
+  fontWeight: state.isToday || state.isSelected ? 700 : 500,
+  fontSize: 13,
+});
+
+// Out-of-month cells: render only the day number. The Calendar's built-in
+// `.otherItem` class handles the muted text color.
+const renderOtherMonth = (date: Date, state: DayState) => (
+  <span style={dayContainerStyle}>
+    <span style={dayNumberStyle(state)}>{date.getDate()}</span>
+  </span>
+);
+
+// Weather — emoji icon per day
+const WEATHER_ICONS = ["☀️", "⛅", "☁️", "🌧", "⛈", "❄️"] as const;
+const weatherFor = (date: Date) =>
+  WEATHER_ICONS[Math.floor(seededRandom(date) * WEATHER_ICONS.length)];
+
+// Heatmap — activity intensity
+const heatColor = (intensity: number): string => {
+  const alpha = Math.min(0.85, 0.08 + intensity * 0.7);
+  return `rgba(34, 139, 60, ${alpha})`;
+};
+
+// Ticket prices — green cheap, red expensive
+const priceFor = (date: Date): number => {
+  const base = 79;
+  const noise = seededRandom(date);
+  const dow = date.getDay();
+  const isWeekend = dow === 0 || dow === 6;
+  return Math.round(base + noise * 220 + (isWeekend ? 60 : 0));
+};
+
+// Event dots — 1-3 dots on specific days
+const EVENT_DAYS = new Set([3, 7, 14, 18, 22, 27]);
+const eventCount = (date: Date): number => {
+  if (!EVENT_DAYS.has(date.getDate())) return 0;
+  return 1 + Math.floor(seededRandom(date) * 3);
+};
 
 export default function ExamplesPage() {
   const [basicDate, setBasicDate] = useState<Date | null>(null);
@@ -99,6 +163,10 @@ export default function ExamplesPage() {
   const [archiveYear, setArchiveYear] = useState<Date | null>(null);
   const [campaignMonth, setCampaignMonth] = useState<Date | null>(null);
   const [meetingTime, setMeetingTime] = useState<Date | null>(null);
+  const [weatherDate, setWeatherDate] = useState<Date | null>(null);
+  const [heatmapDate, setHeatmapDate] = useState<Date | null>(null);
+  const [priceDate, setPriceDate] = useState<Date | null>(null);
+  const [eventDate, setEventDate] = useState<Date | null>(null);
   const launchDate = useMemo(() => new Date(2026, 8, 9), []);
   const archiveDate = useMemo(() => new Date(2026, 0, 1), []);
   const campaignDate = useMemo(() => new Date(2026, 4, 1), []);
@@ -307,6 +375,26 @@ export default function ExamplesPage() {
             <div className="mx-auto mt-6 max-w-md">
               <InstallSnippet />
             </div>
+
+            <nav
+              aria-label="Jump to examples by keyword"
+              className="mx-auto mt-8 max-w-4xl"
+            >
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                Browse by keyword
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {getTagNav().map(({ tag, slug }) => (
+                  <a
+                    key={tag}
+                    href={`#${slug}`}
+                    className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900"
+                  >
+                    {tag}
+                  </a>
+                ))}
+              </div>
+            </nav>
           </section>
         </div>
 
@@ -1704,8 +1792,330 @@ const blackout = createDisabled({
               <CalendarLunar />
             </Calendar>
           </ExampleCard>
+
+          <ExampleCard
+            title="Weather forecast"
+            useWhen="Trip planners or weather apps where each day shows an at-a-glance condition."
+            demonstrates={`\`CalendarDays renderDay\` returning a custom cell — day number plus a per-day weather emoji.`}
+            theme="aurora"
+            appearance="soft"
+            code={`// Deterministic per-day value so each date always looks the same.
+const seededRandom = (d: Date) => {
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const WEATHER_ICONS = ["☀️", "⛅", "☁️", "🌧", "⛈", "❄️"];
+const weatherFor = (d: Date) =>
+  WEATHER_ICONS[Math.floor(seededRandom(d) * WEATHER_ICONS.length)];
+
+<Calendar mode="single" value={date} onChange={setDate}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays
+    renderDay={(d, state) => {
+      if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+      return (
+        <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, lineHeight: 1.1 }}>
+          <span style={{ fontSize: 13 }}>{d.getDate()}</span>
+          <span aria-hidden style={{ fontSize: 13 }}>{weatherFor(d)}</span>
+        </span>
+      );
+    }}
+  />
+</Calendar>`}
+          >
+            <Calendar
+              mode="single"
+              value={weatherDate}
+              onChange={setWeatherDate}
+              theme={aurora}
+              appearance={soft}
+              width="100%"
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarDays
+                renderDay={(d, state) => {
+                  if (state.isOtherMonth) return renderOtherMonth(d, state);
+                  return (
+                    <span style={dayContainerStyle}>
+                      <span style={dayNumberStyle(state)}>{d.getDate()}</span>
+                      <span aria-hidden style={{ fontSize: 13 }}>
+                        {weatherFor(d)}
+                      </span>
+                    </span>
+                  );
+                }}
+              />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Activity heatmap"
+            useWhen="Contribution graphs, habit trackers, or any view where each day carries an intensity."
+            demonstrates={`\`renderDay\` with an absolute-positioned fill behind the number to tint each cell.`}
+            theme="mint"
+            appearance="soft"
+            code={`const seededRandom = (d: Date) => {
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const heatColor = (intensity: number) => {
+  const alpha = Math.min(0.85, 0.08 + intensity * 0.7);
+  return \`rgba(34, 139, 60, \${alpha})\`;
+};
+
+<Calendar mode="single" value={date} onChange={setDate}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays
+    renderDay={(d, state) => {
+      if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+      const intensity = seededRandom(d);
+      return (
+        <>
+          {/* Absolute fill overrides the .activeItem background so the
+              heatmap color wins on every appearance / border-radius. */}
+          <span aria-hidden style={{ position: "absolute", inset: 0, background: heatColor(intensity), borderRadius: "inherit" }} />
+          <span style={{ position: "relative", fontSize: 13 }}>{d.getDate()}</span>
+        </>
+      );
+    }}
+  />
+</Calendar>`}
+          >
+            <Calendar
+              mode="single"
+              value={heatmapDate}
+              onChange={setHeatmapDate}
+              theme={mint}
+              appearance={soft}
+              width="100%"
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarDays
+                renderDay={(d, state) => {
+                  if (state.isOtherMonth) return renderOtherMonth(d, state);
+                  const intensity = seededRandom(d);
+                  return (
+                    <>
+                      <span
+                        aria-hidden
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: heatColor(intensity),
+                          borderRadius: "inherit",
+                        }}
+                      />
+                      <span
+                        style={{ ...dayContainerStyle, position: "relative" }}
+                      >
+                        <span style={dayNumberStyle(state)}>{d.getDate()}</span>
+                      </span>
+                    </>
+                  );
+                }}
+              />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Ticket prices"
+            useWhen="Flight or event booking where users want to spot the cheapest day to buy."
+            demonstrates={`\`renderDay\` showing a derived price under each day — green when cheap, red when pricey.`}
+            theme="temporal"
+            appearance="compact"
+            code={`const seededRandom = (d: Date) => {
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const priceFor = (d: Date) => {
+  const dow = d.getDay();
+  const isWeekend = dow === 0 || dow === 6;
+  return Math.round(79 + seededRandom(d) * 220 + (isWeekend ? 60 : 0));
+};
+
+<Calendar mode="single" value={date} onChange={setDate}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays
+    renderDay={(d, state) => {
+      if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+      const price = priceFor(d);
+      const isCheap = price < 140;
+      return (
+        <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, lineHeight: 1.1 }}>
+          <span style={{ fontSize: 13 }}>{d.getDate()}</span>
+          <span aria-hidden style={{ fontSize: 10, fontWeight: 600, color: isCheap ? "#15803d" : "#b91c1c" }}>
+            \${price}
+          </span>
+        </span>
+      );
+    }}
+  />
+</Calendar>`}
+          >
+            <Calendar
+              mode="single"
+              value={priceDate}
+              onChange={setPriceDate}
+              theme={temporal}
+              appearance={compact}
+              width="100%"
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarDays
+                renderDay={(d, state) => {
+                  if (state.isOtherMonth) return renderOtherMonth(d, state);
+                  const price = priceFor(d);
+                  const isCheap = price < 140;
+                  return (
+                    <span style={dayContainerStyle}>
+                      <span style={dayNumberStyle(state)}>{d.getDate()}</span>
+                      <span
+                        aria-hidden
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color: isCheap ? "#15803d" : "#b91c1c",
+                        }}
+                      >
+                        ${price}
+                      </span>
+                    </span>
+                  );
+                }}
+              />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Event dots"
+            useWhen="Schedules or agendas that mark how many events fall on a given day."
+            demonstrates={`\`renderDay\` rendering 1–3 dots under days that have events.`}
+            theme="nebula"
+            appearance="soft"
+            code={`const seededRandom = (d: Date) => {
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const EVENT_DAYS = new Set([3, 7, 14, 18, 22, 27]);
+const eventCount = (d: Date) => {
+  if (!EVENT_DAYS.has(d.getDate())) return 0;
+  return 1 + Math.floor(seededRandom(d) * 3);
+};
+
+<Calendar mode="single" value={date} onChange={setDate}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays
+    renderDay={(d, state) => {
+      if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+      const count = eventCount(d);
+      return (
+        <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, lineHeight: 1.1 }}>
+          <span style={{ fontSize: 13 }}>{d.getDate()}</span>
+          <span aria-hidden style={{ display: "flex", gap: 2, height: 4 }}>
+            {Array.from({ length: count }, (_, i) => (
+              <span key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "currentColor", opacity: 0.7 }} />
+            ))}
+          </span>
+        </span>
+      );
+    }}
+  />
+</Calendar>`}
+          >
+            <Calendar
+              mode="single"
+              value={eventDate}
+              onChange={setEventDate}
+              theme={nebula}
+              appearance={soft}
+              width="100%"
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarDays
+                renderDay={(d, state) => {
+                  if (state.isOtherMonth) return renderOtherMonth(d, state);
+                  const count = eventCount(d);
+                  return (
+                    <span style={dayContainerStyle}>
+                      <span style={dayNumberStyle(state)}>{d.getDate()}</span>
+                      <span
+                        aria-hidden
+                        style={{ display: "flex", gap: 2, height: 4 }}
+                      >
+                        {Array.from(
+                          { length: count },
+                          (_, i) => `${d.getDate()}-${i}`,
+                        ).map((key) => (
+                          <span
+                            key={key}
+                            style={{
+                              width: 4,
+                              height: 4,
+                              borderRadius: "50%",
+                              background: "currentColor",
+                              opacity: 0.7,
+                            }}
+                          />
+                        ))}
+                      </span>
+                    </span>
+                  );
+                }}
+              />
+            </Calendar>
+          </ExampleCard>
         </div>
       </div>
+
+      <ScrollToTop />
     </main>
   );
 }
@@ -1743,7 +2153,10 @@ function ExampleCard({
   };
 
   return (
-    <section className="border-y border-zinc-200/80 bg-white/75 px-0 py-4 shadow-sm backdrop-blur sm:rounded-2xl sm:border sm:p-4">
+    <section
+      id={slugify(title)}
+      className="scroll-mt-24 border-y border-zinc-200/80 bg-white/75 px-0 py-4 shadow-sm backdrop-blur sm:rounded-2xl sm:border sm:p-4"
+    >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start xl:grid-cols-[minmax(0,980px)_420px]">
         <div className="order-2 overflow-x-auto bg-[#fbfbfd] px-2 py-3 sm:rounded-xl sm:p-3 lg:order-1">
           <div
@@ -1905,34 +2318,78 @@ function highlightCode(code: string) {
   return parts;
 }
 
-function getTags(title: string) {
-  const tagsByTitle: Record<string, string[]> = {
-    "The basics": ["single", "starter"],
-    "Stay booking": ["range", "booking", "presets"],
-    "Flight search": ["range", "mobile"],
-    "Two-month stay search": ["2 months", "desktop"],
-    "Six-month availability": ["read-only", "6 months", "availability"],
-    "Delivery slots": ["multiple", "capacity"],
-    "Limited drop window": ["hideOutOfRange", "disabled"],
-    "Appointment booking": ["time", "scheduling", "gradient"],
-    "Analytics dashboard": ["range", "reports"],
-    "Support quick dates": ["single presets", "support"],
-    "Holiday planner": ["advanced presets", "holidays", "multiple"],
-    "Brand theme picker": ["createTheme", "brand"],
-    "Dense product filter": ["createAppearance", "dashboard"],
-    "Vacation request": ["constraints", "HR"],
-    "Sprint planning": ["presets", "planning"],
-    "Invoice due date": ["manual input", "billing"],
-    "Archive year browser": ["years grid", "archive"],
-    "Campaign month picker": ["months grid", "campaign"],
-    "Time slot picker": ["time grid", "slots"],
-    "Global meeting time": ["time zone", "hour12"],
-    "Profile birthday": ["tracks", "profile"],
-    "Blackout calendar": ["disabled", "operations"],
-    "Launch day": ["read-only", "status"],
-  };
+// Examples in page order with their keyword tags. Drives both the per-card
+// tag chips (`getTags`) and the jump-to tag cloud at the top (`getTagNav`).
+const EXAMPLES: { title: string; tags: string[] }[] = [
+  { title: "The basics", tags: ["single", "starter"] },
+  { title: "Stay booking", tags: ["range", "booking", "presets"] },
+  { title: "Flight search", tags: ["range", "tracks", "mobile"] },
+  { title: "Two-month stay search", tags: ["range", "2 months", "desktop"] },
+  {
+    title: "Six-month availability",
+    tags: ["read-only", "6 months", "availability"],
+  },
+  { title: "Delivery slots", tags: ["multiple", "capacity"] },
+  {
+    title: "Limited drop window",
+    tags: ["single", "hideOutOfRange", "disabled", "clock"],
+  },
+  { title: "Appointment booking", tags: ["single", "time", "scheduling"] },
+  { title: "Analytics dashboard", tags: ["range", "presets", "reports"] },
+  { title: "Support quick dates", tags: ["single", "presets", "support"] },
+  { title: "Holiday planner", tags: ["multiple", "presets", "holidays"] },
+  { title: "Brand theme picker", tags: ["single", "createTheme", "brand"] },
+  {
+    title: "Dense product filter",
+    tags: ["range", "createAppearance", "dashboard"],
+  },
+  { title: "Vacation request", tags: ["range", "constraints", "HR"] },
+  { title: "Sprint planning", tags: ["range", "presets", "planning"] },
+  { title: "Invoice due date", tags: ["single", "manual input", "billing"] },
+  { title: "Archive year browser", tags: ["years grid", "archive"] },
+  { title: "Campaign month picker", tags: ["months grid", "campaign"] },
+  { title: "Time slot picker", tags: ["time", "slots"] },
+  { title: "Global meeting time", tags: ["single", "time zone", "hour12"] },
+  { title: "Profile birthday", tags: ["single", "tracks", "birthday"] },
+  { title: "Blackout calendar", tags: ["range", "disabled", "operations"] },
+  { title: "Launch day", tags: ["read-only", "status"] },
+  { title: "Month wheel + day grid", tags: ["single", "wheel", "2 cols"] },
+  { title: "Lunar phase strip", tags: ["single", "lunar"] },
+  {
+    title: "Weather forecast",
+    tags: ["renderDay", "custom cell", "custom calendar"],
+  },
+  {
+    title: "Activity heatmap",
+    tags: ["renderDay", "heatmap", "custom calendar"],
+  },
+  { title: "Ticket prices", tags: ["renderDay", "pricing", "custom calendar"] },
+  { title: "Event dots", tags: ["renderDay", "events", "custom calendar"] },
+];
 
-  return tagsByTitle[title] ?? ["calendar"];
+function slugify(title: string) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getTags(title: string) {
+  return EXAMPLES.find((example) => example.title === title)?.tags ?? [
+    "calendar",
+  ];
+}
+
+// Unique keyword tags in page order, each pointing at the first example that
+// carries it — powers the jump-to navigation at the top of the page.
+function getTagNav(): { tag: string; slug: string }[] {
+  const seen = new Map<string, string>();
+  for (const { title, tags } of EXAMPLES) {
+    for (const tag of tags) {
+      if (!seen.has(tag)) seen.set(tag, slugify(title));
+    }
+  }
+  return Array.from(seen, ([tag, slug]) => ({ tag, slug }));
 }
 
 function withImports(title: string, body: string) {
@@ -2138,6 +2595,46 @@ import {
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Launch day": `import { Calendar } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Weather forecast": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Activity heatmap": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Ticket prices": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Event dots": `import { useState } from "react";
+import { Calendar } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
   CalendarToolbarPrev,
