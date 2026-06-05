@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ExternalLink, Moon, Sun } from "lucide-react";
 import { DocsHero } from "./components/DocsHero";
+import { ScrollToTop } from "../ScrollToTop";
 import Content from "./content.mdx";
 import { Button } from "@/components/ui/button";
 import {
@@ -216,6 +217,8 @@ export default function DocsPage() {
           </article>
         </main>
       </div>
+
+      <ScrollToTop className="border-[var(--border)] bg-[var(--doc-bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]" />
     </div>
   );
 }
