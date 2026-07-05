@@ -4,7 +4,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import {
   createTheme,
   type CalendarAppearance,
-  type CalendarTheme,
+  type ThemeFamily,
   type ThemeTokens,
 } from "@dateforge/react-calendar";
 import {
@@ -15,6 +15,7 @@ import {
   press,
   soft,
   square,
+  zenith,
 } from "@dateforge/react-calendar/appearances";
 import { THEMES } from "./themes/themes-data";
 
@@ -26,6 +27,7 @@ const PREFERENCE_EVENT = "dateforge:calendar-preferences";
 
 export type AppearanceId =
   | "default"
+  | "zenith"
   | "soft"
   | "compact"
   | "square"
@@ -39,11 +41,10 @@ export type SavedTheme =
   | { type: "custom"; tokens: ThemeTokens };
 
 export const DEFAULT_CUSTOM_THEME_TOKENS: ThemeTokens = {
-  accent: "#fff",
+  accent: "#1a1a1c",
   activeText: "#fff",
   todayDot: "#1a1a1c",
   backdrop: "#fff",
-  highlight: "#1a1a1c",
   tone: "#f4f4f4",
   text: "#1a1a1c",
   stroke: "#e8e8e8",
@@ -54,12 +55,14 @@ export const DEFAULT_CUSTOM_THEME_TOKENS: ThemeTokens = {
   weekend: "#c62828",
   range: "#4a90d9",
   error: "#dc2626",
+  focusRing: "#1a1a1c",
 };
 
 const APPEARANCE_MAP: Record<
   Exclude<AppearanceId, "default">,
   CalendarAppearance
 > = {
+  zenith,
   soft,
   compact,
   square,
@@ -71,6 +74,7 @@ const APPEARANCE_MAP: Record<
 
 export const APPEARANCE_IDS: AppearanceId[] = [
   "default",
+  "zenith",
   "soft",
   "compact",
   "square",
@@ -85,7 +89,6 @@ const THEME_TOKEN_KEYS: Array<keyof ThemeTokens> = [
   "activeText",
   "todayDot",
   "backdrop",
-  "highlight",
   "tone",
   "text",
   "stroke",
@@ -96,7 +99,13 @@ const THEME_TOKEN_KEYS: Array<keyof ThemeTokens> = [
   "weekend",
   "range",
   "error",
+  "focusRing",
 ];
+
+// v2 stored custom themes under the old token names; map them onto v3.
+const LEGACY_TOKEN_RENAMES: Record<string, keyof ThemeTokens> = {
+  highlight: "accent", // v2 highlight = brand color
+};
 
 function canUseStorage() {
   return typeof window !== "undefined" && "localStorage" in window;
@@ -183,6 +192,12 @@ function isThemeTokens(value: unknown): value is ThemeTokens {
 
 function hydrateTokens(tokens: Record<string, unknown>): ThemeTokens {
   const out = { ...DEFAULT_CUSTOM_THEME_TOKENS };
+  for (const [legacyKey, v3Key] of Object.entries(LEGACY_TOKEN_RENAMES)) {
+    const v = tokens[legacyKey];
+    if (typeof v === "string" && typeof tokens[v3Key] !== "string") {
+      out[v3Key] = v;
+    }
+  }
   for (const key of THEME_TOKEN_KEYS) {
     const v = tokens[key];
     if (typeof v === "string") out[key] = v;
@@ -245,7 +260,7 @@ export function saveCustomTheme(tokens: ThemeTokens) {
 
 export function resolveSavedTheme(
   saved = readSavedTheme(),
-): CalendarTheme | undefined {
+): ThemeFamily | undefined {
   if (!saved) return undefined;
   if (saved.type === "custom") return createTheme(saved.tokens);
 
@@ -372,7 +387,7 @@ export function useSavedGradient(): boolean {
   );
 }
 
-export function useSavedTheme(): CalendarTheme | undefined {
+export function useSavedTheme(): ThemeFamily | undefined {
   const snapshot = useSyncExternalStore(
     subscribePreferences,
     () => readStorageValue(THEME_STORAGE_KEY),

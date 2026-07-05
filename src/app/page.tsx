@@ -5,6 +5,7 @@ import { SiteHeader } from "./SiteHeader";
 import { CalendarPreview } from "./CalendarPreview";
 import { RandomizeButton } from "./RandomizeButton";
 import { Reveal } from "./Reveal";
+import { VersionBadge } from "./VersionBadge";
 import { Button } from "@/components/ui/button";
 import dateForgePackage from "../../node_modules/@dateforge/react-calendar/package.json";
 
@@ -39,8 +40,11 @@ export default async function Home() {
         <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
           <SiteHeader coverage={coverage} />
           <section className="flex flex-1 flex-col py-2 text-center lg:gap-8 lg:py-6">
+            <Reveal delay={0.02}>
+              <VersionBadge version={DATEFORGE_VERSION} />
+            </Reveal>
             <Reveal delay={0.05}>
-              <h1 className="mt-2 mb-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-4xl lg:mt-0 lg:text-5xl lg:whitespace-nowrap">
+              <h1 className="mt-1 mb-1 text-xl font-semibold tracking-tight text-zinc-950 sm:mt-2 sm:mb-2 sm:text-4xl lg:mt-0 lg:text-5xl lg:whitespace-nowrap">
                 Build exactly the calendar your product needs.
               </h1>
             </Reveal>
@@ -48,8 +52,16 @@ export default async function Home() {
             <div className="flex flex-1 flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-0">
               {/* calendar */}
               <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 lg:order-2 lg:flex-none lg:items-end">
-                <Reveal delay={0.18} y={18} className="w-full max-w-[320px] lg:max-w-[330px]">
-                  <CalendarPreview width="100%" navLinks={[]} />
+                <Reveal
+                  delay={0.18}
+                  y={18}
+                  className="w-full max-w-[292px] sm:max-w-[320px] lg:max-w-[330px]"
+                >
+                  <CalendarPreview
+                    width="100%"
+                    navLinks={[]}
+                    reserveHeight="min(440px, 58dvh)"
+                  />
                 </Reveal>
                 <Reveal delay={0.32} className="flex flex-col items-center gap-2">
                   <RandomizeButton />
@@ -184,7 +196,7 @@ function BranchLink({
     <Button
       asChild
       variant="outline"
-      className={`group h-10 flex-1 justify-center gap-4 rounded-full px-4 text-left shadow-sm lg:h-16 lg:justify-between lg:px-6 lg:py-3 ${v.link}`}
+      className={`group h-10 flex-1 justify-center gap-4 rounded-full px-4 text-left shadow-sm transition-transform duration-150 active:scale-[0.98] lg:h-16 lg:justify-between lg:px-6 lg:py-3 ${v.link}`}
     >
       <Link
         href={href}

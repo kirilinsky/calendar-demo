@@ -4,11 +4,14 @@ import { useMemo, useState } from "react";
 import { Check, ChevronDown, Clipboard, Palette, Sparkles } from "lucide-react";
 import {
   Calendar,
-  basicPresets,
+  calendarDate,
+  commonPresets,
   createAppearance,
+  createCalendarConfig,
   createDisabled,
   createTheme,
-  type PresetEntry,
+  type CalendarDate,
+  type PresetInput,
 } from "@dateforge/react-calendar";
 import {
   CalendarDays,
@@ -22,7 +25,13 @@ import {
   CalendarYearsGrid,
   CalendarYearsTrack,
 } from "@dateforge/react-calendar/modules";
-import type { DayState } from "@dateforge/react-calendar/modules/days";
+import type { DayRenderState } from "@dateforge/react-calendar/modules/days";
+import {
+  DatePicker,
+  MonthPicker,
+  MultiMonthCalendar,
+  SimpleCalendar,
+} from "@dateforge/react-calendar/prebuilt";
 import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
 import { CalendarMonthsWheel } from "@dateforge/react-calendar/modules/months-wheel";
 import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
@@ -49,21 +58,25 @@ import {
 } from "@dateforge/react-calendar/appearances";
 import {
   aurora,
+  chalk,
+  fjord,
   graphite,
   industrial,
+  meadow,
   nebula,
   mint,
   riso,
   snow,
   temporal,
+  velvet,
 } from "@dateforge/react-calendar/themes";
 import { InstallSnippet } from "../InstallSnippet";
 import { ScrollToTop } from "../ScrollToTop";
 import { SiteHeader } from "../SiteHeader";
 
-type RangeValue = { from: Date | null; to: Date | null };
+type RangeValue = { start: Date; end: Date } | null;
 
-const emptyRange = (): RangeValue => ({ from: null, to: null });
+const emptyRange = (): RangeValue => null;
 
 const MEETING_ZONES = [
   { city: "New York", tz: "America/New_York" },
@@ -75,9 +88,10 @@ const MEETING_ZONES = [
 // ── renderDay helpers (from compositions/days-render-day stories) ─────────────
 
 // Deterministic per-day pseudo-random in [0, 1) — same date always yields the
-// same value so demos are stable across reloads.
-const seededRandom = (d: Date): number => {
-  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+// same value so demos are stable across reloads. renderDay hands us the
+// library's CalendarDate ({ year, month, day }, month 1-12).
+const seededRandom = (d: CalendarDate): number => {
+  const seed = d.year * 10000 + d.month * 100 + d.day;
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
@@ -94,22 +108,22 @@ const dayContainerStyle: React.CSSProperties = {
   lineHeight: 1.1,
 };
 
-const dayNumberStyle = (state: DayState): React.CSSProperties => ({
-  fontWeight: state.isToday || state.isSelected ? 700 : 500,
+const dayNumberStyle = (state: DayRenderState): React.CSSProperties => ({
+  fontWeight: state.today || state.selected ? 700 : 500,
   fontSize: 13,
 });
 
 // Out-of-month cells: render only the day number. The Calendar's built-in
-// `.otherItem` class handles the muted text color.
-const renderOtherMonth = (date: Date, state: DayState) => (
+// outside-day styling handles the muted text color.
+const renderOtherMonth = (date: CalendarDate, state: DayRenderState) => (
   <span style={dayContainerStyle}>
-    <span style={dayNumberStyle(state)}>{date.getDate()}</span>
+    <span style={dayNumberStyle(state)}>{date.day}</span>
   </span>
 );
 
 // Weather — emoji icon per day
 const WEATHER_ICONS = ["☀️", "⛅", "☁️", "🌧", "⛈", "❄️"] as const;
-const weatherFor = (date: Date) =>
+const weatherFor = (date: CalendarDate) =>
   WEATHER_ICONS[Math.floor(seededRandom(date) * WEATHER_ICONS.length)];
 
 // Heatmap — activity intensity
@@ -119,18 +133,18 @@ const heatColor = (intensity: number): string => {
 };
 
 // Ticket prices — green cheap, red expensive
-const priceFor = (date: Date): number => {
+const priceFor = (date: CalendarDate): number => {
   const base = 79;
   const noise = seededRandom(date);
-  const dow = date.getDay();
+  const dow = new Date(date.year, date.month - 1, date.day).getDay();
   const isWeekend = dow === 0 || dow === 6;
   return Math.round(base + noise * 220 + (isWeekend ? 60 : 0));
 };
 
 // Event dots — 1-3 dots on specific days
 const EVENT_DAYS = new Set([3, 7, 14, 18, 22, 27]);
-const eventCount = (date: Date): number => {
-  if (!EVENT_DAYS.has(date.getDate())) return 0;
+const eventCount = (date: CalendarDate): number => {
+  if (!EVENT_DAYS.has(date.day)) return 0;
   return 1 + Math.floor(seededRandom(date) * 3);
 };
 
@@ -167,9 +181,18 @@ export default function ExamplesPage() {
   const [heatmapDate, setHeatmapDate] = useState<Date | null>(null);
   const [priceDate, setPriceDate] = useState<Date | null>(null);
   const [eventDate, setEventDate] = useState<Date | null>(null);
+  const [prebuiltDate, setPrebuiltDate] = useState<Date | null>(null);
+  const [pickedMonth, setPickedMonth] = useState<Date | null>(null);
+  const [weekSpan, setWeekSpan] = useState<RangeValue>(null);
+  const [shiftRanges, setShiftRanges] = useState<{ start: Date; end: Date }[]>(
+    [],
+  );
+  const [bizRange, setBizRange] = useState<RangeValue>(null);
+  const [bizSegments, setBizSegments] = useState<number | null>(null);
+  const [deDate, setDeDate] = useState<Date | null>(null);
+  const [schemeDate, setSchemeDate] = useState<Date | null>(null);
+  const [scheme, setScheme] = useState<"light" | "dark">("light");
   const launchDate = useMemo(() => new Date(2026, 8, 9), []);
-  const archiveDate = useMemo(() => new Date(2026, 0, 1), []);
-  const campaignDate = useMemo(() => new Date(2026, 4, 1), []);
   const sixMonthDates = useMemo(
     () => [
       new Date(2026, 4, 8),
@@ -212,7 +235,7 @@ export default function ExamplesPage() {
       }),
     [],
   );
-  const analyticsPresets = useMemo<PresetEntry[]>(
+  const analyticsPresets = useMemo<PresetInput[]>(
     () => [
       { label: "Today", value: 0 },
       { label: "Last 7 days", value: -6, range: 6 },
@@ -221,7 +244,7 @@ export default function ExamplesPage() {
     ],
     [],
   );
-  const sprintPresets = useMemo<PresetEntry[]>(
+  const sprintPresets = useMemo<PresetInput[]>(
     () => [
       { label: "Current sprint", value: 0, range: 13 },
       { label: "Next sprint", value: 14, range: 13 },
@@ -229,7 +252,7 @@ export default function ExamplesPage() {
     ],
     [],
   );
-  const supportPresets = useMemo<PresetEntry[]>(
+  const supportPresets = useMemo<PresetInput[]>(
     () => [
       { label: "Today", value: 0 },
       { label: "Tomorrow", value: 1 },
@@ -237,85 +260,85 @@ export default function ExamplesPage() {
       {
         id: "next-monday",
         label: "Next Monday",
-        getValue: ({ now, isValid }) => {
+        getValue: ({ now }) => {
           const date = new Date(now);
           const delta = (8 - date.getDay()) % 7 || 7;
           date.setDate(date.getDate() + delta);
-          return isValid(date) ? date : null;
+          return date;
         },
       },
     ],
     [],
   );
-  const holidayPresets = useMemo<PresetEntry[]>(
+  const holidayPresets = useMemo<PresetInput[]>(
     () => [
       {
         id: "new-year",
         label: "New Year",
-        getValue: ({ now, isValid }) => {
+        getValue: ({ now }) => {
           const year =
             now.getMonth() > 0 || now.getDate() > 1
               ? now.getFullYear() + 1
               : now.getFullYear();
           const date = new Date(year, 0, 1);
-          return isValid(date) ? date : null;
+          return date;
         },
       },
       {
         id: "independence-day",
         label: "Independence Day",
-        getValue: ({ now, isValid }) => {
+        getValue: ({ now }) => {
           const year =
             now.getMonth() > 6 || (now.getMonth() === 6 && now.getDate() > 4)
               ? now.getFullYear() + 1
               : now.getFullYear();
           const date = new Date(year, 6, 4);
-          return isValid(date) ? date : null;
+          return date;
         },
       },
       {
         id: "christmas-day",
         label: "Christmas Day",
-        getValue: ({ now, isValid }) => {
+        getValue: ({ now }) => {
           const year =
             now.getMonth() > 11 || (now.getMonth() === 11 && now.getDate() > 25)
               ? now.getFullYear() + 1
               : now.getFullYear();
           const date = new Date(year, 11, 25);
-          return isValid(date) ? date : null;
+          return date;
         },
       },
       {
         id: "thanksgiving-day",
         label: "Thanksgiving",
-        getValue: ({ now, isValid }) => {
+        getValue: ({ now }) => {
           const year =
             now.getMonth() > 10 ? now.getFullYear() + 1 : now.getFullYear();
           const date = nthWeekdayOfMonth(year, 10, 4, 4);
-          return isValid(date) ? date : null;
+          return date;
         },
       },
       {
         id: "christmas-eve",
         label: "Christmas Eve",
-        getValue: ({ now, isValid }) => {
+        getValue: ({ now }) => {
           const year =
             now.getMonth() > 11 || (now.getMonth() === 11 && now.getDate() > 24)
               ? now.getFullYear() + 1
               : now.getFullYear();
           const date = new Date(year, 11, 24);
-          return isValid(date) ? date : null;
+          return date;
         },
       },
       {
         id: "black-friday",
         label: "Black Friday",
-        getValue: ({ now, isValid }) => {
+        getValue: ({ now }) => {
           const year =
             now.getMonth() > 10 ? now.getFullYear() + 1 : now.getFullYear();
           const date = nthWeekdayOfMonth(year, 10, 4, 4);
           date.setDate(date.getDate() + 1);
-          return isValid(date) ? date : null;
+          return date;
         },
       },
     ],
@@ -324,8 +347,8 @@ export default function ExamplesPage() {
   const brandTheme = useMemo(
     () =>
       createTheme({
-        highlight: "#7c3aed",
-        accent: "#ede9fe",
+        accent: "#7c3aed",
+        focusRing: "#ede9fe",
         range: "#ddd6fe",
         weekend: "#db2777",
         light: {
@@ -349,11 +372,109 @@ export default function ExamplesPage() {
         radius: "5px",
         spacing: "0.42em",
         fontSize: "13px",
-        dayRatio: "1 / 0.78",
+        dayHeight: "2.2em",
         transition: "120ms ease",
       }),
     [],
   );
+
+  const singleCfg = useMemo(() => createCalendarConfig(), []);
+  const rangeCfg = useMemo(() => createCalendarConfig({ mode: "range" }), []);
+  const multipleCfg = useMemo(
+    () => createCalendarConfig({ mode: "multiple" }),
+    [],
+  );
+  const rangeNoPastCfg = useMemo(
+    () => createCalendarConfig({ mode: "range", disabled: noPast }),
+    [noPast],
+  );
+  const sixMonthCfg = useMemo(
+    () => createCalendarConfig({ mode: "multiple", readOnly: true }),
+    [],
+  );
+  const deliveryCfg = useMemo(
+    () =>
+      createCalendarConfig({
+        mode: "multiple",
+        maxDates: 4,
+        disabled: weekdaysOnly,
+      }),
+    [weekdaysOnly],
+  );
+  const dropCfg = useMemo(
+    () =>
+      createCalendarConfig({
+        min: new Date(2026, 6, 10),
+        max: new Date(2026, 6, 18),
+        disabled: dropDisabled,
+      }),
+    [dropDisabled],
+  );
+  const appointmentCfg = useMemo(
+    () => createCalendarConfig({ withTime: true, disabled: weekdaysOnly }),
+    [weekdaysOnly],
+  );
+  const vacationCfg = useMemo(
+    () =>
+      createCalendarConfig({
+        mode: "range",
+        disabled: weekdaysOnly,
+        minSpan: 2,
+        maxSpan: 21,
+      }),
+    [weekdaysOnly],
+  );
+  const invoiceCfg = useMemo(
+    () =>
+      createCalendarConfig({
+        locale: "de-DE",
+        min: new Date(2026, 4, 1),
+        max: new Date(2026, 7, 31),
+      }),
+    [],
+  );
+  const archiveCfg = useMemo(
+    () =>
+      createCalendarConfig({
+        min: new Date(2018, 0, 1),
+        max: new Date(2030, 11, 31),
+      }),
+    [],
+  );
+  const timeCfg = useMemo(() => createCalendarConfig({ withTime: true }), []);
+  const globalCfg = useMemo(
+    () =>
+      createCalendarConfig({
+        withTime: true,
+        hour12: true,
+        timeZone: "America/New_York",
+        disabled: noPast,
+      }),
+    [noPast],
+  );
+  const blackoutCfg = useMemo(
+    () => createCalendarConfig({ mode: "range", disabled: blackout }),
+    [blackout],
+  );
+  const readOnlyCfg = useMemo(
+    () => createCalendarConfig({ readOnly: true }),
+    [],
+  );
+  const weekCfg = useMemo(() => createCalendarConfig({ unit: "week" }), []);
+  const multiRangeCfg = useMemo(
+    () => createCalendarConfig({ mode: "multi-range", maxRanges: 3 }),
+    [],
+  );
+  const bizCfg = useMemo(
+    () =>
+      createCalendarConfig({
+        mode: "range",
+        exclude: { weekends: true },
+        excludedEndpointPolicy: "snap-inward",
+      }),
+    [],
+  );
+  const deCfg = useMemo(() => createCalendarConfig({ locale: "de-DE" }), []);
 
   return (
     <main className="min-h-screen bg-[#fbfbfd] text-zinc-950">
@@ -405,7 +526,9 @@ export default function ExamplesPage() {
             demonstrates="Bare minimum composition — Calendar shell + nav + days + selected dates."
             code={`const [basicDate, setBasicDate] = useState<Date | null>(new Date());
 
-<Calendar mode="single" value={basicDate} onChange={setBasicDate}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={basicDate} onChange={(value) => setBasicDate(value as Date | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -417,10 +540,10 @@ export default function ExamplesPage() {
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={basicDate}
-              onChange={setBasicDate}
-              width="100%"
+              onChange={(value) => setBasicDate(value as Date | null)}
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -434,11 +557,309 @@ export default function ExamplesPage() {
           </ExampleCard>
 
           <ExampleCard
+            title="One-import prebuilts"
+            useWhen="You want a working picker now and composition later."
+            demonstrates={`\`SimpleCalendar\`, \`DatePicker\`, and \`MonthPicker\` from \`/prebuilt\` — ready recipes over the same primitives, plain-Date props.`}
+            code={`import { DatePicker, MonthPicker, SimpleCalendar } from "@dateforge/react-calendar/prebuilt";
+
+const [date, setDate] = useState<Date | null>(null);
+const [month, setMonth] = useState<Date | null>(null);
+
+<SimpleCalendar value={date} onChange={setDate} />   {/* header + day grid */}
+<DatePicker value={date} onChange={setDate} />       {/* typed input + grid + Today */}
+<MonthPicker value={month} onChange={setMonth} />    {/* year stepper + 12-month grid */}`}
+          >
+            <div className="flex flex-col gap-6">
+              <SimpleCalendar value={prebuiltDate} onChange={setPrebuiltDate} />
+              <DatePicker value={prebuiltDate} onChange={setPrebuiltDate} />
+              <MonthPicker value={pickedMonth} onChange={setPickedMonth} />
+            </div>
+          </ExampleCard>
+
+          <ExampleCard
+            wide
+            title="Quarter board"
+            useWhen="Roadmaps, quarters, or long bookings that need several months at once."
+            demonstrates={`\`MultiMonthCalendar\` — a 3-month range board generated from one prop set; one shared selection drags across months.`}
+            appearance="compact"
+            code={`import { MultiMonthCalendar } from "@dateforge/react-calendar/prebuilt";
+
+<MultiMonthCalendar
+  months={3}
+  cols={3}
+  mode="range"
+  startMonth={new Date(2026, 6, 1)}
+/>`}
+          >
+            <MultiMonthCalendar
+              months={3}
+              cols={3}
+              mode="range"
+              startMonth={new Date(2026, 6, 1)}
+            />
+          </ExampleCard>
+
+          <ExampleCard
+            title="Week picker"
+            useWhen="Timesheets, weekly reports, or anything that snaps to whole weeks."
+            demonstrates={`\`unit: "week"\` — one click selects the whole week and emits a \`{ start, end }\` span.`}
+            theme="fjord"
+            appearance="soft"
+            code={`const config = createCalendarConfig({ unit: "week" });
+const [week, setWeek] = useState<{ start: Date; end: Date } | null>(null);
+
+<Calendar config={config} value={week} onChange={(value) => setWeek(value as { start: Date; end: Date } | null)}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays weekNumbers />
+  <CalendarInfo showSummary rangeStyle="duration" />
+</Calendar>`}
+          >
+            <Calendar
+              config={weekCfg}
+              value={weekSpan}
+              onChange={(value) => setWeekSpan(value as RangeValue)}
+              theme={fjord}
+              appearance={soft}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarDays weekNumbers />
+              <CalendarInfo showSummary rangeStyle="duration" />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Shift blocks"
+            useWhen="Rotas, maintenance windows, or anything collecting several separate ranges."
+            demonstrates={`\`mode: "multi-range"\` with \`maxRanges\` — several \`{ start, end }\` spans, chips with per-span removal.`}
+            theme="industrial"
+            appearance="compact"
+            code={`const config = createCalendarConfig({ mode: "multi-range", maxRanges: 3 });
+const [shifts, setShifts] = useState<{ start: Date; end: Date }[]>([]);
+
+<Calendar config={config} value={shifts} onChange={(value) => setShifts(value as { start: Date; end: Date }[])}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
+  <CalendarDays />
+  <CalendarSelectedDates allowClear allowClearPerChip allowNavigate />
+</Calendar>`}
+          >
+            <Calendar
+              config={multiRangeCfg}
+              value={shiftRanges}
+              onChange={(value) =>
+                setShiftRanges(value as { start: Date; end: Date }[])
+              }
+              theme={industrial}
+              appearance={compact}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
+              <CalendarDays />
+              <CalendarSelectedDates allowClear allowClearPerChip allowNavigate />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Business days"
+            useWhen="SLAs, delivery estimates, or any flow counting working days only."
+            demonstrates={`\`exclude: { weekends: true }\` — weekends stay spannable but are cut from the emitted value; \`details.segments\` reports the working-day blocks.`}
+            theme="meadow"
+            appearance="soft"
+            code={`const config = createCalendarConfig({
+  mode: "range",
+  exclude: { weekends: true },           // cut from emitted spans
+  excludedEndpointPolicy: "snap-inward", // or "reject"
+});
+
+const [range, setRange] = useState<{ start: Date; end: Date } | null>(null);
+const [segments, setSegments] = useState<number | null>(null);
+
+<Calendar
+  config={config}
+  value={range}
+  onChange={(value, details) => {
+    setRange(value as { start: Date; end: Date } | null);
+    setSegments(details.segments?.length ?? null);
+  }}
+>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
+  <CalendarDays highlightWeekends />
+  <CalendarInfo showSummary rangeStyle="days" />
+</Calendar>
+
+{segments !== null && <p>{segments} working-day block(s) in the selection</p>}`}
+          >
+            <Calendar
+              config={bizCfg}
+              value={bizRange}
+              onChange={(value, details) => {
+                setBizRange(value as RangeValue);
+                setBizSegments(details.segments?.length ?? null);
+              }}
+              theme={meadow}
+              appearance={soft}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
+              <CalendarDays highlightWeekends />
+              <CalendarInfo showSummary rangeStyle="days" />
+            </Calendar>
+            <p
+              aria-live="polite"
+              className="mt-3 text-center text-sm font-medium text-zinc-600"
+            >
+              {bizSegments !== null
+                ? `${bizSegments} working-day block${bizSegments === 1 ? "" : "s"} in the selection`
+                : "Drag a range across a weekend"}
+            </p>
+          </ExampleCard>
+
+          <ExampleCard
+            title="German locale + labels"
+            useWhen="Localized products where every visible and screen-reader string must match the language."
+            demonstrates={`\`locale\` drives names/digits/week start via Intl; the \`labels\` registry localizes every aria-label in one place.`}
+            theme="chalk"
+            appearance="square"
+            code={`const config = createCalendarConfig({ locale: "de-DE" });
+
+<Calendar
+  config={config}
+  value={date}
+  onChange={(value) => setDate(value as Date | null)}
+  labels={{
+    clear: "Löschen",
+    previousMonth: "Vorheriger Monat",
+    nextMonth: "Nächster Monat",
+    selectMonth: "Monat wählen",
+    selectYear: "Jahr wählen",
+  }}
+>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarClear />
+  </CalendarToolbar>
+  <CalendarDays weekNumbers weekLabel="KW" weekdayFormat="narrow" />
+</Calendar>`}
+          >
+            <Calendar
+              config={deCfg}
+              value={deDate}
+              onChange={(value) => setDeDate(value as Date | null)}
+              labels={{
+                clear: "Löschen",
+                previousMonth: "Vorheriger Monat",
+                nextMonth: "Nächster Monat",
+                selectMonth: "Monat wählen",
+                selectYear: "Jahr wählen",
+              }}
+              theme={chalk}
+              appearance={square}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarClear />
+              </CalendarToolbar>
+              <CalendarDays weekNumbers weekLabel="KW" weekdayFormat="narrow" />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Controlled scheme"
+            useWhen="The calendar must follow your app's own light/dark state."
+            demonstrates={`Controlled \`scheme\` + \`onSchemeChange\` — the built-in toggle reports the next scheme instead of flipping itself.`}
+            theme="velvet"
+            appearance="loft"
+            code={`const config = createCalendarConfig();
+const [scheme, setScheme] = useState<"light" | "dark">("light");
+
+<Calendar
+  config={config}
+  value={date}
+  onChange={(value) => setDate(value as Date | null)}
+  scheme={scheme}
+  onSchemeChange={setScheme}
+>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarThemeToggle />
+  </CalendarToolbar>
+  <CalendarDays />
+</Calendar>`}
+          >
+            <Calendar
+              config={singleCfg}
+              value={schemeDate}
+              onChange={(value) => setSchemeDate(value as Date | null)}
+              scheme={scheme}
+              onSchemeChange={setScheme}
+              theme={velvet}
+              appearance={loft}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarThemeToggle />
+              </CalendarToolbar>
+              <CalendarDays />
+            </Calendar>
+            <p className="mt-3 text-center text-sm font-medium text-zinc-600">
+              App-side scheme: <span className="font-semibold">{scheme}</span>
+            </p>
+          </ExampleCard>
+
+          <ExampleCard
             title="Stay booking"
             useWhen="Lodging or short-stay rentals where guests pick check-in and check-out."
             demonstrates="Range mode with disabled past dates, quick-stay presets, a nights counter via CalendarInfo, and an animated summary."
             appearance="soft"
-            code={`const [stayRange, setStayRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+            code={`const [stayRange, setStayRange] = useState<{ start: Date; end: Date } | null>(null);
 
 const noPast = useMemo(() => {
   const today = new Date();
@@ -446,7 +867,9 @@ const noPast = useMemo(() => {
   return createDisabled({ before: today });
 }, []);
 
-<Calendar mode="range" value={stayRange} onChange={setStayRange} disabled={noPast} appearance={soft}>
+const config = createCalendarConfig({ mode: "range", disabled: noPast });
+
+<Calendar config={config} value={stayRange} onChange={(value) => setStayRange(value as { start: Date; end: Date } | null)} appearance={soft}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -456,18 +879,17 @@ const noPast = useMemo(() => {
     <CalendarToolbarClear />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarPresets presets={basicPresets.slice(4, 9)} />
+  <CalendarPresets presets={commonPresets.slice(4, 9)} />
   <CalendarInfo showSummary rangeStyle="duration" />
-  <CalendarSelectedDates allowClear allowNavigate animated />
+  <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`}
           >
             <Calendar
-              mode="range"
+              config={rangeNoPastCfg}
               value={stayRange}
-              onChange={setStayRange}
-              disabled={noPast}
+              onChange={(value) => setStayRange(value as RangeValue)}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -478,9 +900,9 @@ const noPast = useMemo(() => {
                 <CalendarToolbarClear />
               </CalendarToolbar>
               <CalendarDays />
-              <CalendarPresets presets={basicPresets.slice(4, 9)} />
+              <CalendarPresets presets={commonPresets.slice(4, 9)} />
               <CalendarInfo showSummary rangeStyle="duration" />
-              <CalendarSelectedDates allowClear allowNavigate animated />
+              <CalendarSelectedDates allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -491,7 +913,7 @@ const noPast = useMemo(() => {
             demonstrates={`Split bound tracks (\`bound="from"\` / \`bound="to"\`) for compact range selection across two columns.`}
             theme="temporal"
             appearance="compact"
-            code={`const [flightRange, setFlightRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+            code={`const [flightRange, setFlightRange] = useState<{ start: Date; end: Date } | null>(null);
 
 const noPast = useMemo(() => {
   const today = new Date();
@@ -499,41 +921,42 @@ const noPast = useMemo(() => {
   return createDisabled({ before: today });
 }, []);
 
-<Calendar mode="range" value={flightRange} onChange={setFlightRange} disabled={noPast} theme={temporal} appearance={compact}>
+const config = createCalendarConfig({ mode: "range", disabled: noPast });
+
+<Calendar config={config} value={flightRange} onChange={(value) => setFlightRange(value as { start: Date; end: Date } | null)} theme={temporal} appearance={compact}>
   <CalendarToolbar col={2}>
-    <CalendarToolbarLabel label="Departure" />
+    <CalendarToolbarLabel>Departure</CalendarToolbarLabel>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthLabel />
     <CalendarToolbarYearLabel />
-    <CalendarToolbarLabel label="Return" />
+    <CalendarToolbarLabel>Return</CalendarToolbarLabel>
     <CalendarToolbarMonthLabel offset={1} />
     <CalendarToolbarYearLabel offset={1} />
     <CalendarToolbarNext />
     <CalendarToolbarClear />
   </CalendarToolbar>
   <CalendarMonthsTrack bound="from" short />
-  <CalendarDaysTrack bound="from" showMonthLabel />
+  <CalendarDaysTrack bound="from" />
   <CalendarMonthsTrack bound="to" short />
-  <CalendarDaysTrack bound="to" showMonthLabel />
-  <CalendarSelectedDates allowClear animated />
+  <CalendarDaysTrack bound="to" />
+  <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
             <Calendar
-              mode="range"
+              config={rangeNoPastCfg}
               value={flightRange}
-              onChange={setFlightRange}
-              disabled={noPast}
+              onChange={(value) => setFlightRange(value as RangeValue)}
               theme={temporal}
               appearance={compact}
-              width="100%"
+              style={{ width: "100%" }}
               cols={2}
             >
               <CalendarToolbar col={2}>
-                <CalendarToolbarLabel label="Departure" />
+                <CalendarToolbarLabel>Departure</CalendarToolbarLabel>
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthLabel />
                 <CalendarToolbarYearLabel />
-                <CalendarToolbarLabel label="Return" />
+                <CalendarToolbarLabel>Return</CalendarToolbarLabel>
                 <CalendarToolbarMonthLabel offset={1} />
                 <CalendarToolbarYearLabel offset={1} />
                 <CalendarToolbarNext />
@@ -543,7 +966,7 @@ const noPast = useMemo(() => {
               <CalendarMonthsTrack col={1} bound="to" />
               <CalendarDaysTrack col={1} bound="from" />
               <CalendarDaysTrack col={1} bound="to" />
-              <CalendarSelectedDates animated />
+              <CalendarSelectedDates />
             </Calendar>
           </ExampleCard>
 
@@ -553,7 +976,7 @@ const noPast = useMemo(() => {
             demonstrates={`\`cols={2}\` with two \`CalendarDays\` (offset 0 and 1) and one continuous range value.`}
             theme="snow"
             appearance="soft"
-            code={`const [twoMonthRange, setTwoMonthRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+            code={`const [twoMonthRange, setTwoMonthRange] = useState<{ start: Date; end: Date } | null>(null);
 
 const noPast = useMemo(() => {
   const today = new Date();
@@ -561,7 +984,9 @@ const noPast = useMemo(() => {
   return createDisabled({ before: today });
 }, []);
 
-<Calendar mode="range" value={twoMonthRange} onChange={setTwoMonthRange} disabled={noPast} cols={2}>
+const config = createCalendarConfig({ mode: "range", disabled: noPast });
+
+<Calendar config={config} value={twoMonthRange} onChange={(value) => setTwoMonthRange(value as { start: Date; end: Date } | null)} cols={2}>
   <CalendarToolbar col={2}>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthLabel />
@@ -572,19 +997,18 @@ const noPast = useMemo(() => {
   </CalendarToolbar>
   <CalendarDays col={1} />
   <CalendarDays offset={1} col={1} />
-  <CalendarSelectedDates allowClear allowNavigate animated />
+  <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`}
             wide
           >
             <Calendar
-              mode="range"
+              config={rangeNoPastCfg}
               value={twoMonthRange}
-              onChange={setTwoMonthRange}
-              disabled={noPast}
+              onChange={(value) => setTwoMonthRange(value as RangeValue)}
               theme={snow}
               appearance={soft}
               cols={2}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar col={2}>
                 <CalendarToolbarPrev />
@@ -596,7 +1020,7 @@ const noPast = useMemo(() => {
               </CalendarToolbar>
               <CalendarDays col={1} />
               <CalendarDays offset={1} col={1} />
-              <CalendarSelectedDates allowClear allowNavigate animated />
+              <CalendarSelectedDates allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -624,7 +1048,9 @@ const noPast = useMemo(() => {
   [],
 );
 
-<Calendar mode="multiple" value={sixMonthDates} defaultViewDate={new Date("2026-05-01")} readOnly cols={3} appearance={compact}>
+const config = createCalendarConfig({ mode: "multiple", readOnly: true });
+
+<Calendar config={config} value={sixMonthDates} initialView={calendarDate(2026, 5, 1)} cols={3} appearance={compact}>
   <CalendarToolbar col={1}>
     <CalendarToolbarMonthLabel />
     <CalendarToolbarYearLabel />
@@ -659,14 +1085,13 @@ const noPast = useMemo(() => {
             wide
           >
             <Calendar
-              mode="multiple"
+              config={sixMonthCfg}
               value={sixMonthDates}
-              defaultViewDate={new Date(2026, 4, 1)}
-              readOnly
+              initialView={calendarDate(2026, 5, 1)}
               theme={industrial}
               appearance={compact}
               cols={3}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar col={1}>
                 <CalendarToolbarMonthLabel />
@@ -715,7 +1140,13 @@ const weekdaysOnly = useMemo(() => {
   return createDisabled({ weekends: true, before: today });
 }, []);
 
-<Calendar mode="multiple" value={deliveryDates} onChange={setDeliveryDates} maxDates={4} disabled={weekdaysOnly}>
+const config = createCalendarConfig({
+  mode: "multiple",
+  maxDates: 4,
+  disabled: weekdaysOnly,
+});
+
+<Calendar config={config} value={deliveryDates} onChange={(value) => setDeliveryDates(value as Date[])}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger compact />
@@ -723,18 +1154,16 @@ const weekdaysOnly = useMemo(() => {
     <CalendarToolbarYearTrigger />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarSelectedDates allowClear animated />
+  <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
             <Calendar
-              mode="multiple"
+              config={deliveryCfg}
               value={deliveryDates}
-              onChange={setDeliveryDates}
-              maxDates={4}
-              disabled={weekdaysOnly}
+              onChange={(value) => setDeliveryDates(value as Date[])}
               theme={mint}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -743,7 +1172,7 @@ const weekdaysOnly = useMemo(() => {
                 <CalendarToolbarYearTrigger compact />
               </CalendarToolbar>
               <CalendarDays />
-              <CalendarSelectedDates allowClear animated />
+              <CalendarSelectedDates allowClear />
             </Calendar>
           </ExampleCard>
 
@@ -764,43 +1193,43 @@ const dropDisabled = useMemo(
   [],
 );
 
+const config = createCalendarConfig({
+  min: new Date("2026-07-10"),
+  max: new Date("2026-07-18"),
+  disabled: dropDisabled,
+});
+
 <Calendar
-  mode="single"
+  config={config}
   value={dropDate}
-  onChange={setDropDate}
-  defaultViewDate={new Date("2026-07-10")}
-  minDate={new Date("2026-07-10")}
-  maxDate={new Date("2026-07-18")}
-  disabled={dropDisabled}
+  onChange={(value) => setDropDate(value as Date | null)}
+  initialView={calendarDate(2026, 7, 10)}
 >
   <CalendarToolbar>
     <CalendarToolbarMonthLabel />
     <CalendarToolbarYearLabel />
     <CalendarToolbarClock />
   </CalendarToolbar>
-  <CalendarDays hideOutOfRange fixedRows={false} />
-  <CalendarSelectedDates allowClear animated />
+  <CalendarDays hideOutOfRange fixedWeeks={false} />
+  <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={dropCfg}
               value={dropDate}
-              onChange={setDropDate}
-              defaultViewDate={new Date(2026, 6, 10)}
-              minDate={new Date(2026, 6, 10)}
-              maxDate={new Date(2026, 6, 18)}
-              disabled={dropDisabled}
+              onChange={(value) => setDropDate(value as Date | null)}
+              initialView={calendarDate(2026, 7, 10)}
               theme={riso}
               appearance={compact}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarMonthLabel />
                 <CalendarToolbarYearLabel />
                 <CalendarToolbarClock />
               </CalendarToolbar>
-              <CalendarDays hideOutOfRange fixedRows={false} />
-              <CalendarSelectedDates allowClear animated />
+              <CalendarDays hideOutOfRange fixedWeeks={false} />
+              <CalendarSelectedDates allowClear />
             </Calendar>
           </ExampleCard>
 
@@ -818,7 +1247,9 @@ const weekdaysOnly = useMemo(() => {
   return createDisabled({ weekends: true, before: today });
 }, []);
 
-<Calendar gradient mode="single" value={appointment} onChange={setAppointment} disabled={weekdaysOnly}>
+const config = createCalendarConfig({ withTime: true, disabled: weekdaysOnly });
+
+<Calendar gradient config={config} value={appointment} onChange={(value) => setAppointment(value as Date | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -832,14 +1263,13 @@ const weekdaysOnly = useMemo(() => {
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={appointmentCfg}
               value={appointment}
               gradient
-              onChange={setAppointment}
-              disabled={weekdaysOnly}
+              onChange={(value) => setAppointment(value as Date | null)}
               theme={aurora}
               appearance={loft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -859,7 +1289,7 @@ const weekdaysOnly = useMemo(() => {
             useWhen="Filtering reports by familiar ranges (Today / Last 7 / Quarter)."
             demonstrates={`Range mode + \`CalendarPresets\` with relative offsets + animated summary.`}
             theme="graphite"
-            code={`const [reportRange, setReportRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+            code={`const [reportRange, setReportRange] = useState<{ start: Date; end: Date } | null>(null);
 
 const analyticsPresets = [
   { label: "Today", value: 0 },
@@ -867,7 +1297,9 @@ const analyticsPresets = [
   { label: "Last 30 days", value: -29, range: 29 },
 ];
 
-<Calendar mode="range" value={reportRange} onChange={setReportRange}>
+const config = createCalendarConfig({ mode: "range" });
+
+<Calendar config={config} value={reportRange} onChange={(value) => setReportRange(value as { start: Date; end: Date } | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -877,15 +1309,15 @@ const analyticsPresets = [
   </CalendarToolbar>
   <CalendarDays />
   <CalendarPresets presets={analyticsPresets} />
-  <CalendarSelectedDates allowClear allowNavigate animated />
+  <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`}
           >
             <Calendar
-              mode="range"
+              config={rangeCfg}
               value={reportRange}
-              onChange={setReportRange}
+              onChange={(value) => setReportRange(value as RangeValue)}
               theme={graphite}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -896,7 +1328,7 @@ const analyticsPresets = [
               </CalendarToolbar>
               <CalendarDays />
               <CalendarPresets presets={analyticsPresets} />
-              <CalendarSelectedDates allowClear allowNavigate animated />
+              <CalendarSelectedDates allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -908,7 +1340,7 @@ const analyticsPresets = [
             appearance="soft"
             code={`const [singlePresetDate, setSinglePresetDate] = useState<Date | null>(null);
 
-const supportPresets = useMemo<PresetEntry[]>(
+const supportPresets = useMemo<PresetInput[]>(
   () => [
     { label: "Today", value: 0 },
     { label: "Tomorrow", value: 1 },
@@ -916,18 +1348,20 @@ const supportPresets = useMemo<PresetEntry[]>(
     {
       id: "next-monday",
       label: "Next Monday",
-      getValue: ({ now, isValid }) => {
+      getValue: ({ now }) => {
         const date = new Date(now);
         const delta = (8 - date.getDay()) % 7 || 7;
         date.setDate(date.getDate() + delta);
-        return isValid(date) ? date : null;
+        return date;
       },
     },
   ],
   [],
 );
 
-<Calendar mode="single" value={singlePresetDate} onChange={setSinglePresetDate}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={singlePresetDate} onChange={(value) => setSinglePresetDate(value as Date | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -937,16 +1371,16 @@ const supportPresets = useMemo<PresetEntry[]>(
   </CalendarToolbar>
   <CalendarDays />
   <CalendarPresets presets={supportPresets} />
-  <CalendarSelectedDates allowClear allowNavigate animated />
+  <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={singlePresetDate}
-              onChange={setSinglePresetDate}
+              onChange={(value) => setSinglePresetDate(value as Date | null)}
               theme={mint}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -957,7 +1391,7 @@ const supportPresets = useMemo<PresetEntry[]>(
               </CalendarToolbar>
               <CalendarDays />
               <CalendarPresets presets={supportPresets} />
-              <CalendarSelectedDates allowClear allowNavigate animated />
+              <CalendarSelectedDates allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -976,102 +1410,104 @@ function nthWeekdayOfMonth(year: number, month: number, weekday: number, occurre
   return date;
 }
 
-const holidayPresets = useMemo<PresetEntry[]>(
+const holidayPresets = useMemo<PresetInput[]>(
   () => [
     {
       id: "new-year",
       label: "New Year",
-      getValue: ({ now, isValid }) => {
+      getValue: ({ now }) => {
         const year =
           now.getMonth() > 0 || now.getDate() > 1
             ? now.getFullYear() + 1
             : now.getFullYear();
         const date = new Date(year, 0, 1);
-        return isValid(date) ? date : null;
+        return date;
       },
     },
     {
       id: "independence-day",
       label: "Independence Day",
-      getValue: ({ now, isValid }) => {
+      getValue: ({ now }) => {
         const year =
           now.getMonth() > 6 || (now.getMonth() === 6 && now.getDate() > 4)
             ? now.getFullYear() + 1
             : now.getFullYear();
         const date = new Date(year, 6, 4);
-        return isValid(date) ? date : null;
+        return date;
       },
     },
     {
       id: "christmas-day",
       label: "Christmas Day",
-      getValue: ({ now, isValid }) => {
+      getValue: ({ now }) => {
         const year =
           now.getMonth() > 11 || (now.getMonth() === 11 && now.getDate() > 25)
             ? now.getFullYear() + 1
             : now.getFullYear();
         const date = new Date(year, 11, 25);
-        return isValid(date) ? date : null;
+        return date;
       },
     },
     {
       id: "thanksgiving-day",
       label: "Thanksgiving",
-      getValue: ({ now, isValid }) => {
+      getValue: ({ now }) => {
         const year = now.getMonth() > 10 ? now.getFullYear() + 1 : now.getFullYear();
         const date = nthWeekdayOfMonth(year, 10, 4, 4);
-        return isValid(date) ? date : null;
+        return date;
       },
     },
     {
       id: "christmas-eve",
       label: "Christmas Eve",
-      getValue: ({ now, isValid }) => {
+      getValue: ({ now }) => {
         const year =
           now.getMonth() > 11 || (now.getMonth() === 11 && now.getDate() > 24)
             ? now.getFullYear() + 1
             : now.getFullYear();
         const date = new Date(year, 11, 24);
-        return isValid(date) ? date : null;
+        return date;
       },
     },
     {
       id: "black-friday",
       label: "Black Friday",
-      getValue: ({ now, isValid }) => {
+      getValue: ({ now }) => {
         const year = now.getMonth() > 10 ? now.getFullYear() + 1 : now.getFullYear();
         const date = nthWeekdayOfMonth(year, 10, 4, 4);
         date.setDate(date.getDate() + 1);
-        return isValid(date) ? date : null;
+        return date;
       },
     },
   ],
   [],
 );
 
-<Calendar mode="multiple" value={holidayRange} onChange={setHolidayRange} cols={2}>
+const config = createCalendarConfig({ mode: "multiple" });
+
+<Calendar config={config} value={holidayRange} onChange={(value) => setHolidayRange(value as Date[])} cols={2}>
   <CalendarPresets presets={holidayPresets} />
   <CalendarDays />
   <CalendarMonthsGrid col={1} />
   <CalendarYearsGrid col={1} />
-  <CalendarSelectedDates allowClear allowNavigate animated />
+  <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`}
             medium
           >
             <Calendar
-              mode="multiple"
+              config={multipleCfg}
               value={holidayRange}
-              onChange={setHolidayRange}
+              onChange={(value) => setHolidayRange(value as Date[])}
               theme={snow}
               appearance={compact}
               cols={2}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarPresets presets={holidayPresets} />
               <CalendarDays />
               <CalendarMonthsGrid col={1} />
               <CalendarYearsGrid col={1} />
-              <CalendarSelectedDates allowClear allowNavigate animated />
+              <CalendarSelectedDates allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -1087,8 +1523,8 @@ const holidayPresets = useMemo<PresetEntry[]>(
 const brandTheme = useMemo(
   () =>
     createTheme({
-      highlight: "#7c3aed",
-      accent: "#ede9fe",
+      accent: "#7c3aed",
+      focusRing: "#ede9fe",
       range: "#ddd6fe",
       weekend: "#db2777",
       light: { backdrop: "#faf5ff", tone: "#f3e8ff", text: "#3b0764", stroke: "#e9d5ff" },
@@ -1097,7 +1533,9 @@ const brandTheme = useMemo(
   [],
 );
 
-<Calendar mode="single" value={brandDate} onChange={setBrandDate} theme={brandTheme}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={brandDate} onChange={(value) => setBrandDate(value as Date | null)} theme={brandTheme}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -1106,16 +1544,16 @@ const brandTheme = useMemo(
     <CalendarToolbarThemeToggle />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarSelectedDates allowClear animated />
+  <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={brandDate}
-              onChange={setBrandDate}
+              onChange={(value) => setBrandDate(value as Date | null)}
               theme={brandTheme}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1125,7 +1563,7 @@ const brandTheme = useMemo(
                 <CalendarToolbarThemeToggle />
               </CalendarToolbar>
               <CalendarDays />
-              <CalendarSelectedDates allowClear animated />
+              <CalendarSelectedDates allowClear />
             </Calendar>
           </ExampleCard>
 
@@ -1135,7 +1573,7 @@ const brandTheme = useMemo(
             demonstrates={`\`createAppearance\` with custom radius, spacing, font size, and \`dayRatio\`.`}
             theme="graphite"
             appearance="custom"
-            code={`const [denseRange, setDenseRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+            code={`const [denseRange, setDenseRange] = useState<{ start: Date; end: Date } | null>(null);
 
 const denseAppearance = useMemo(
   () =>
@@ -1143,13 +1581,15 @@ const denseAppearance = useMemo(
       radius: "5px",
       spacing: "0.42em",
       fontSize: "13px",
-      dayRatio: "1 / 0.78",
+      dayHeight: "2.2em",
       transition: "120ms ease",
     }),
   [],
 );
 
-<Calendar mode="range" value={denseRange} onChange={setDenseRange} appearance={denseAppearance}>
+const config = createCalendarConfig({ mode: "range" });
+
+<Calendar config={config} value={denseRange} onChange={(value) => setDenseRange(value as { start: Date; end: Date } | null)} appearance={denseAppearance}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -1158,16 +1598,16 @@ const denseAppearance = useMemo(
     <CalendarToolbarClear />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarSelectedDates allowClear animated />
+  <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
             <Calendar
-              mode="range"
+              config={rangeCfg}
               value={denseRange}
-              onChange={setDenseRange}
+              onChange={(value) => setDenseRange(value as RangeValue)}
               theme={graphite}
               appearance={denseAppearance}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1177,7 +1617,7 @@ const denseAppearance = useMemo(
                 <CalendarToolbarClear />
               </CalendarToolbar>
               <CalendarDays />
-              <CalendarSelectedDates allowClear animated />
+              <CalendarSelectedDates allowClear />
             </Calendar>
           </ExampleCard>
 
@@ -1187,7 +1627,7 @@ const denseAppearance = useMemo(
             demonstrates={`Range mode with \`minRangeDays\` / \`maxRangeDays\`, weekday-only rule, and \`CalendarInfo\` showing the duration as the user drags.`}
             theme="riso"
             appearance="square"
-            code={`const [vacationRange, setVacationRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+            code={`const [vacationRange, setVacationRange] = useState<{ start: Date; end: Date } | null>(null);
 
 const weekdaysOnly = useMemo(() => {
   const today = new Date();
@@ -1195,13 +1635,17 @@ const weekdaysOnly = useMemo(() => {
   return createDisabled({ weekends: true, before: today });
 }, []);
 
+const config = createCalendarConfig({
+  mode: "range",
+  disabled: weekdaysOnly,
+  minSpan: 2,
+  maxSpan: 21,
+});
+
 <Calendar
-  mode="range"
+  config={config}
   value={vacationRange}
-  onChange={setVacationRange}
-  disabled={weekdaysOnly}
-  minRangeDays={2}
-  maxRangeDays={21}
+  onChange={(value) => setVacationRange(value as { start: Date; end: Date } | null)}
 >
   <CalendarToolbar>
     <CalendarToolbarPrev />
@@ -1212,19 +1656,16 @@ const weekdaysOnly = useMemo(() => {
   </CalendarToolbar>
   <CalendarDays />
   <CalendarInfo showSummary rangeStyle="duration" />
-  <CalendarSelectedDates allowClear animated />
+  <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
             <Calendar
-              mode="range"
+              config={vacationCfg}
               value={vacationRange}
-              onChange={setVacationRange}
-              disabled={weekdaysOnly}
-              minRangeDays={2}
-              maxRangeDays={21}
+              onChange={(value) => setVacationRange(value as RangeValue)}
               theme={riso}
               appearance={square}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1235,7 +1676,7 @@ const weekdaysOnly = useMemo(() => {
               </CalendarToolbar>
               <CalendarDays />
               <CalendarInfo showSummary rangeStyle="duration" />
-              <CalendarSelectedDates allowClear animated />
+              <CalendarSelectedDates allowClear />
             </Calendar>
           </ExampleCard>
 
@@ -1244,7 +1685,7 @@ const weekdaysOnly = useMemo(() => {
             useWhen="Engineering planning around current sprint, next sprint, release week."
             demonstrates="Range mode with custom-length presets (offset + range)."
             theme="industrial"
-            code={`const [sprintRange, setSprintRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+            code={`const [sprintRange, setSprintRange] = useState<{ start: Date; end: Date } | null>(null);
 
 const sprintPresets = [
   { label: "Current sprint", value: 0, range: 13 },
@@ -1252,7 +1693,9 @@ const sprintPresets = [
   { label: "Release week", value: 28, range: 6 },
 ];
 
-<Calendar mode="range" value={sprintRange} onChange={setSprintRange}>
+const config = createCalendarConfig({ mode: "range" });
+
+<Calendar config={config} value={sprintRange} onChange={(value) => setSprintRange(value as { start: Date; end: Date } | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -1261,15 +1704,15 @@ const sprintPresets = [
   </CalendarToolbar>
   <CalendarPresets presets={sprintPresets} />
   <CalendarDays />
-  <CalendarSelectedDates allowClear allowNavigate animated />
+  <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`}
           >
             <Calendar
-              mode="range"
+              config={rangeCfg}
               value={sprintRange}
-              onChange={setSprintRange}
+              onChange={(value) => setSprintRange(value as RangeValue)}
               theme={industrial}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1279,7 +1722,7 @@ const sprintPresets = [
               </CalendarToolbar>
               <CalendarPresets presets={sprintPresets} />
               <CalendarDays />
-              <CalendarSelectedDates allowClear allowNavigate animated />
+              <CalendarSelectedDates allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -1291,13 +1734,16 @@ const sprintPresets = [
             appearance="soft"
             code={`const [manualDate, setManualDate] = useState<Date | null>(null);
 
+const config = createCalendarConfig({
+  locale: "de-DE",
+  min: new Date("2026-05-01"),
+  max: new Date("2026-08-31"),
+});
+
 <Calendar
-  mode="single"
+  config={config}
   value={manualDate}
-  onChange={setManualDate}
-  locale="de-DE"
-  minDate={new Date("2026-05-01")}
-  maxDate={new Date("2026-08-31")}
+  onChange={(value) => setManualDate(value as Date | null)}
 >
   <CalendarToolbar>
     <CalendarToolbarPrev />
@@ -1310,15 +1756,12 @@ const sprintPresets = [
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={invoiceCfg}
               value={manualDate}
-              onChange={setManualDate}
-              locale="de-DE"
-              minDate={new Date(2026, 4, 1)}
-              maxDate={new Date(2026, 7, 31)}
+              onChange={(value) => setManualDate(value as Date | null)}
               theme={snow}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1341,31 +1784,30 @@ const sprintPresets = [
 
 <>
   <Calendar
-    mode="single"
-    defaultViewDate={new Date("2026-01-01")}
-    minDate={new Date("2018-01-01")}
-    maxDate={new Date("2030-12-31")}
+    config={createCalendarConfig({
+      min: new Date("2018-01-01"),
+      max: new Date("2030-12-31"),
+    })}
+    initialView={calendarDate(2026, 1, 1)}
   >
     <CalendarYearsGrid
       yearsPerPage={12}
-      onYearSelect={(date: Date) => setArchiveYear(date)}
+      onYearSelect={(year: number) => setArchiveYear(new Date(year, 0, 1))}
     />
   </Calendar>
   {archiveYear && <p>Browsing archive · {archiveYear.getFullYear()}</p>}
 </>`}
           >
             <Calendar
-              mode="single"
-              defaultViewDate={archiveDate}
-              minDate={new Date(2018, 0, 1)}
-              maxDate={new Date(2030, 11, 31)}
+              config={archiveCfg}
+              initialView={calendarDate(2026, 1, 1)}
               theme={graphite}
               appearance={compact}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarYearsGrid
                 yearsPerPage={12}
-                onYearSelect={(year: Date) => setArchiveYear(year)}
+                onYearSelect={(year: number) => setArchiveYear(new Date(year, 0, 1))}
               />
             </Calendar>
             <p
@@ -1388,15 +1830,18 @@ const sprintPresets = [
 
 <>
   <Calendar
-    mode="single"
-    defaultViewDate={new Date("2026-05-01")}
-    minDate={new Date("2026-01-01")}
-    maxDate={new Date("2026-12-31")}
+    config={createCalendarConfig({
+      min: new Date("2026-01-01"),
+      max: new Date("2026-12-31"),
+    })}
+    initialView={calendarDate(2026, 5, 1)}
     gradient
   >
     <CalendarMonthsGrid
       short
-      onMonthSelect={(date: Date) => setCampaignMonth(date)}
+      onMonthSelect={(year: number, month: number) =>
+                  setCampaignMonth(new Date(year, month - 1, 1))
+                }
     />
   </Calendar>
   {campaignMonth && (
@@ -1408,16 +1853,18 @@ const sprintPresets = [
 </>`}
           >
             <Calendar
-              mode="single"
-              defaultViewDate={campaignDate}
+              config={singleCfg}
+              initialView={calendarDate(2026, 5, 1)}
               gradient
               theme={temporal}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarMonthsGrid
                 short
-                onMonthSelect={(date: Date) => setCampaignMonth(date)}
+                onMonthSelect={(year: number, month: number) =>
+                  setCampaignMonth(new Date(year, month - 1, 1))
+                }
               />
             </Calendar>
             <p
@@ -1440,10 +1887,9 @@ const sprintPresets = [
 
 <>
   <Calendar
-    mode="single"
+    config={createCalendarConfig({ withTime: true })}
     value={meetingTime}
-    onChange={setMeetingTime}
-    timeStep={{ minute: 10 }}
+    onChange={(value) => setMeetingTime(value as Date | null)}
   >
     <CalendarTimeWheel />
   </Calendar>
@@ -1459,13 +1905,12 @@ const sprintPresets = [
 </>`}
           >
             <Calendar
-              mode="single"
+              config={timeCfg}
               value={meetingTime}
-              onChange={setMeetingTime}
-              timeStep={{ minute: 10 }}
+              onChange={(value) => setMeetingTime(value as Date | null)}
               theme={aurora}
               appearance={loft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarTimeWheel />
             </Calendar>
@@ -1500,13 +1945,17 @@ const noPast = useMemo(() => {
   return createDisabled({ before: today });
 }, []);
 
+const config = createCalendarConfig({
+  withTime: true,
+  hour12: true,
+  timeZone: "America/New_York",
+  disabled: noPast,
+});
+
 <Calendar
-  mode="single"
+  config={config}
   value={globalMeeting}
-  onChange={setGlobalMeeting}
-  timeZone="America/New_York"
-  hour12
-  disabled={noPast}
+  onChange={(value) => setGlobalMeeting(value as Date | null)}
 >
   <CalendarToolbar>
     <CalendarToolbarPrev />
@@ -1541,15 +1990,12 @@ const noPast = useMemo(() => {
 )}`}
           >
             <Calendar
-              mode="single"
+              config={globalCfg}
               value={globalMeeting}
-              onChange={setGlobalMeeting}
-              timeZone="America/New_York"
-              hour12
-              disabled={noPast}
+              onChange={(value) => setGlobalMeeting(value as Date | null)}
               theme={aurora}
               appearance={loft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1612,24 +2058,26 @@ const noPast = useMemo(() => {
             appearance="bubble"
             code={`const [birthday, setBirthday] = useState<Date | null>(new Date(1994, 5, 14));
 
-<Calendar mode="single" value={birthday} onChange={setBirthday} appearance={bubble}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={birthday} onChange={(value) => setBirthday(value as Date | null)} appearance={bubble}>
   <CalendarYearsTrack />
   <CalendarMonthsTrack short />
-  <CalendarDaysTrack showMonthLabel />
+  <CalendarDaysTrack />
   <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={birthday}
-              onChange={setBirthday}
+              onChange={(value) => setBirthday(value as Date | null)}
               theme={nebula}
               appearance={bubble}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarYearsTrack />
               <CalendarMonthsTrack short />
-              <CalendarDaysTrack showMonthLabel />
+              <CalendarDaysTrack />
               <CalendarSelectedDates allowClear />
             </Calendar>
           </ExampleCard>
@@ -1640,7 +2088,7 @@ const noPast = useMemo(() => {
             demonstrates={`Range mode with composite \`createDisabled\` (weekends + before + ranges + dates).`}
             theme="graphite"
             appearance="compact"
-            code={`const [blackoutRange, setBlackoutRange] = useState<{ from: Date | null; to: Date | null }>({ from: null, to: null });
+            code={`const [blackoutRange, setBlackoutRange] = useState<{ start: Date; end: Date } | null>(null);
 
 const blackout = createDisabled({
   weekends: true,
@@ -1648,7 +2096,9 @@ const blackout = createDisabled({
   ranges: [{ from: new Date("2026-06-10"), to: new Date("2026-06-14") }],
 });
 
-<Calendar mode="range" value={blackoutRange} onChange={setBlackoutRange} disabled={blackout}>
+const config = createCalendarConfig({ mode: "range", disabled: blackout });
+
+<Calendar config={config} value={blackoutRange} onChange={(value) => setBlackoutRange(value as { start: Date; end: Date } | null)}>
   <CalendarToolbar>
     <CalendarToolbarMonthTrigger compact />
     <CalendarToolbarPrev unit="year" />
@@ -1657,17 +2107,16 @@ const blackout = createDisabled({
     <CalendarToolbarHome />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarSelectedDates allowClear animated />
+  <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
             <Calendar
-              mode="range"
+              config={blackoutCfg}
               value={blackoutRange}
-              onChange={setBlackoutRange}
-              disabled={blackout}
+              onChange={(value) => setBlackoutRange(value as RangeValue)}
               theme={graphite}
               appearance={compact}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarMonthTrigger compact />
@@ -1677,7 +2126,7 @@ const blackout = createDisabled({
                 <CalendarToolbarHome />
               </CalendarToolbar>
               <CalendarDays />
-              <CalendarSelectedDates allowClear animated />
+              <CalendarSelectedDates allowClear />
             </Calendar>
           </ExampleCard>
 
@@ -1689,7 +2138,9 @@ const blackout = createDisabled({
             appearance="soft"
             code={`const launchDate = new Date(2026, 8, 9);
 
-<Calendar mode="single" value={launchDate} readOnly>
+const config = createCalendarConfig({ readOnly: true });
+
+<Calendar config={config} value={launchDate}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthLabel />
@@ -1697,16 +2148,15 @@ const blackout = createDisabled({
     <CalendarToolbarYearLabel />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarSelectedDates allowNavigate animated />
+  <CalendarSelectedDates allowNavigate />
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={readOnlyCfg}
               value={launchDate}
-              readOnly
               theme={snow}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1715,7 +2165,7 @@ const blackout = createDisabled({
                 <CalendarToolbarNext />
               </CalendarToolbar>
               <CalendarDays />
-              <CalendarSelectedDates allowNavigate animated />
+              <CalendarSelectedDates allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -1726,7 +2176,9 @@ const blackout = createDisabled({
             theme="temporal"
             appearance="soft"
             wide
-            code={`<Calendar mode="single" value={date} onChange={setDate} cols={2}>
+            code={`const config = createCalendarConfig();
+
+<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)} cols={2}>
   <CalendarToolbar>
     <CalendarToolbarPrev unit="year" />
     <CalendarToolbarYearTrigger  />
@@ -1737,13 +2189,13 @@ const blackout = createDisabled({
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={basicDate}
-              onChange={setBasicDate}
+              onChange={(value) => setBasicDate(value as Date | null)}
               cols={2}
               theme={temporal}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev unit="year" />
@@ -1763,7 +2215,9 @@ const blackout = createDisabled({
             appearance="soft"
             code={`import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
 
-<Calendar mode="single" value={date} onChange={setDate}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -1775,12 +2229,12 @@ const blackout = createDisabled({
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={basicDate}
-              onChange={setBasicDate}
+              onChange={(value) => setBasicDate(value as Date | null)}
               theme={nebula}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1800,17 +2254,19 @@ const blackout = createDisabled({
             theme="aurora"
             appearance="soft"
             code={`// Deterministic per-day value so each date always looks the same.
-const seededRandom = (d: Date) => {
-  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+const seededRandom = (d: CalendarDate) => {
+  const seed = d.year * 10000 + d.month * 100 + d.day;
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
 
 const WEATHER_ICONS = ["☀️", "⛅", "☁️", "🌧", "⛈", "❄️"];
-const weatherFor = (d: Date) =>
+const weatherFor = (d: CalendarDate) =>
   WEATHER_ICONS[Math.floor(seededRandom(d) * WEATHER_ICONS.length)];
 
-<Calendar mode="single" value={date} onChange={setDate}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -1819,10 +2275,10 @@ const weatherFor = (d: Date) =>
   </CalendarToolbar>
   <CalendarDays
     renderDay={(d, state) => {
-      if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+      if (state.outside) return <span>{d.day}</span>;
       return (
         <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, lineHeight: 1.1 }}>
-          <span style={{ fontSize: 13 }}>{d.getDate()}</span>
+          <span style={{ fontSize: 13 }}>{d.day}</span>
           <span aria-hidden style={{ fontSize: 13 }}>{weatherFor(d)}</span>
         </span>
       );
@@ -1831,12 +2287,12 @@ const weatherFor = (d: Date) =>
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={weatherDate}
-              onChange={setWeatherDate}
+              onChange={(value) => setWeatherDate(value as Date | null)}
               theme={aurora}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1846,10 +2302,10 @@ const weatherFor = (d: Date) =>
               </CalendarToolbar>
               <CalendarDays
                 renderDay={(d, state) => {
-                  if (state.isOtherMonth) return renderOtherMonth(d, state);
+                  if (state.outside) return renderOtherMonth(d, state);
                   return (
                     <span style={dayContainerStyle}>
-                      <span style={dayNumberStyle(state)}>{d.getDate()}</span>
+                      <span style={dayNumberStyle(state)}>{d.day}</span>
                       <span aria-hidden style={{ fontSize: 13 }}>
                         {weatherFor(d)}
                       </span>
@@ -1866,8 +2322,8 @@ const weatherFor = (d: Date) =>
             demonstrates={`\`renderDay\` with an absolute-positioned fill behind the number to tint each cell.`}
             theme="mint"
             appearance="soft"
-            code={`const seededRandom = (d: Date) => {
-  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+            code={`const seededRandom = (d: CalendarDate) => {
+  const seed = d.year * 10000 + d.month * 100 + d.day;
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
@@ -1877,7 +2333,9 @@ const heatColor = (intensity: number) => {
   return \`rgba(34, 139, 60, \${alpha})\`;
 };
 
-<Calendar mode="single" value={date} onChange={setDate}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -1886,14 +2344,14 @@ const heatColor = (intensity: number) => {
   </CalendarToolbar>
   <CalendarDays
     renderDay={(d, state) => {
-      if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+      if (state.outside) return <span>{d.day}</span>;
       const intensity = seededRandom(d);
       return (
         <>
           {/* Absolute fill overrides the .activeItem background so the
               heatmap color wins on every appearance / border-radius. */}
           <span aria-hidden style={{ position: "absolute", inset: 0, background: heatColor(intensity), borderRadius: "inherit" }} />
-          <span style={{ position: "relative", fontSize: 13 }}>{d.getDate()}</span>
+          <span style={{ position: "relative", fontSize: 13 }}>{d.day}</span>
         </>
       );
     }}
@@ -1901,12 +2359,12 @@ const heatColor = (intensity: number) => {
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={heatmapDate}
-              onChange={setHeatmapDate}
+              onChange={(value) => setHeatmapDate(value as Date | null)}
               theme={mint}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1916,7 +2374,7 @@ const heatColor = (intensity: number) => {
               </CalendarToolbar>
               <CalendarDays
                 renderDay={(d, state) => {
-                  if (state.isOtherMonth) return renderOtherMonth(d, state);
+                  if (state.outside) return renderOtherMonth(d, state);
                   const intensity = seededRandom(d);
                   return (
                     <>
@@ -1932,7 +2390,7 @@ const heatColor = (intensity: number) => {
                       <span
                         style={{ ...dayContainerStyle, position: "relative" }}
                       >
-                        <span style={dayNumberStyle(state)}>{d.getDate()}</span>
+                        <span style={dayNumberStyle(state)}>{d.day}</span>
                       </span>
                     </>
                   );
@@ -1947,19 +2405,21 @@ const heatColor = (intensity: number) => {
             demonstrates={`\`renderDay\` showing a derived price under each day — green when cheap, red when pricey.`}
             theme="temporal"
             appearance="compact"
-            code={`const seededRandom = (d: Date) => {
-  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+            code={`const seededRandom = (d: CalendarDate) => {
+  const seed = d.year * 10000 + d.month * 100 + d.day;
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
 
-const priceFor = (d: Date) => {
-  const dow = d.getDay();
+const priceFor = (d: CalendarDate) => {
+  const dow = new Date(d.year, d.month - 1, d.day).getDay();
   const isWeekend = dow === 0 || dow === 6;
   return Math.round(79 + seededRandom(d) * 220 + (isWeekend ? 60 : 0));
 };
 
-<Calendar mode="single" value={date} onChange={setDate}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -1968,12 +2428,12 @@ const priceFor = (d: Date) => {
   </CalendarToolbar>
   <CalendarDays
     renderDay={(d, state) => {
-      if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+      if (state.outside) return <span>{d.day}</span>;
       const price = priceFor(d);
       const isCheap = price < 140;
       return (
         <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, lineHeight: 1.1 }}>
-          <span style={{ fontSize: 13 }}>{d.getDate()}</span>
+          <span style={{ fontSize: 13 }}>{d.day}</span>
           <span aria-hidden style={{ fontSize: 10, fontWeight: 600, color: isCheap ? "#15803d" : "#b91c1c" }}>
             \${price}
           </span>
@@ -1984,12 +2444,12 @@ const priceFor = (d: Date) => {
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={priceDate}
-              onChange={setPriceDate}
+              onChange={(value) => setPriceDate(value as Date | null)}
               theme={temporal}
               appearance={compact}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -1999,12 +2459,12 @@ const priceFor = (d: Date) => {
               </CalendarToolbar>
               <CalendarDays
                 renderDay={(d, state) => {
-                  if (state.isOtherMonth) return renderOtherMonth(d, state);
+                  if (state.outside) return renderOtherMonth(d, state);
                   const price = priceFor(d);
                   const isCheap = price < 140;
                   return (
                     <span style={dayContainerStyle}>
-                      <span style={dayNumberStyle(state)}>{d.getDate()}</span>
+                      <span style={dayNumberStyle(state)}>{d.day}</span>
                       <span
                         aria-hidden
                         style={{
@@ -2028,19 +2488,21 @@ const priceFor = (d: Date) => {
             demonstrates={`\`renderDay\` rendering 1–3 dots under days that have events.`}
             theme="nebula"
             appearance="soft"
-            code={`const seededRandom = (d: Date) => {
-  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+            code={`const seededRandom = (d: CalendarDate) => {
+  const seed = d.year * 10000 + d.month * 100 + d.day;
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
 
 const EVENT_DAYS = new Set([3, 7, 14, 18, 22, 27]);
-const eventCount = (d: Date) => {
-  if (!EVENT_DAYS.has(d.getDate())) return 0;
+const eventCount = (d: CalendarDate) => {
+  if (!EVENT_DAYS.has(d.day)) return 0;
   return 1 + Math.floor(seededRandom(d) * 3);
 };
 
-<Calendar mode="single" value={date} onChange={setDate}>
+const config = createCalendarConfig();
+
+<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)}>
   <CalendarToolbar>
     <CalendarToolbarPrev />
     <CalendarToolbarMonthTrigger />
@@ -2049,11 +2511,11 @@ const eventCount = (d: Date) => {
   </CalendarToolbar>
   <CalendarDays
     renderDay={(d, state) => {
-      if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+      if (state.outside) return <span>{d.day}</span>;
       const count = eventCount(d);
       return (
         <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, lineHeight: 1.1 }}>
-          <span style={{ fontSize: 13 }}>{d.getDate()}</span>
+          <span style={{ fontSize: 13 }}>{d.day}</span>
           <span aria-hidden style={{ display: "flex", gap: 2, height: 4 }}>
             {Array.from({ length: count }, (_, i) => (
               <span key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "currentColor", opacity: 0.7 }} />
@@ -2066,12 +2528,12 @@ const eventCount = (d: Date) => {
 </Calendar>`}
           >
             <Calendar
-              mode="single"
+              config={singleCfg}
               value={eventDate}
-              onChange={setEventDate}
+              onChange={(value) => setEventDate(value as Date | null)}
               theme={nebula}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -2081,18 +2543,18 @@ const eventCount = (d: Date) => {
               </CalendarToolbar>
               <CalendarDays
                 renderDay={(d, state) => {
-                  if (state.isOtherMonth) return renderOtherMonth(d, state);
+                  if (state.outside) return renderOtherMonth(d, state);
                   const count = eventCount(d);
                   return (
                     <span style={dayContainerStyle}>
-                      <span style={dayNumberStyle(state)}>{d.getDate()}</span>
+                      <span style={dayNumberStyle(state)}>{d.day}</span>
                       <span
                         aria-hidden
                         style={{ display: "flex", gap: 2, height: 4 }}
                       >
                         {Array.from(
                           { length: count },
-                          (_, i) => `${d.getDate()}-${i}`,
+                          (_, i) => `${d.day}-${i}`,
                         ).map((key) => (
                           <span
                             key={key}
@@ -2274,7 +2736,7 @@ function renderInlineCode(text: string): React.ReactNode[] {
 
 function highlightCode(code: string) {
   const pattern =
-    /(\/\/.*|import|from|const|return|useMemo|useState|new|type|Calendar|createDisabled|createTheme|createAppearance|basicPresets|PresetEntry|("[^"]*"|'[^']*')|(<\/?[A-Z][A-Za-z0-9]*)|([{}()[\]=/>]+))/g;
+    /(\/\/.*|import|from|const|return|useMemo|useState|new|type|Calendar|createDisabled|createTheme|createAppearance|commonPresets|PresetEntry|("[^"]*"|'[^']*')|(<\/?[A-Z][A-Za-z0-9]*)|([{}()[\]=/>]+))/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -2322,6 +2784,16 @@ function highlightCode(code: string) {
 // tag chips (`getTags`) and the jump-to tag cloud at the top (`getTagNav`).
 const EXAMPLES: { title: string; tags: string[] }[] = [
   { title: "The basics", tags: ["single", "starter"] },
+  { title: "One-import prebuilts", tags: ["prebuilt", "one import"] },
+  { title: "Quarter board", tags: ["prebuilt", "3 months", "range"] },
+  { title: "Week picker", tags: ["unit: week", "spans"] },
+  { title: "Shift blocks", tags: ["multi-range", "maxRanges"] },
+  { title: "Business days", tags: ["exclude", "segments", "range"] },
+  {
+    title: "German locale + labels",
+    tags: ["locale", "labels", "week numbers"],
+  },
+  { title: "Controlled scheme", tags: ["scheme", "dark mode", "toggle"] },
   { title: "Stay booking", tags: ["range", "booking", "presets"] },
   { title: "Flight search", tags: ["range", "tracks", "mobile"] },
   { title: "Two-month stay search", tags: ["range", "2 months", "desktop"] },
@@ -2395,7 +2867,7 @@ function getTagNav(): { tag: string; slug: string }[] {
 function withImports(title: string, body: string) {
   const importsByTitle: Record<string, string> = {
     "The basics": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2404,8 +2876,65 @@ import {
   CalendarToolbarNext,
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
+    "One-import prebuilts": `import { useState } from "react";
+import { DatePicker, MonthPicker, SimpleCalendar } from "@dateforge/react-calendar/prebuilt";`,
+    "Quarter board": `import { MultiMonthCalendar } from "@dateforge/react-calendar/prebuilt";`,
+    "Week picker": `import { useState } from "react";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
+import { CalendarDays, CalendarInfo } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Shift blocks": `import { useState } from "react";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+  CalendarToolbarClear,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Business days": `import { useState } from "react";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
+import { CalendarDays, CalendarInfo } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+  CalendarToolbarClear,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "German locale + labels": `import { useState } from "react";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+  CalendarToolbarClear,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Controlled scheme": `import { useState } from "react";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+  CalendarToolbarThemeToggle,
+} from "@dateforge/react-calendar/modules/toolbar";`,
     "Stay booking": `import { useMemo, useState } from "react";
-import { Calendar, basicPresets, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, commonPresets, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2416,7 +2945,7 @@ import {
 } from "@dateforge/react-calendar/modules/toolbar";
 import { soft } from "@dateforge/react-calendar/appearances";`,
     "Flight search": `import { useMemo, useState } from "react";
-import { Calendar, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDaysTrack, CalendarMonthsTrack, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2428,7 +2957,7 @@ import {
 import { temporal } from "@dateforge/react-calendar/themes";
 import { compact } from "@dateforge/react-calendar/appearances";`,
     "Two-month stay search": `import { useMemo, useState } from "react";
-import { Calendar, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2438,7 +2967,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Six-month availability": `import { useMemo } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2449,7 +2978,7 @@ import {
 } from "@dateforge/react-calendar/modules/toolbar";
 import { compact } from "@dateforge/react-calendar/appearances";`,
     "Delivery slots": `import { useMemo, useState } from "react";
-import { Calendar, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2459,7 +2988,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Limited drop window": `import { useMemo, useState } from "react";
-import { Calendar, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2469,7 +2998,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Appointment booking": `import { useMemo, useState } from "react";
-import { Calendar, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
 import {
@@ -2480,7 +3009,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Analytics dashboard": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2490,7 +3019,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Support quick dates": `import { useMemo, useState } from "react";
-import { Calendar, type PresetEntry } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, type PresetInput } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2500,7 +3029,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Holiday planner": `import { useMemo, useState } from "react";
-import { Calendar, type PresetEntry } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, type PresetInput } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarMonthsGrid, CalendarPresets, CalendarSelectedDates, CalendarYearsGrid } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2510,7 +3039,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Brand theme picker": `import { useMemo, useState } from "react";
-import { Calendar, createTheme } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createTheme } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2520,7 +3049,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Dense product filter": `import { useMemo, useState } from "react";
-import { Calendar, createAppearance } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createAppearance } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2530,7 +3059,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Vacation request": `import { useMemo, useState } from "react";
-import { Calendar, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2540,7 +3069,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Sprint planning": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2550,7 +3079,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Invoice due date": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarManualInput } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2560,16 +3089,16 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Archive year browser": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarYearsGrid } from "@dateforge/react-calendar/modules";`,
     "Campaign month picker": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarMonthsGrid } from "@dateforge/react-calendar/modules";`,
     "Time slot picker": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";`,
     "Global meeting time": `import { useMemo, useState } from "react";
-import { Calendar, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
 import {
@@ -2580,11 +3109,11 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Profile birthday": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDaysTrack, CalendarMonthsTrack, CalendarSelectedDates, CalendarYearsTrack } from "@dateforge/react-calendar/modules";
 import { bubble } from "@dateforge/react-calendar/appearances";`,
     "Blackout calendar": `import { useMemo, useState } from "react";
-import { Calendar, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2593,7 +3122,7 @@ import {
   CalendarToolbarNext,
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
-    "Launch day": `import { Calendar } from "@dateforge/react-calendar";
+    "Launch day": `import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2603,7 +3132,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Weather forecast": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2613,7 +3142,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Activity heatmap": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2623,7 +3152,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Ticket prices": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2633,7 +3162,7 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Event dots": `import { useState } from "react";
-import { Calendar } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2646,7 +3175,7 @@ import {
 
   const imports =
     importsByTitle[title] ??
-    `import { Calendar } from "@dateforge/react-calendar";`;
+    `import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";`;
   const componentName = `${toPascal(title)}Example`;
   const lines = body.split("\n");
   let jsxStart = lines.findIndex((line) => /^\s*<(>|[A-Z])/.test(line));

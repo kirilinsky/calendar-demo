@@ -4,11 +4,18 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Calendar,
-  basicPresets,
   createAppearance,
+  createCalendarConfig,
   createDisabled,
   createTheme,
-  type PresetEntry,
+  relativePresets,
+  type AnyCalendarValue,
+  type CalendarChangeDetails,
+  type CalendarConfig,
+  type CustomAppearance,
+  type Preset,
+  type PresetInput,
+  type ThemeFamily,
 } from "@dateforge/react-calendar";
 import {
   CalendarDays,
@@ -20,13 +27,10 @@ import {
   CalendarTimeWheel,
   CalendarToolbar,
   CalendarToolbarClear,
-  CalendarToolbarHome,
-  CalendarToolbarLabel,
   CalendarToolbarMonthLabel,
   CalendarToolbarMonthTrigger,
   CalendarToolbarNext,
   CalendarToolbarPrev,
-  CalendarToolbarThemeToggle,
   CalendarToolbarTime,
   CalendarToolbarYearLabel,
   CalendarToolbarYearTrigger,
@@ -58,7 +62,9 @@ import {
   Sparkles,
 } from "lucide-react";
 
-type DemoMode = "single" | "range" | "multiple";
+type DemoMode = "single" | "range" | "multiple" | "multi-range";
+type DemoUnit = "day" | "week" | "month";
+type SchemeId = "auto" | "light" | "dark";
 type DemoTab = "recipes" | "builder" | "gallery" | "code";
 type PanelTab = "modules" | "props" | "theme" | "look" | "disabled" | "presets" | "code";
 type ModuleKind =
@@ -71,11 +77,26 @@ type ModuleKind =
   | "yearsTrack"
   | "monthsTrack"
   | "daysTrack";
-type ThemeId = "auto" | "light" | "dark" | "custom" | keyof typeof themeObjects;
+type ThemeId = "default" | "custom" | keyof typeof themeObjects;
 type AppearanceId = "default" | "custom" | keyof typeof appearanceObjects;
 type PresetPackId = "none" | "basic" | "analytics" | "booking" | "sprint";
 
-type DemoValue = Date | Date[] | { from: Date | null; to: Date | null } | null;
+type DemoValue = AnyCalendarValue;
+
+interface ModuleProps {
+  allowClear?: boolean;
+  allowNavigate?: boolean;
+  clear?: boolean;
+  compactMonths?: boolean;
+  compactYears?: boolean;
+  monthLabel?: boolean;
+  seconds?: boolean;
+  short?: boolean;
+  showMonthLabel?: boolean;
+  showMonthPicker?: boolean;
+  showTime?: boolean;
+  yearLabel?: boolean;
+}
 
 interface DemoModule {
   id: string;
@@ -83,7 +104,7 @@ interface DemoModule {
   enabled: boolean;
   label: string;
   role: "navigation" | "interactive" | "display" | "hybrid";
-  props?: Record<string, unknown>;
+  props?: ModuleProps;
 }
 
 interface DemoState {
@@ -91,9 +112,11 @@ interface DemoState {
   panelTab: PanelTab;
   recipeId: string;
   mode: DemoMode;
+  unit: DemoUnit;
   modules: DemoModule[];
   value: DemoValue;
   themeId: ThemeId;
+  scheme: SchemeId;
   appearanceId: AppearanceId;
   locale: string;
   timeZone: string;
@@ -102,14 +125,15 @@ interface DemoState {
   gradient: boolean;
   minDate: string;
   maxDate: string;
-  minRangeDays: number;
-  maxRangeDays: number;
+  minSpan: number;
+  maxSpan: number;
   maxDates: number;
+  maxRanges: number;
   disabledPreset: "none" | "weekends" | "future90" | "blackout";
   presetPack: PresetPackId;
   customTheme: {
-    highlight: string;
     accent: string;
+    focusRing: string;
     backdrop: string;
     text: string;
     stroke: string;
@@ -118,7 +142,7 @@ interface DemoState {
     radius: number;
     spacing: number;
     fontSize: number;
-    dayRatio: string;
+    dayHeight: string;
   };
   interactions: string[];
 }
@@ -178,11 +202,7 @@ const moduleGroups: { title: string; kinds: ModuleKind[] }[] = [
 
 let moduleIdSeq = 0;
 
-const makeModule = (
-  kind: ModuleKind,
-  enabled = true,
-  props: Record<string, unknown> = {},
-): DemoModule => ({
+const makeModule = (kind: ModuleKind, enabled = true, props: ModuleProps = {}): DemoModule => ({
   id: `${kind}-${moduleIdSeq++}`,
   kind,
   enabled,
@@ -198,12 +218,12 @@ const recipeModules = {
   range: () => [
     makeModule("nav", true, { showMonthPicker: true, compactYears: true, clear: true }),
     makeModule("days"),
-    makeModule("selected", true, { allowClear: true, allowNavigate: true, animated: true }),
+    makeModule("selected", true, { allowClear: true, allowNavigate: true }),
   ],
   multi: () => [
     makeModule("nav", true, { compactMonths: true, compactYears: true, clear: true }),
     makeModule("days"),
-    makeModule("selected", true, { allowClear: true, animated: true }),
+    makeModule("selected", true, { allowClear: true }),
   ],
   dateTime: () => [
     makeModule("nav", true, { showTime: true, showMonthPicker: true, compactYears: true, clear: true }),
@@ -231,7 +251,7 @@ const recipeModules = {
   readonly: () => [
     makeModule("nav", true, { monthLabel: true, yearLabel: true }),
     makeModule("days"),
-    makeModule("selected", true, { allowNavigate: true, animated: true }),
+    makeModule("selected", true, { allowNavigate: true }),
   ],
 };
 
@@ -316,28 +336,28 @@ const recipes: Recipe[] = [
   },
 ];
 
-const analyticsPresets: PresetEntry[] = [
+const analyticsPresets: PresetInput[] = [
   { label: "Today", value: 0 },
   { label: "Yesterday", value: -1 },
   { label: "Last 7 days", value: -6, range: 6 },
   { label: "Last 30 days", value: -29, range: 29 },
 ];
 
-const bookingPresets: PresetEntry[] = [
+const bookingPresets: PresetInput[] = [
   { label: "Tomorrow", value: 1 },
   { label: "Next 14 days", value: 1, range: 13 },
   { label: "Release week", value: 7, range: 6 },
 ];
 
-const sprintPresets: PresetEntry[] = [
+const sprintPresets: PresetInput[] = [
   { label: "Current sprint", value: 0, range: 13 },
   { label: "Next sprint", value: 14, range: 13 },
   { label: "Planning day", value: 2 },
 ];
 
-const presetPacks: Record<PresetPackId, PresetEntry[]> = {
+const presetPacks: Record<PresetPackId, (Preset | PresetInput)[]> = {
   none: [],
-  basic: basicPresets,
+  basic: relativePresets,
   analytics: analyticsPresets,
   booking: bookingPresets,
   sprint: sprintPresets,
@@ -350,9 +370,11 @@ const initialState: DemoState = {
   panelTab: "modules",
   recipeId: firstRecipe.id,
   mode: firstRecipe.mode,
+  unit: "day",
   modules: firstRecipe.modules,
   value: null,
-  themeId: firstRecipe.themeId ?? "auto",
+  themeId: firstRecipe.themeId ?? "default",
+  scheme: "auto",
   appearanceId: firstRecipe.appearanceId ?? "default",
   locale: "en",
   timeZone: "auto",
@@ -361,14 +383,15 @@ const initialState: DemoState = {
   gradient: false,
   minDate: "",
   maxDate: "",
-  minRangeDays: 2,
-  maxRangeDays: 14,
+  minSpan: 2,
+  maxSpan: 14,
   maxDates: 3,
+  maxRanges: 3,
   disabledPreset: "none",
   presetPack: "basic",
   customTheme: {
-    highlight: "#2563eb",
-    accent: "#ffffff",
+    accent: "#2563eb",
+    focusRing: "#ffffff",
     backdrop: "#f8fafc",
     text: "#0f172a",
     stroke: "#dbe3ef",
@@ -377,7 +400,7 @@ const initialState: DemoState = {
     radius: 8,
     spacing: 0.6,
     fontSize: 14,
-    dayRatio: "1 / 1",
+    dayHeight: "2.5em",
   },
   interactions: ["Loaded Basic recipe"],
 };
@@ -387,20 +410,20 @@ export function DemoPage() {
   const [sheetOpen, setSheetOpen] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const theme = useMemo(() => {
+  const theme = useMemo<ThemeFamily | undefined>(() => {
     if (state.themeId === "custom") return createTheme(state.customTheme);
-    if (state.themeId === "auto" || state.themeId === "light" || state.themeId === "dark") return state.themeId;
+    if (state.themeId === "default") return undefined;
     return themeObjects[state.themeId];
   }, [state.themeId, state.customTheme]);
 
-  const appearance = useMemo(() => {
+  const appearance = useMemo<CustomAppearance | undefined>(() => {
     if (state.appearanceId === "custom") {
       return createAppearance({
         radius: `${state.customAppearance.radius}px`,
         containerRadius: `${state.customAppearance.radius + 2}px`,
         spacing: `${state.customAppearance.spacing}em`,
         fontSize: `${state.customAppearance.fontSize}px`,
-        dayRatio: state.customAppearance.dayRatio,
+        dayHeight: state.customAppearance.dayHeight,
       });
     }
     if (state.appearanceId === "default") return undefined;
@@ -424,6 +447,44 @@ export function DemoPage() {
     return undefined;
   }, [state.disabledPreset]);
 
+  const withTime = useMemo(() => wantsTime(state.modules), [state.modules]);
+
+  const config = useMemo(
+    () =>
+      createCalendarConfig({
+        mode: state.mode,
+        unit: state.unit,
+        locale: state.locale,
+        timeZone: state.timeZone === "auto" ? undefined : state.timeZone,
+        withTime,
+        hour12: state.hour12,
+        readOnly: state.readOnly,
+        disabled,
+        min: dateFromInput(state.minDate),
+        max: dateFromInput(state.maxDate),
+        minSpan: isSpanMode(state.mode) ? state.minSpan : undefined,
+        maxSpan: isSpanMode(state.mode) ? state.maxSpan : undefined,
+        maxDates: state.mode === "multiple" ? state.maxDates : undefined,
+        maxRanges: state.mode === "multi-range" ? state.maxRanges : undefined,
+      }),
+    [
+      state.mode,
+      state.unit,
+      state.locale,
+      state.timeZone,
+      withTime,
+      state.hour12,
+      state.readOnly,
+      disabled,
+      state.minDate,
+      state.maxDate,
+      state.minSpan,
+      state.maxSpan,
+      state.maxDates,
+      state.maxRanges,
+    ],
+  );
+
   const presets = useMemo(() => presetPacks[state.presetPack], [state.presetPack]);
   const code = useMemo(() => generateCode(state), [state]);
   const activeRecipe = recipes.find((recipe) => recipe.id === state.recipeId) ?? firstRecipe;
@@ -442,8 +503,9 @@ export function DemoPage() {
       {
         recipeId: recipe.id,
         mode: recipe.mode,
+        unit: "day",
         modules: recipe.modules.map((module) => ({ ...module })),
-        value: recipe.readOnly ? new Date(2026, 4, 12) : null,
+        value: recipe.readOnly ? new Date(2026, 4, 12) : emptyValue(recipe.mode),
         appearanceId: recipe.appearanceId ?? "default",
         themeId: recipe.themeId ?? state.themeId,
         presetPack: recipe.presetPack ?? "basic",
@@ -456,6 +518,10 @@ export function DemoPage() {
 
   const setMode = (mode: DemoMode) => {
     patch({ mode, value: emptyValue(mode) }, `Mode changed to ${mode}`);
+  };
+
+  const setUnit = (unit: DemoUnit) => {
+    patch({ unit, value: emptyValue(state.mode) }, `Unit changed to ${unit}`);
   };
 
   const toggleModule = (kind: ModuleKind) => {
@@ -478,8 +544,8 @@ export function DemoPage() {
     patch({ modules }, `${module.label} reordered`);
   };
 
-  const onCalendarChange = (value: DemoValue) => {
-    patch({ value }, "Calendar value changed");
+  const onCalendarChange = (value: DemoValue, details: CalendarChangeDetails) => {
+    patch({ value }, `Calendar value changed (${details.reason})`);
   };
 
   const copyCode = async () => {
@@ -520,9 +586,9 @@ export function DemoPage() {
           <div className="sticky top-0 z-20 border-b border-zinc-200 bg-[#f7f7f4]/95 px-3 py-3 backdrop-blur lg:static lg:border-b-0 lg:px-8 lg:pt-8">
             <LivePreview
               state={state}
+              config={config}
               theme={theme}
               appearance={appearance}
-              disabled={disabled}
               presets={presets}
               onChange={onCalendarChange}
             />
@@ -551,6 +617,7 @@ export function DemoPage() {
               state={state}
               patch={patch}
               setMode={setMode}
+              setUnit={setUnit}
               toggleModule={toggleModule}
               moveModule={moveModule}
               hints={safetyHints}
@@ -576,6 +643,7 @@ export function DemoPage() {
               state={state}
               patch={patch}
               setMode={setMode}
+              setUnit={setUnit}
               toggleModule={toggleModule}
               moveModule={moveModule}
               hints={safetyHints}
@@ -628,18 +696,18 @@ function TopBar({ state, onTab }: { state: DemoState; onTab: (tab: DemoTab) => v
 
 function LivePreview({
   state,
+  config,
   theme,
   appearance,
-  disabled,
   presets,
   onChange,
 }: {
   state: DemoState;
-  theme: unknown;
-  appearance: unknown;
-  disabled: unknown;
-  presets: PresetEntry[];
-  onChange: (value: DemoValue) => void;
+  config: CalendarConfig;
+  theme?: ThemeFamily;
+  appearance?: CustomAppearance;
+  presets: (Preset | PresetInput)[];
+  onChange: (value: DemoValue, details: CalendarChangeDetails) => void;
 }) {
   return (
     <div className="mx-auto max-w-[520px] lg:max-w-[620px]">
@@ -651,23 +719,14 @@ function LivePreview({
       </div>
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white p-2 shadow-sm sm:p-4">
         <Calendar
-          mode={state.mode as never}
-          value={state.value as never}
-          onChange={onChange as never}
-          theme={theme as never}
-          appearance={appearance as never}
-          disabled={disabled as never}
-          locale={state.locale}
-          timeZone={state.timeZone === "auto" ? undefined : state.timeZone}
-          hour12={state.hour12}
-          readOnly={state.readOnly}
+          config={config}
+          value={state.value}
+          onChange={onChange}
+          theme={theme}
+          appearance={appearance}
+          scheme={state.scheme}
           gradient={state.gradient}
-          minDate={dateFromInput(state.minDate)}
-          maxDate={dateFromInput(state.maxDate)}
-          minRangeDays={state.mode === "range" ? state.minRangeDays : undefined}
-          maxRangeDays={state.mode === "range" ? state.maxRangeDays : undefined}
-          maxDates={state.mode === "multiple" ? state.maxDates : undefined}
-          width="100%"
+          style={{ width: "100%" }}
         >
           {state.modules
             .filter((module) => module.enabled)
@@ -678,24 +737,41 @@ function LivePreview({
   );
 }
 
-function renderCalendarModule(module: DemoModule, presets: PresetEntry[]) {
+function renderCalendarModule(module: DemoModule, presets: (Preset | PresetInput)[]) {
   const props = module.props ?? {};
-  if (module.kind === "nav") return (
-    <CalendarToolbar key={module.id}>
-      <CalendarToolbarPrev />
-      <CalendarToolbarMonthTrigger />
-      <CalendarToolbarNext />
-      <CalendarToolbarYearTrigger compact />
-    </CalendarToolbar>
-  );
-  if (module.kind === "days") return <CalendarDays key={module.id} {...props} />;
-  if (module.kind === "selected") return <CalendarSelectedDates key={module.id} {...props} />;
-  if (module.kind === "presets") return <CalendarPresets key={module.id} presets={presets} {...props} />;
-  if (module.kind === "manual") return <CalendarManualInput key={module.id} {...props} />;
-  if (module.kind === "time") return <CalendarTimeWheel key={module.id} {...props} />;
-  if (module.kind === "yearsTrack") return <CalendarYearsTrack key={module.id} {...props} />;
-  if (module.kind === "monthsTrack") return <CalendarMonthsTrack key={module.id} {...props} />;
-  return <CalendarDaysTrack key={module.id} {...props} />;
+  if (module.kind === "nav") {
+    return (
+      <CalendarToolbar key={module.id}>
+        <CalendarToolbarPrev />
+        {props.monthLabel ? (
+          <CalendarToolbarMonthLabel />
+        ) : (
+          <CalendarToolbarMonthTrigger compact={Boolean(props.compactMonths)} />
+        )}
+        {props.yearLabel ? <CalendarToolbarYearLabel /> : <CalendarToolbarYearTrigger compact />}
+        <CalendarToolbarNext />
+        {props.showTime && <CalendarToolbarTime />}
+        {props.clear && <CalendarToolbarClear />}
+      </CalendarToolbar>
+    );
+  }
+  if (module.kind === "days") return <CalendarDays key={module.id} />;
+  if (module.kind === "selected") {
+    return (
+      <CalendarSelectedDates
+        key={module.id}
+        allowClear={props.allowClear}
+        allowNavigate={props.allowNavigate}
+        showTime={props.showTime}
+      />
+    );
+  }
+  if (module.kind === "presets") return <CalendarPresets key={module.id} presets={presets} />;
+  if (module.kind === "manual") return <CalendarManualInput key={module.id} allowClear={props.allowClear} />;
+  if (module.kind === "time") return <CalendarTimeWheel key={module.id} seconds={props.seconds} />;
+  if (module.kind === "yearsTrack") return <CalendarYearsTrack key={module.id} />;
+  if (module.kind === "monthsTrack") return <CalendarMonthsTrack key={module.id} short={props.short} />;
+  return <CalendarDaysTrack key={module.id} showMonthLabel={props.showMonthLabel} />;
 }
 
 function StatusBar({ state }: { state: DemoState }) {
@@ -890,6 +966,7 @@ function PanelContent({
   state,
   patch,
   setMode,
+  setUnit,
   toggleModule,
   moveModule,
   hints,
@@ -897,6 +974,7 @@ function PanelContent({
   state: DemoState;
   patch: (next: Partial<DemoState>, event?: string) => void;
   setMode: (mode: DemoMode) => void;
+  setUnit: (unit: DemoUnit) => void;
   toggleModule: (kind: ModuleKind) => void;
   moveModule: (id: string, direction: -1 | 1) => void;
   hints: string[];
@@ -909,7 +987,7 @@ function PanelContent({
       </div>
     );
   }
-  if (state.panelTab === "props") return <PropsLab state={state} patch={patch} setMode={setMode} />;
+  if (state.panelTab === "props") return <PropsLab state={state} patch={patch} setMode={setMode} setUnit={setUnit} />;
   if (state.panelTab === "theme") return <ThemeLab state={state} patch={patch} />;
   if (state.panelTab === "look") return <AppearanceLab state={state} patch={patch} />;
   if (state.panelTab === "disabled") return <DisabledLab state={state} patch={patch} />;
@@ -921,13 +999,15 @@ function PropsLab({
   state,
   patch,
   setMode,
+  setUnit,
 }: {
   state: DemoState;
   patch: (next: Partial<DemoState>, event?: string) => void;
   setMode: (mode: DemoMode) => void;
+  setUnit: (unit: DemoUnit) => void;
 }) {
   return (
-    <PanelCard title="Calendar Props" icon={<SlidersHorizontal size={16} />}>
+    <PanelCard title="Calendar Config" icon={<SlidersHorizontal size={16} />}>
       <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Mode</div>
       <Segmented
         value={state.mode}
@@ -935,8 +1015,19 @@ function PropsLab({
           ["single", "Single"],
           ["range", "Range"],
           ["multiple", "Multi"],
+          ["multi-range", "Multi-range"],
         ]}
         onChange={(value) => setMode(value as DemoMode)}
+      />
+      <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Unit</div>
+      <Segmented
+        value={state.unit}
+        options={[
+          ["day", "Day"],
+          ["week", "Week"],
+          ["month", "Month"],
+        ]}
+        onChange={(value) => setUnit(value as DemoUnit)}
       />
       <div className="grid grid-cols-2 gap-2">
         <Toggle label="Read only" checked={state.readOnly} onChange={(readOnly) => patch({ readOnly }, "Read-only toggled")} />
@@ -965,14 +1056,17 @@ function PropsLab({
           <Input type="date" value={state.maxDate} onChange={(maxDate) => patch({ maxDate }, "Max date changed")} />
         </ControlRow>
       </div>
-      {state.mode === "range" && (
+      {isSpanMode(state.mode) && (
         <div className="grid grid-cols-2 gap-2">
-          <NumberInput label="Min range" value={state.minRangeDays} onChange={(minRangeDays) => patch({ minRangeDays })} />
-          <NumberInput label="Max range" value={state.maxRangeDays} onChange={(maxRangeDays) => patch({ maxRangeDays })} />
+          <NumberInput label="Min span" value={state.minSpan} onChange={(minSpan) => patch({ minSpan })} />
+          <NumberInput label="Max span" value={state.maxSpan} onChange={(maxSpan) => patch({ maxSpan })} />
         </div>
       )}
       {state.mode === "multiple" && (
         <NumberInput label="Max dates" value={state.maxDates} onChange={(maxDates) => patch({ maxDates })} />
+      )}
+      {state.mode === "multi-range" && (
+        <NumberInput label="Max ranges" value={state.maxRanges} onChange={(maxRanges) => patch({ maxRanges })} />
       )}
       <ValueInspector state={state} />
     </PanelCard>
@@ -980,9 +1074,19 @@ function PropsLab({
 }
 
 function ThemeLab({ state, patch }: { state: DemoState; patch: (next: Partial<DemoState>, event?: string) => void }) {
-  const themeOptions: ThemeId[] = ["auto", "light", "dark", "nebula", "snow", "temporal", "mint", "riso", "aurora", "graphite", "industrial", "custom"];
+  const themeOptions: ThemeId[] = ["default", "nebula", "snow", "temporal", "mint", "riso", "aurora", "graphite", "industrial", "custom"];
   return (
     <PanelCard title="Theme Lab" icon={<Palette size={16} />}>
+      <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Scheme</div>
+      <Segmented
+        value={state.scheme}
+        options={[
+          ["auto", "Auto"],
+          ["light", "Light"],
+          ["dark", "Dark"],
+        ]}
+        onChange={(value) => patch({ scheme: value as SchemeId }, `Scheme changed to ${value}`)}
+      />
       <div className="grid grid-cols-3 gap-2">
         {themeOptions.map((themeId) => (
           <button
@@ -1042,10 +1146,10 @@ function AppearanceLab({ state, patch }: { state: DemoState; patch: (next: Parti
           <Range label="Radius" value={state.customAppearance.radius} min={0} max={24} onChange={(radius) => patch({ customAppearance: { ...state.customAppearance, radius } })} />
           <Range label="Spacing" value={state.customAppearance.spacing} min={0.2} max={1.2} step={0.05} onChange={(spacing) => patch({ customAppearance: { ...state.customAppearance, spacing } })} />
           <Range label="Font size" value={state.customAppearance.fontSize} min={11} max={18} onChange={(fontSize) => patch({ customAppearance: { ...state.customAppearance, fontSize } })} />
-          <ControlRow label="Day ratio">
-            <Select value={state.customAppearance.dayRatio} onChange={(dayRatio) => patch({ customAppearance: { ...state.customAppearance, dayRatio } })}>
-              {["1 / 1", "1 / 0.85", "1 / 0.75"].map((ratio) => (
-                <option key={ratio}>{ratio}</option>
+          <ControlRow label="Day height">
+            <Select value={state.customAppearance.dayHeight} onChange={(dayHeight) => patch({ customAppearance: { ...state.customAppearance, dayHeight } })}>
+              {["2em", "2.5em", "3em"].map((height) => (
+                <option key={height}>{height}</option>
               ))}
             </Select>
           </ControlRow>
@@ -1348,51 +1452,120 @@ function getSafetyHints(state: DemoState) {
   const hasInteractive = enabled.some((kind) => ["days", "manual", "time", "presets", "daysTrack"].includes(kind));
   if (enabled.includes("selected") && !hasInteractive) hints.push("SelectedDates can display value, but no enabled module commits a date.");
   if (enabled.includes("presets") && state.presetPack === "none") hints.push("CalendarPresets is enabled, but the preset pack is empty.");
-  if (enabled.includes("time") && state.mode !== "single") hints.push("TimeGrid is clearest in single mode; range/multiple time can feel pending.");
+  if (enabled.includes("time") && state.mode !== "single") hints.push("TimeWheel is clearest in single mode; range/multiple time can feel pending.");
   return hints;
+}
+
+function isSpanMode(mode: DemoMode) {
+  return mode === "range" || mode === "multi-range";
+}
+
+function wantsTime(modules: DemoModule[]) {
+  return modules.some(
+    (module) => module.enabled && (module.kind === "time" || Boolean(module.props?.showTime)),
+  );
+}
+
+function valueTypeCode(state: DemoState) {
+  const span = state.unit !== "day" || isSpanMode(state.mode);
+  const many = state.mode === "multiple" || state.mode === "multi-range";
+  if (!span) return many ? "Date[]" : "Date | null";
+  return many ? "{ start: Date; end: Date }[]" : "{ start: Date; end: Date } | null";
+}
+
+function moduleImportNames(module: DemoModule): string[] {
+  if (module.kind === "nav") {
+    const props = module.props ?? {};
+    return [
+      "CalendarToolbar",
+      "CalendarToolbarPrev",
+      props.monthLabel ? "CalendarToolbarMonthLabel" : "CalendarToolbarMonthTrigger",
+      props.yearLabel ? "CalendarToolbarYearLabel" : "CalendarToolbarYearTrigger",
+      "CalendarToolbarNext",
+      ...(props.showTime ? ["CalendarToolbarTime"] : []),
+      ...(props.clear ? ["CalendarToolbarClear"] : []),
+    ];
+  }
+  return [moduleMeta[module.kind].label];
 }
 
 function generateCode(state: DemoState) {
   const modules = state.modules.filter((module) => module.enabled);
-  const moduleImports = modules.map((module) => moduleMeta[module.kind].label);
+  const moduleImports = Array.from(new Set(modules.flatMap(moduleImportNames)));
+  const presetsEnabled = modules.some((module) => module.kind === "presets");
+  const withTime = wantsTime(state.modules);
+
+  const rootImports = ["Calendar", "createCalendarConfig"];
+  if (state.themeId === "custom") rootImports.push("createTheme");
+  if (state.appearanceId === "custom") rootImports.push("createAppearance");
+  if (state.disabledPreset !== "none") rootImports.push("createDisabled");
+  if (presetsEnabled && state.presetPack === "basic") rootImports.push("relativePresets");
+
   const imports = [
     `import { useMemo, useState } from "react";`,
-    `import { Calendar${state.themeId === "custom" ? ", createTheme" : ""}${state.appearanceId === "custom" ? ", createAppearance" : ""}${state.disabledPreset !== "none" ? ", createDisabled" : ""}${state.presetPack === "basic" ? ", basicPresets" : ""} } from "@dateforge/react-calendar";`,
-    `import { ${Array.from(new Set(moduleImports)).join(", ")} } from "@dateforge/react-calendar/modules";`,
+    `import { ${rootImports.join(", ")} } from "@dateforge/react-calendar";`,
+    `import { ${moduleImports.join(", ")} } from "@dateforge/react-calendar/modules";`,
   ];
-  if (!["auto", "light", "dark", "custom"].includes(state.themeId)) {
+  if (state.themeId !== "default" && state.themeId !== "custom") {
     imports.push(`import { ${state.themeId} } from "@dateforge/react-calendar/themes";`);
   }
-  if (!["default", "custom"].includes(state.appearanceId)) {
+  if (state.appearanceId !== "default" && state.appearanceId !== "custom") {
     imports.push(`import { ${state.appearanceId} } from "@dateforge/react-calendar/appearances";`);
   }
 
-  const valueType =
-    state.mode === "range"
-      ? `{ from: Date | null; to: Date | null }`
-      : state.mode === "multiple"
-        ? `Date[]`
-        : `Date | null`;
-  const initial = state.mode === "range" ? `{ from: null, to: null }` : state.mode === "multiple" ? `[]` : `null`;
-  const config: string[] = [];
-  if (state.themeId === "custom") config.push(`  const theme = useMemo(() => createTheme(${JSON.stringify(state.customTheme, null, 2).replace(/\n/g, "\n  ")}), []);`);
+  const valueType = valueTypeCode(state);
+  const many = state.mode === "multiple" || state.mode === "multi-range";
+  const initial = many ? "[]" : "null";
+
+  const configOptions: string[] = [];
+  if (state.mode !== "single") configOptions.push(`mode: "${state.mode}"`);
+  if (state.unit !== "day") configOptions.push(`unit: "${state.unit}"`);
+  if (state.locale !== "en") configOptions.push(`locale: "${state.locale}"`);
+  if (state.timeZone !== "auto") configOptions.push(`timeZone: "${state.timeZone}"`);
+  if (withTime) configOptions.push("withTime: true");
+  if (state.hour12) configOptions.push("hour12: true");
+  if (state.readOnly) configOptions.push("readOnly: true");
+  if (state.minDate) configOptions.push(`min: new Date("${state.minDate}T00:00:00")`);
+  if (state.maxDate) configOptions.push(`max: new Date("${state.maxDate}T00:00:00")`);
+  if (isSpanMode(state.mode)) {
+    configOptions.push(`minSpan: ${state.minSpan}`, `maxSpan: ${state.maxSpan}`);
+  }
+  if (state.mode === "multiple") configOptions.push(`maxDates: ${state.maxDates}`);
+  if (state.mode === "multi-range") configOptions.push(`maxRanges: ${state.maxRanges}`);
+  if (state.disabledPreset !== "none") configOptions.push(`disabled: ${disabledCode(state.disabledPreset)}`);
+
+  const configBlock = configOptions.length
+    ? [
+        "  const config = useMemo(",
+        "    () =>",
+        "      createCalendarConfig({",
+        ...configOptions.map((option) => `        ${option},`),
+        "      }),",
+        "    [],",
+        "  );",
+      ].join("\n")
+    : "  const config = useMemo(() => createCalendarConfig(), []);";
+
+  const consts: string[] = [configBlock];
+  if (state.themeId === "custom") {
+    consts.push(`  const theme = useMemo(() => createTheme(${JSON.stringify(state.customTheme, null, 2).replace(/\n/g, "\n  ")}), []);`);
+  }
   if (state.appearanceId === "custom") {
-    config.push(
-      `  const appearance = useMemo(() => createAppearance({ radius: "${state.customAppearance.radius}px", spacing: "${state.customAppearance.spacing}em", fontSize: "${state.customAppearance.fontSize}px", dayRatio: "${state.customAppearance.dayRatio}" }), []);`,
+    consts.push(
+      `  const appearance = useMemo(() => createAppearance({ radius: "${state.customAppearance.radius}px", spacing: "${state.customAppearance.spacing}em", fontSize: "${state.customAppearance.fontSize}px", dayHeight: "${state.customAppearance.dayHeight}" }), []);`,
     );
   }
-  if (state.disabledPreset !== "none") config.push(`  const disabled = useMemo(() => ${disabledCode(state.disabledPreset)}, []);`);
-  if (!["none", "basic"].includes(state.presetPack)) config.push(`  const presets = useMemo(() => ${presetCode(state.presetPack)}, []);`);
+  if (presetsEnabled && !["none", "basic"].includes(state.presetPack)) {
+    consts.push(`  const presets = useMemo(() => ${presetCode(state.presetPack)}, []);`);
+  }
 
   const calendarProps = [
-    `mode="${state.mode}"`,
+    `config={config}`,
     `value={value}`,
-    `onChange={setValue}`,
-    state.themeId === "custom" ? `theme={theme}` : state.themeId === "auto" ? "" : `theme={${state.themeId === "light" || state.themeId === "dark" ? `"${state.themeId}"` : state.themeId}}`,
+    `onChange={(next) => setValue(next as ${valueType})}`,
+    state.themeId === "custom" ? `theme={theme}` : state.themeId === "default" ? "" : `theme={${state.themeId}}`,
     state.appearanceId === "custom" ? `appearance={appearance}` : state.appearanceId === "default" ? "" : `appearance={${state.appearanceId}}`,
-    state.disabledPreset !== "none" ? `disabled={disabled}` : "",
-    state.locale !== "en" ? `locale="${state.locale}"` : "",
-    state.readOnly ? `readOnly` : "",
+    state.scheme === "auto" ? "" : `scheme="${state.scheme}"`,
     state.gradient ? `gradient` : "",
   ].filter(Boolean);
 
@@ -1404,7 +1577,8 @@ function generateCode(state: DemoState) {
 
 export function DateForgeDemo() {
   const [value, setValue] = useState<${valueType}>(${initial});
-${config.length ? `${config.join("\n")}\n` : ""}
+${consts.join("\n")}
+
   return (
     <Calendar
 ${calendarProps.map((prop) => `      ${prop}`).join("\n")}
@@ -1416,18 +1590,42 @@ ${jsx}
 }
 
 function moduleCode(module: DemoModule, presetPack: PresetPackId) {
-  if (module.kind === "nav") return `<CalendarToolbar>\n        <CalendarToolbarPrev />\n        <CalendarToolbarMonthTrigger />\n        <CalendarToolbarYearTrigger compact />\n        <CalendarToolbarNext />\n      </CalendarToolbar>`;
+  const props = module.props ?? {};
+  if (module.kind === "nav") {
+    const lines = [
+      "<CalendarToolbar>",
+      "        <CalendarToolbarPrev />",
+      props.monthLabel
+        ? "        <CalendarToolbarMonthLabel />"
+        : `        <CalendarToolbarMonthTrigger${props.compactMonths ? " compact" : ""} />`,
+      props.yearLabel
+        ? "        <CalendarToolbarYearLabel />"
+        : "        <CalendarToolbarYearTrigger compact />",
+      "        <CalendarToolbarNext />",
+    ];
+    if (props.showTime) lines.push("        <CalendarToolbarTime />");
+    if (props.clear) lines.push("        <CalendarToolbarClear />");
+    lines.push("      </CalendarToolbar>");
+    return lines.join("\n");
+  }
   if (module.kind === "days") return `<CalendarDays />`;
-  if (module.kind === "selected") return `<CalendarSelectedDates allowClear allowNavigate animated />`;
+  if (module.kind === "selected") {
+    const flags = [
+      props.allowClear ? " allowClear" : "",
+      props.allowNavigate ? " allowNavigate" : "",
+      props.showTime ? " showTime" : "",
+    ].join("");
+    return `<CalendarSelectedDates${flags} />`;
+  }
   if (module.kind === "presets") {
-    const value = presetPack === "basic" ? "basicPresets" : presetPack === "none" ? "[]" : "presets";
+    const value = presetPack === "basic" ? "relativePresets" : presetPack === "none" ? "[]" : "presets";
     return `<CalendarPresets presets={${value}} />`;
   }
-  if (module.kind === "manual") return `<CalendarManualInput allowClear />`;
-  if (module.kind === "time") return `<CalendarTimeWheel />`;
+  if (module.kind === "manual") return `<CalendarManualInput${props.allowClear ? " allowClear" : ""} />`;
+  if (module.kind === "time") return `<CalendarTimeWheel${props.seconds ? " seconds" : ""} />`;
   if (module.kind === "yearsTrack") return `<CalendarYearsTrack />`;
-  if (module.kind === "monthsTrack") return `<CalendarMonthsTrack />`;
-  return `<CalendarDaysTrack showMonthLabel />`;
+  if (module.kind === "monthsTrack") return `<CalendarMonthsTrack${props.short ? " short" : ""} />`;
+  return `<CalendarDaysTrack${props.showMonthLabel ? " showMonthLabel" : ""} />`;
 }
 
 function disabledCode(preset: DemoState["disabledPreset"]) {
@@ -1455,8 +1653,15 @@ function presetCode(pack: PresetPackId) {
 function formatValue(value: DemoValue) {
   if (!value) return "null";
   if (value instanceof Date) return formatDate(value);
-  if (Array.isArray(value)) return value.length ? value.map(formatDate).join(", ") : "[]";
-  return `${value.from ? formatDate(value.from) : "from?"} -> ${value.to ? formatDate(value.to) : "to?"}`;
+  if (Array.isArray(value)) {
+    if (!value.length) return "[]";
+    return value.map((item) => (item instanceof Date ? formatDate(item) : formatRange(item))).join(", ");
+  }
+  return formatRange(value);
+}
+
+function formatRange(range: { start: Date; end: Date }) {
+  return `${formatDate(range.start)} -> ${formatDate(range.end)}`;
 }
 
 function formatDate(date: Date) {
@@ -1464,8 +1669,7 @@ function formatDate(date: Date) {
 }
 
 function emptyValue(mode: DemoMode): DemoValue {
-  if (mode === "range") return { from: null, to: null };
-  if (mode === "multiple") return [];
+  if (mode === "multiple" || mode === "multi-range") return [];
   return null;
 }
 

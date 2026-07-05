@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/tooltip";
 import {
   Calendar,
+  calendarDate,
+  createCalendarConfig,
   createDisabled,
   createTheme,
-  type DateRange,
-  type PresetEntry,
+  type PresetInput,
 } from "@dateforge/react-calendar";
 import {
   CalendarDays,
@@ -46,6 +47,12 @@ import {
 import { CalendarLunar } from "@dateforge/react-calendar/modules/lunar";
 import { CalendarMonthsWheel } from "@dateforge/react-calendar/modules/months-wheel";
 import { CalendarYearsWheel } from "@dateforge/react-calendar/modules/years-wheel";
+import {
+  DatePicker,
+  MonthPicker,
+  MultiMonthCalendar as PrebuiltMultiMonth,
+  SimpleCalendar,
+} from "@dateforge/react-calendar/prebuilt";
 import { bubble, compact, soft } from "@dateforge/react-calendar/appearances";
 import { monsoon, nebula, snow } from "@dateforge/react-calendar/themes";
 import { CalendarPreview } from "../CalendarPreview";
@@ -65,6 +72,15 @@ export type RecipeKind =
   | "Holiday presets example"
   | "Per-module themes"
   | "Theme toggle";
+
+export const PREBUILT_NAMES = [
+  "SimpleCalendar",
+  "DatePicker",
+  "MonthPicker",
+  "MultiMonthCalendar",
+] as const;
+
+export type PrebuiltName = (typeof PREBUILT_NAMES)[number];
 
 export const MODULE_NAMES = [
   "Calendar",
@@ -87,14 +103,25 @@ export const MODULE_NAMES = [
 
 export type ModuleName = (typeof MODULE_NAMES)[number];
 
-const disabledRules = createDisabled({
-  weekends: true,
-  before: new Date(2026, 4, 5),
-  dates: [new Date(2026, 4, 14), new Date(2026, 4, 21)],
+type RangeValue = { start: Date; end: Date } | null;
+
+const singleConfig = createCalendarConfig();
+const rangeConfig = createCalendarConfig({ mode: "range" });
+const timeConfig = createCalendarConfig({
+  withTime: true,
+  defaultTime: { hour: 10, minute: 30 },
+});
+const minTodayConfig = createCalendarConfig({ min: new Date() });
+const disabledConfig = createCalendarConfig({
+  disabled: createDisabled({
+    weekends: true,
+    before: new Date(2026, 4, 5),
+    dates: [new Date(2026, 4, 14), new Date(2026, 4, 21)],
+  }),
 });
 
 const brandTheme = createTheme({
-  highlight: "#1ad980",
+  accent: "#1ad980",
   range:     "#a7f3d0",
   weekend:   "#dc2626",
   light: {
@@ -111,13 +138,13 @@ const brandTheme = createTheme({
   },
 });
 
-const analyticsPresets: PresetEntry[] = [
+const analyticsPresets: PresetInput[] = [
   { label: "Last 7 days", value: -6, range: 6 },
   { label: "Last 30 days", value: -29, range: 29 },
   { label: "Next sprint", value: 0, range: 13 },
 ];
 
-const holidayPresets: PresetEntry[] = [
+const holidayPresets: PresetInput[] = [
   { label: "New Year's Day", value: new Date(2027, 0, 1) },
   { label: "Christmas", value: new Date(2026, 11, 25) },
   {
@@ -196,9 +223,10 @@ export function SimplePresetShowcase({
       >
         <CalendarPreview
           width="100%"
+          reserveHeight={0}
           navLinks={[]}
           initialDate={new Date(2026, 4, 13)}
-          defaultViewDate={new Date(2026, 4, 1)}
+          initialView={new Date(2026, 4, 1)}
           useSavedAppearanceFallback={false}
           useSavedThemeFallback={false}
         />
@@ -291,6 +319,59 @@ export function ModuleShowcase({
   );
 }
 
+export function PrebuiltCalendar({ name }: { name: PrebuiltName }) {
+  if (name === "SimpleCalendar") {
+    return <SimpleCalendar defaultValue={new Date(2026, 4, 13)} />;
+  }
+  if (name === "DatePicker") {
+    return <DatePicker defaultValue={new Date(2026, 4, 13)} />;
+  }
+  if (name === "MonthPicker") {
+    return <MonthPicker defaultValue={new Date(2026, 4, 1)} />;
+  }
+  return (
+    <PrebuiltMultiMonth
+      months={6}
+      cols={3}
+      mode="range"
+      startMonth={new Date(2026, 4, 1)}
+      defaultValue={{ start: new Date(2026, 5, 8), end: new Date(2026, 7, 16) }}
+    />
+  );
+}
+
+export function PrebuiltShowcase({
+  name,
+  sampleKey,
+}: {
+  name: PrebuiltName;
+  sampleKey: CodeSampleKey;
+}) {
+  const wide = name === "MultiMonthCalendar";
+  return (
+    <section className="mb-8 space-y-4">
+      {wide ? (
+        <div className="relative">
+          <Card className="border-[var(--border)] bg-[var(--doc-bg-secondary)] py-0 ring-0 shadow-sm">
+            <CardContent className="overflow-x-auto px-4 py-7">
+              <div className="min-w-[760px]">
+                <PrebuiltCalendar name={name} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <ShowcaseFrame previewSlug={`prebuilt/${name}`}>
+          <PrebuiltCalendar name={name} />
+        </ShowcaseFrame>
+      )}
+      <div className="min-w-0 [&>div]:mb-0">
+        <CodeBlock code={codeSamples[sampleKey]} lang="tsx" />
+      </div>
+    </section>
+  );
+}
+
 export function recipeSlug(kind: RecipeKind) {
   return kind
     .toLowerCase()
@@ -299,16 +380,14 @@ export function recipeSlug(kind: RecipeKind) {
 }
 
 export function MultiMonthCalendar() {
-  const [range, setRange] = useState<DateRange>({
-    from: new Date(2026, 6, 8),
-    to: new Date(2026, 10, 16),
+  const [range, setRange] = useState<RangeValue>({
+    start: new Date(2026, 6, 8),
+    end: new Date(2026, 10, 16),
   });
-
-  const rowStarts = [0, 3, 6, 9];
 
   const children = useMemo(
     () =>
-      rowStarts.flatMap((start) => [
+      [0, 3, 6, 9].flatMap((start) => [
         ...Array.from({ length: 3 }, (_, i) => {
           const offset = start + i;
           return offset === 0 ? (
@@ -332,8 +411,8 @@ export function MultiMonthCalendar() {
               key={`days-${offset}`}
               col={1}
               offset={offset}
-              currentMonthOnly
-              fixedRows={false}
+              showOutsideDays={false}
+              fixedWeeks={false}
             />
           );
         }),
@@ -343,12 +422,12 @@ export function MultiMonthCalendar() {
 
   return (
     <Calendar
-      mode="range"
+      config={rangeConfig}
       value={range}
-      onChange={setRange}
-      defaultViewDate={new Date(2026, 0, 1)}
+      onChange={(value) => setRange(value as RangeValue)}
+      initialView={calendarDate(2026, 1, 1)}
       cols={3}
-      width="100%"
+      style={{ width: "100%" }}
       appearance={compact}
     >
       {children}
@@ -364,26 +443,26 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   const [dateTime, setDateTime] = useState<Date | null>(
     () => new Date(2026, 4, 13, 10, 30),
   );
-  const [bookingRange, setBookingRange] = useState<DateRange>({
-    from: new Date(2026, 4, 12),
-    to: new Date(2026, 4, 17),
+  const [bookingRange, setBookingRange] = useState<RangeValue>({
+    start: new Date(2026, 4, 12),
+    end: new Date(2026, 4, 17),
   });
-  const [analyticsRange, setAnalyticsRange] = useState<DateRange>({
-    from: new Date(2026, 4, 1),
-    to: new Date(2026, 4, 13),
+  const [analyticsRange, setAnalyticsRange] = useState<RangeValue>({
+    start: new Date(2026, 4, 1),
+    end: new Date(2026, 4, 13),
   });
-  const [trackRange, setTrackRange] = useState<DateRange>({
-    from: new Date(2026, 4, 8),
-    to: new Date(2026, 4, 20),
+  const [trackRange, setTrackRange] = useState<RangeValue>({
+    start: new Date(2026, 4, 8),
+    end: new Date(2026, 4, 20),
   });
 
   if (kind === "Booking range") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={bookingRange}
-        onChange={setBookingRange}
-        defaultViewDate={new Date(2026, 4, 1)}
+        onChange={(value) => setBookingRange(value as RangeValue)}
+        initialView={calendarDate(2026, 5, 1)}
         appearance={soft}
       >
         <CalendarToolbar>
@@ -402,10 +481,10 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Analytics range with presets") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={analyticsRange}
-        onChange={setAnalyticsRange}
-        defaultViewDate={new Date(2026, 4, 1)}
+        onChange={(value) => setAnalyticsRange(value as RangeValue)}
+        initialView={calendarDate(2026, 5, 1)}
         appearance={soft}
       >
         <CalendarPresets presets={analyticsPresets} />
@@ -424,11 +503,10 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Date and time") {
     return (
       <Calendar
-        mode="single"
+        config={timeConfig}
         value={dateTime}
-        onChange={setDateTime}
-        defaultViewDate={new Date(2026, 4, 1)}
-        timeStep={{ minute: 5 }}
+        onChange={(value) => setDateTime(value as Date | null)}
+        initialView={calendarDate(2026, 5, 1)}
         appearance={soft}
       >
         <CalendarToolbar>
@@ -447,11 +525,10 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Disabled dates example") {
     return (
       <Calendar
-        mode="single"
+        config={disabledConfig}
         value={singleDate}
-        onChange={setSingleDate}
-        defaultViewDate={new Date(2026, 4, 1)}
-        disabled={disabledRules}
+        onChange={(value) => setSingleDate(value as Date | null)}
+        initialView={calendarDate(2026, 5, 1)}
         appearance={soft}
       >
         <CalendarToolbar>
@@ -468,10 +545,10 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Holiday presets example") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={singleDate}
-        onChange={setSingleDate}
-        defaultViewDate={new Date(2026, 11, 1)}
+        onChange={(value) => setSingleDate(value as Date | null)}
+        initialView={calendarDate(2026, 12, 1)}
         appearance={soft}
       >
         <CalendarPresets presets={holidayPresets} />
@@ -489,10 +566,10 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Monsoon theme") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={singleDate}
-        onChange={setSingleDate}
-        defaultViewDate={new Date(2026, 4, 1)}
+        onChange={(value) => setSingleDate(value as Date | null)}
+        initialView={calendarDate(2026, 5, 1)}
         theme={monsoon}
       >
         <CalendarToolbar>
@@ -509,10 +586,10 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Custom theme") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={singleDate}
-        onChange={setSingleDate}
-        defaultViewDate={new Date(2026, 4, 1)}
+        onChange={(value) => setSingleDate(value as Date | null)}
+        initialView={calendarDate(2026, 5, 1)}
         theme={brandTheme}
         appearance={soft}
       >
@@ -530,10 +607,10 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Bubble appearance") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={singleDate}
-        onChange={setSingleDate}
-        defaultViewDate={new Date(2026, 4, 1)}
+        onChange={(value) => setSingleDate(value as Date | null)}
+        initialView={calendarDate(2026, 5, 1)}
         appearance={bubble}
       >
         <CalendarToolbar>
@@ -550,10 +627,10 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Mobile tracks") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={trackRange}
-        onChange={setTrackRange}
-        defaultViewDate={new Date(2026, 4, 1)}
+        onChange={(value) => setTrackRange(value as RangeValue)}
+        initialView={calendarDate(2026, 5, 1)}
         appearance={soft}
       >
         <CalendarYearsTrack />
@@ -568,11 +645,11 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Theme toggle") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={singleDate}
-        onChange={setSingleDate}
-        defaultViewDate={new Date(2026, 4, 1)}
-        theme={nebula as any}
+        onChange={(value) => setSingleDate(value as Date | null)}
+        initialView={calendarDate(2026, 5, 1)}
+        theme={nebula}
         appearance={soft}
       >
         <CalendarToolbar>
@@ -590,16 +667,16 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
   if (kind === "Per-module themes") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={singleDate}
-        onChange={setSingleDate}
-        defaultViewDate={new Date(2026, 4, 1)}
+        onChange={(value) => setSingleDate(value as Date | null)}
+        initialView={calendarDate(2026, 5, 1)}
         theme={snow}
-        light
+        scheme="light"
         appearance={soft}
       >
-        {/* toolbar overrides to built-in dark — dark bar on light calendar */}
-        <CalendarToolbar theme="dark">
+        {/* toolbar overrides to noir dark — dark bar on light calendar */}
+        <CalendarToolbar theme="noir" scheme="dark">
           <CalendarToolbarPrev />
           <CalendarToolbarMonthTrigger />
           <CalendarToolbarNext />
@@ -607,18 +684,17 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         </CalendarToolbar>
         {/* days inherit snow light from Calendar */}
         <CalendarDays />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <CalendarInfo theme={nebula as any} showSummary showRelative />
+        <CalendarInfo theme="nebula" showSummary showRelative />
       </Calendar>
     );
   }
 
   return (
     <Calendar
-      mode="single"
+      config={singleConfig}
       value={singleDate}
-      onChange={setSingleDate}
-      defaultViewDate={new Date(2026, 4, 1)}
+      onChange={(value) => setSingleDate(value as Date | null)}
+      initialView={calendarDate(2026, 5, 1)}
       appearance={soft}
     >
       <CalendarToolbar>
@@ -637,21 +713,20 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   const [dateTime, setDateTime] = useState<Date | null>(
     () => new Date(2026, 4, 13, 10, 30),
   );
-  const [range, setRange] = useState<DateRange>({
-    from: new Date(2026, 4, 8),
-    to: new Date(2026, 4, 20),
+  const [range, setRange] = useState<RangeValue>({
+    start: new Date(2026, 4, 8),
+    end: new Date(2026, 4, 20),
   });
-  const defaultViewDate = new Date(2026, 4, 1);
+  const viewDate = calendarDate(2026, 5, 1);
 
   if (moduleName === "Calendar") {
     return (
       <Calendar
-        mode="single"
+        config={minTodayConfig}
         value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setDate(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
-        minDate={new Date()}
       >
         <CalendarToolbar>
           <CalendarToolbarPrev />
@@ -668,10 +743,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarToolbar") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setDate(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarToolbar>
@@ -689,10 +764,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarDays") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setDate(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarDays highlightWeekends weekNumbers todayDot />
@@ -703,11 +778,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarTimeWheel") {
     return (
       <Calendar
-        mode="single"
+        config={timeConfig}
         value={dateTime}
-        onChange={setDateTime}
-        defaultViewDate={defaultViewDate}
-        timeStep={{ minute: 5 }}
+        onChange={(value) => setDateTime(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarTimeWheel seconds labels="long" />
@@ -718,10 +792,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarMonthsWheel") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={range}
-        onChange={setRange}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setRange(value as RangeValue)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarMonthsWheel showLabel showReset />
@@ -732,13 +806,13 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarYearsWheel") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={range}
-        onChange={setRange}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setRange(value as RangeValue)}
+        initialView={viewDate}
         appearance={soft}
       >
-        <CalendarYearsWheel showLabel showReset />
+        <CalendarYearsWheel showReset />
       </Calendar>
     );
   }
@@ -746,10 +820,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarLunar") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setDate(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarToolbar>
@@ -767,10 +841,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarPresets") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={range}
-        onChange={setRange}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setRange(value as RangeValue)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarPresets presets={analyticsPresets} />
@@ -781,10 +855,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarSelectedDates") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={range}
-        onChange={setRange}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setRange(value as RangeValue)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarSelectedDates allowClear allowNavigate />
@@ -795,10 +869,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarManualInput") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setDate(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarManualInput allowClear />
@@ -809,10 +883,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarInfo") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={range}
-        onChange={setRange}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setRange(value as RangeValue)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarDays />
@@ -824,14 +898,14 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarDaysTrack") {
     return (
       <Calendar
-        mode="range"
+        config={rangeConfig}
         value={range}
-        onChange={setRange}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setRange(value as RangeValue)}
+        initialView={viewDate}
         appearance={soft}
       >
-        <CalendarDaysTrack bound="from" showMonthLabel />
-        <CalendarDaysTrack bound="to" showMonthLabel />
+        <CalendarDaysTrack bound="from" />
+        <CalendarDaysTrack bound="to" />
       </Calendar>
     );
   }
@@ -839,10 +913,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarMonthsTrack") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setDate(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarMonthsTrack short showYearLabel />
@@ -853,10 +927,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarYearsTrack") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setDate(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarYearsTrack />
@@ -867,10 +941,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
   if (moduleName === "CalendarMonthsGrid") {
     return (
       <Calendar
-        mode="single"
+        config={singleConfig}
         value={date}
-        onChange={setDate}
-        defaultViewDate={defaultViewDate}
+        onChange={(value) => setDate(value as Date | null)}
+        initialView={viewDate}
         appearance={soft}
       >
         <CalendarMonthsGrid short />
@@ -880,10 +954,10 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
 
   return (
     <Calendar
-      mode="single"
+      config={singleConfig}
       value={date}
-      onChange={setDate}
-      defaultViewDate={defaultViewDate}
+      onChange={(value) => setDate(value as Date | null)}
+      initialView={viewDate}
       appearance={soft}
     >
       <CalendarYearsGrid showControls yearsPerPage={12} />
@@ -894,12 +968,13 @@ export function ModuleCalendar({ moduleName }: { moduleName: ModuleName }) {
 const WEATHER_ICONS = ["☀️", "⛅", "☁️", "🌧", "⛈", "❄️"];
 
 // Stable per-day value so a given date always renders the same icon.
-const weatherSeed = (d: Date) => {
-  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+// renderDay receives the library's CalendarDate ({ year, month, day }, month 1-12).
+const weatherSeed = (d: { year: number; month: number; day: number }) => {
+  const seed = d.year * 10000 + d.month * 100 + d.day;
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 };
-const weatherFor = (d: Date) =>
+const weatherFor = (d: { year: number; month: number; day: number }) =>
   WEATHER_ICONS[Math.floor(weatherSeed(d) * WEATHER_ICONS.length)];
 
 export function WeatherRenderDayShowcase() {
@@ -910,12 +985,12 @@ export function WeatherRenderDayShowcase() {
         <CardContent className="flex justify-center px-4 py-7">
           <div className="w-full max-w-[340px]">
             <Calendar
-              mode="single"
+              config={singleConfig}
               value={date}
-              onChange={setDate}
-              defaultViewDate={new Date(2026, 4, 1)}
+              onChange={(value) => setDate(value as Date | null)}
+              initialView={calendarDate(2026, 5, 1)}
               appearance={soft}
-              width="100%"
+              style={{ width: "100%" }}
             >
               <CalendarToolbar>
                 <CalendarToolbarPrev />
@@ -925,7 +1000,7 @@ export function WeatherRenderDayShowcase() {
               </CalendarToolbar>
               <CalendarDays
                 renderDay={(d, state) => {
-                  if (state.isOtherMonth) return <span>{d.getDate()}</span>;
+                  if (state.outside) return <span>{d.day}</span>;
                   return (
                     <span
                       style={{
@@ -936,7 +1011,7 @@ export function WeatherRenderDayShowcase() {
                         lineHeight: 1.1,
                       }}
                     >
-                      <span style={{ fontSize: 13 }}>{d.getDate()}</span>
+                      <span style={{ fontSize: 13 }}>{d.day}</span>
                       <span aria-hidden style={{ fontSize: 13 }}>
                         {weatherFor(d)}
                       </span>
@@ -956,9 +1031,10 @@ export function QuickStartCalendar() {
   return (
     <CalendarPreview
       width="100%"
+      reserveHeight={0}
       navLinks={[]}
       initialDate={new Date(2026, 4, 13)}
-      defaultViewDate={new Date(2026, 4, 1)}
+      initialView={new Date(2026, 4, 1)}
       useSavedAppearanceFallback={false}
       useSavedThemeFallback={false}
     />

@@ -5,10 +5,13 @@ import {
   MODULE_NAMES,
   ModuleCalendar,
   MultiMonthCalendar,
+  PREBUILT_NAMES,
+  PrebuiltCalendar,
   QuickStartCalendar,
   RecipeCalendar,
   recipeSlug,
   type ModuleName,
+  type PrebuiltName,
   type RecipeKind,
 } from "../../showcases";
 
@@ -32,7 +35,9 @@ export default function PreviewPage() {
   const calendar = resolveCalendar(slug);
   if (!calendar) notFound();
 
-  const wide = slug[0] === "multi-month";
+  const wide =
+    slug[0] === "multi-month" ||
+    (slug[0] === "prebuilt" && slug[1] === "MultiMonthCalendar");
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-white p-6">
@@ -54,6 +59,12 @@ function resolveCalendar(slug: string[]): React.ReactNode | null {
     if (slug[0] === "quick-start") return <QuickStartCalendar />;
     if (slug[0] === "multi-month") return <MultiMonthCalendar />;
     return null;
+  }
+
+  if (slug.length === 2 && slug[0] === "prebuilt") {
+    const name = slug[1] as PrebuiltName;
+    if (!PREBUILT_NAMES.includes(name)) return null;
+    return <PrebuiltCalendar name={name} />;
   }
 
   if (slug.length === 2 && slug[0] === "module") {

@@ -43,7 +43,7 @@ const TOKEN_LABELS: Array<{ key: EditableThemeTokenKey; label: string }> = [
   { key: "activeText", label: "Active text" },
   { key: "todayDot", label: "Today dot" },
   { key: "backdrop", label: "Backdrop" },
-  { key: "highlight", label: "Highlight" },
+  { key: "focusRing", label: "Focus ring" },
   { key: "tone", label: "Tone" },
   { key: "text", label: "Text" },
   { key: "stroke", label: "Stroke" },
@@ -74,7 +74,7 @@ export function ThemesClient() {
     () => ({
       id: "custom theme",
       backdrop: customTokens.backdrop,
-      highlight: customTokens.highlight,
+      accent: customTokens.accent,
       mood: "Light base",
       theme: createTheme(customTokens),
       adjustable: true,
@@ -345,11 +345,11 @@ export function ThemesClient() {
       <section className="flex flex-1 flex-col items-center justify-center gap-4 py-6">
         <div
           className="transition-all duration-500 ease-out"
-          style={{ filter: `drop-shadow(0 12px 40px ${active.highlight}2a)` }}
+          style={{ filter: `drop-shadow(0 12px 40px ${active.accent}2a)` }}
         >
           <CalendarPreview
             theme={active.theme}
-            dark={dark}
+            scheme={dark ? "dark" : "light"}
             gradient={gradient}
             width={320}
             navLinks={THEMES_NAV}
@@ -443,10 +443,10 @@ const ThemeCard = memo(function ThemeCard({
         height: 64,
         scrollSnapAlign: "center",
         borderColor: isCenter
-          ? `${preset.highlight}55`
+          ? `${preset.accent}55`
           : "rgb(228 228 231 / 0.6)",
         boxShadow: isCenter
-          ? `0 2px 12px ${preset.highlight}18, 0 1px 3px rgb(0 0 0 / 0.06)`
+          ? `0 2px 12px ${preset.accent}18, 0 1px 3px rgb(0 0 0 / 0.06)`
           : "0 1px 2px rgb(0 0 0 / 0.04)",
         opacity: isCenter ? 1 : 0.52,
         transform: isCenter ? "scale(1)" : "scale(0.93)",
@@ -467,7 +467,7 @@ const ThemeCard = memo(function ThemeCard({
         />
         <div
           className="w-1/2 h-full"
-          style={{ backgroundColor: preset.highlight }}
+          style={{ backgroundColor: preset.accent }}
         />
       </div>
       <div className="min-w-0 flex-1">
@@ -619,14 +619,14 @@ function CustomThemeModal({
               <div
                 className="flex items-center justify-between border-b px-3 py-2.5 sm:px-4 sm:py-3"
                 style={{
-                  backgroundColor: tokens.accent,
+                  backgroundColor: tokens.tone,
                   borderColor: tokens.stroke,
                 }}
               >
                 <span className="text-sm font-semibold">Preview</span>
                 <span
                   className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: tokens.highlight }}
+                  style={{ backgroundColor: tokens.accent }}
                 />
               </div>
               <div className="grid grid-cols-6 gap-1.5 p-3 sm:grid-cols-3 sm:gap-2 sm:p-4">
@@ -637,7 +637,7 @@ function CustomThemeModal({
                     style={
                       index === 4
                         ? {
-                            backgroundColor: tokens.highlight,
+                            backgroundColor: tokens.accent,
                             color: tokens.activeText,
                           }
                         : {

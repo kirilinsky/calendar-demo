@@ -10,6 +10,7 @@ import {
   press,
   soft,
   square,
+  zenith,
 } from "@dateforge/react-calendar/appearances";
 import {
   readSavedAppearanceId,
@@ -47,6 +48,13 @@ const APPEARANCES: AppearancePreset[] = [
     mood: "Balanced",
     radius: "0.5em",
     spacing: "0.55em",
+  },
+  {
+    id: "zenith",
+    mood: "Polished",
+    appearance: zenith,
+    radius: "0.5em",
+    spacing: "0.6em",
   },
   {
     id: "soft",
@@ -326,7 +334,8 @@ export function AppearanceClient() {
           >
             <CalendarPreview
               appearance={active.appearance}
-              defaultViewDate={PREVIEW_VIEW_DATE}
+              reserveHeight={0}
+              initialView={PREVIEW_VIEW_DATE}
               initialDate={PREVIEW_DATE}
               useSavedAppearanceFallback={false}
               width={previewWidth}

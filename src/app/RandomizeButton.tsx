@@ -19,7 +19,7 @@ export function RandomizeButton() {
       type="button"
       onClick={randomize}
       size="lg"
-      className="h-12 px-8 text-sm font-semibold shadow-lg shadow-zinc-950/20"
+      className="h-12 rounded-full bg-gradient-to-b from-zinc-800 to-zinc-950 px-8 text-sm font-semibold shadow-lg shadow-zinc-950/25 transition-[transform,box-shadow] duration-150 will-change-transform hover:scale-[1.03] hover:shadow-xl hover:shadow-zinc-950/30 active:scale-95"
     >
       Surprise Me ✨
     </Button>
