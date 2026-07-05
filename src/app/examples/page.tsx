@@ -5,7 +5,6 @@ import { Check, ChevronDown, Clipboard, Palette, Sparkles } from "lucide-react";
 import {
   Calendar,
   calendarDate,
-  commonPresets,
   createAppearance,
   createCalendarConfig,
   createDisabled,
@@ -39,6 +38,7 @@ import {
   CalendarToolbar,
   CalendarToolbarClear,
   CalendarToolbarClock,
+  CalendarToolbarGroup,
   CalendarToolbarHome,
   CalendarToolbarLabel,
   CalendarToolbarMonthLabel,
@@ -65,6 +65,7 @@ import {
   meadow,
   nebula,
   mint,
+  prism,
   riso,
   snow,
   temporal,
@@ -151,7 +152,12 @@ const eventCount = (date: CalendarDate): number => {
 export default function ExamplesPage() {
   const [basicDate, setBasicDate] = useState<Date | null>(null);
   const [stayRange, setStayRange] = useState<RangeValue>(emptyRange);
-  const [flightRange, setFlightRange] = useState<RangeValue>(emptyRange);
+  // Seed a range so the from/to bound tracks show different dates right away —
+  // with an empty selection both bounds fall back to the shared view date.
+  const [flightRange, setFlightRange] = useState<RangeValue>(() => {
+    const today = startOfDay(new Date());
+    return { start: addDays(today, 7), end: addDays(today, 14) };
+  });
   const [twoMonthRange, setTwoMonthRange] = useState<RangeValue>(emptyRange);
   const [reportRange, setReportRange] = useState<RangeValue>(emptyRange);
   const [singlePresetDate, setSinglePresetDate] = useState<Date | null>(null);
@@ -182,6 +188,7 @@ export default function ExamplesPage() {
   const [priceDate, setPriceDate] = useState<Date | null>(null);
   const [eventDate, setEventDate] = useState<Date | null>(null);
   const [prebuiltDate, setPrebuiltDate] = useState<Date | null>(null);
+  const [pickerDate, setPickerDate] = useState<Date | null>(null);
   const [pickedMonth, setPickedMonth] = useState<Date | null>(null);
   const [weekSpan, setWeekSpan] = useState<RangeValue>(null);
   const [shiftRanges, setShiftRanges] = useState<{ start: Date; end: Date }[]>(
@@ -191,6 +198,8 @@ export default function ExamplesPage() {
   const [bizSegments, setBizSegments] = useState<number | null>(null);
   const [deDate, setDeDate] = useState<Date | null>(null);
   const [schemeDate, setSchemeDate] = useState<Date | null>(null);
+  const [drumDate, setDrumDate] = useState<Date | null>(null);
+  const [slotTime, setSlotTime] = useState<Date | null>(null);
   const [scheme, setScheme] = useState<"light" | "dark">("light");
   const launchDate = useMemo(() => new Date(2026, 8, 9), []);
   const sixMonthDates = useMemo(
@@ -222,8 +231,8 @@ export default function ExamplesPage() {
       createDisabled({
         weekends: true,
         before: today,
-        ranges: [{ from: addDays(today, 18), to: addDays(today, 23) }],
-        dates: [addDays(today, 31)],
+        ranges: [{ from: addDays(today, 8), to: addDays(today, 12) }],
+        dates: [addDays(today, 15)],
       }),
     [today],
   );
@@ -235,9 +244,31 @@ export default function ExamplesPage() {
       }),
     [],
   );
+  // Range mode accepts only range-kind presets (value + range, or getValue
+  // returning { from, to }); plain date presets render disabled there.
+  const stayPresets = useMemo<PresetInput[]>(
+    () => [
+      { label: "Tonight", value: 0, range: 1 },
+      {
+        id: "next-weekend",
+        label: "Weekend",
+        getValue: ({ now }) => {
+          const sat = new Date(now);
+          const daysToSat = (6 - sat.getDay() + 7) % 7 || 7;
+          sat.setDate(sat.getDate() + daysToSat);
+          const sun = new Date(sat);
+          sun.setDate(sat.getDate() + 1);
+          return { from: sat, to: sun };
+        },
+      },
+      { label: "Week stay", value: 0, range: 6 },
+      { label: "Two weeks", value: 0, range: 13 },
+    ],
+    [],
+  );
   const analyticsPresets = useMemo<PresetInput[]>(
     () => [
-      { label: "Today", value: 0 },
+      { label: "Today", value: 0, range: 0 },
       { label: "Last 7 days", value: -6, range: 6 },
       { label: "Last 30 days", value: -29, range: 29 },
       { label: "Quarter", value: new Date(2026, 0, 1), range: 89 },
@@ -461,6 +492,10 @@ export default function ExamplesPage() {
     [],
   );
   const weekCfg = useMemo(() => createCalendarConfig({ unit: "week" }), []);
+  const slotCfg = useMemo(
+    () => createCalendarConfig({ withTime: true, defaultTime: { hour: 9 } }),
+    [],
+  );
   const multiRangeCfg = useMemo(
     () => createCalendarConfig({ mode: "multi-range", maxRanges: 3 }),
     [],
@@ -521,6 +556,82 @@ export default function ExamplesPage() {
 
         <div className="-mx-5 flex flex-col gap-5 sm:mx-auto sm:max-w-[1720px]">
           <ExampleCard
+            title="SimpleCalendar"
+            useWhen="You need a working date picker in one line, today."
+            demonstrates={`The flagship prebuilt: navigation header + day grid, plain-Date props. Same shared props everywhere — \`locale\`, \`min\`/\`max\`, \`disabled\`, \`theme\`, \`appearance\`, \`scheme\`, \`gradient\`.`}
+            code={`import { SimpleCalendar } from "@dateforge/react-calendar/prebuilt";
+
+const [date, setDate] = useState<Date | null>(null);
+
+<SimpleCalendar value={date} onChange={setDate} />
+
+// Dress it up without composing anything:
+<SimpleCalendar
+  defaultValue={new Date()}
+  min={new Date()}
+  theme="noir"
+  appearance="zenith"
+  gradient
+/>`}
+          >
+            <SimpleCalendar value={prebuiltDate} onChange={setPrebuiltDate} />
+          </ExampleCard>
+
+          <ExampleCard
+            title="DatePicker"
+            useWhen="Forms where users type the date as often as they click it."
+            demonstrates={`Prebuilt with a typed, segment-based input above the grid plus a Today jump — keyboard-first entry, grid as fallback.`}
+            code={`import { DatePicker } from "@dateforge/react-calendar/prebuilt";
+
+const [date, setDate] = useState<Date | null>(null);
+
+<DatePicker value={date} onChange={setDate} />
+
+// Rules work the same as everywhere else:
+<DatePicker onChange={setDate} disabled={{ weekends: true }} />`}
+          >
+            <DatePicker value={pickerDate} onChange={setPickerDate} />
+          </ExampleCard>
+
+          <ExampleCard
+            title="MonthPicker"
+            useWhen="Billing periods, campaign months, or season selectors."
+            demonstrates={`Prebuilt month selector: year-stepping header + 12-month grid (\`unit: "month"\` under the hood). Picking a month selects the whole month, reported as its first day.`}
+            code={`import { MonthPicker } from "@dateforge/react-calendar/prebuilt";
+
+const [month, setMonth] = useState<Date | null>(null);
+
+// onChange reports the first day of the picked month (or null).
+<MonthPicker value={month} onChange={setMonth} />`}
+          >
+            <MonthPicker value={pickedMonth} onChange={setPickedMonth} />
+          </ExampleCard>
+
+          <ExampleCard
+            wide
+            desktopOnly
+            title="Quarter board"
+            useWhen="Roadmaps, quarters, or long bookings that need several months at once."
+            demonstrates={`\`MultiMonthCalendar\` — a 3-month range board generated from one prop set; one shared selection drags across months.`}
+            appearance="compact"
+            code={`import { MultiMonthCalendar } from "@dateforge/react-calendar/prebuilt";
+
+<MultiMonthCalendar
+  months={3}
+  cols={3}
+  mode="range"
+  startMonth={new Date(2026, 6, 1)}
+/>`}
+          >
+            <MultiMonthCalendar
+              months={3}
+              cols={3}
+              mode="range"
+              startMonth={new Date(2026, 6, 1)}
+            />
+          </ExampleCard>
+
+          <ExampleCard
             title="The basics"
             useWhen="You're starting a new flow and just need a working date picker."
             demonstrates="Bare minimum composition — Calendar shell + nav + days + selected dates."
@@ -554,50 +665,6 @@ const config = createCalendarConfig();
               <CalendarDays />
               <CalendarSelectedDates allowClear={false} />
             </Calendar>
-          </ExampleCard>
-
-          <ExampleCard
-            title="One-import prebuilts"
-            useWhen="You want a working picker now and composition later."
-            demonstrates={`\`SimpleCalendar\`, \`DatePicker\`, and \`MonthPicker\` from \`/prebuilt\` — ready recipes over the same primitives, plain-Date props.`}
-            code={`import { DatePicker, MonthPicker, SimpleCalendar } from "@dateforge/react-calendar/prebuilt";
-
-const [date, setDate] = useState<Date | null>(null);
-const [month, setMonth] = useState<Date | null>(null);
-
-<SimpleCalendar value={date} onChange={setDate} />   {/* header + day grid */}
-<DatePicker value={date} onChange={setDate} />       {/* typed input + grid + Today */}
-<MonthPicker value={month} onChange={setMonth} />    {/* year stepper + 12-month grid */}`}
-          >
-            <div className="flex flex-col gap-6">
-              <SimpleCalendar value={prebuiltDate} onChange={setPrebuiltDate} />
-              <DatePicker value={prebuiltDate} onChange={setPrebuiltDate} />
-              <MonthPicker value={pickedMonth} onChange={setPickedMonth} />
-            </div>
-          </ExampleCard>
-
-          <ExampleCard
-            wide
-            desktopOnly
-            title="Quarter board"
-            useWhen="Roadmaps, quarters, or long bookings that need several months at once."
-            demonstrates={`\`MultiMonthCalendar\` — a 3-month range board generated from one prop set; one shared selection drags across months.`}
-            appearance="compact"
-            code={`import { MultiMonthCalendar } from "@dateforge/react-calendar/prebuilt";
-
-<MultiMonthCalendar
-  months={3}
-  cols={3}
-  mode="range"
-  startMonth={new Date(2026, 6, 1)}
-/>`}
-          >
-            <MultiMonthCalendar
-              months={3}
-              cols={3}
-              mode="range"
-              startMonth={new Date(2026, 6, 1)}
-            />
           </ExampleCard>
 
           <ExampleCard
@@ -868,6 +935,29 @@ const noPast = useMemo(() => {
   return createDisabled({ before: today });
 }, []);
 
+// Range mode wants range-kind presets: value + range, or getValue
+// returning { from, to }. Plain date presets show up disabled here.
+const stayPresets = useMemo<PresetInput[]>(
+  () => [
+    { label: "Tonight", value: 0, range: 1 },
+    {
+      id: "next-weekend",
+      label: "Weekend",
+      getValue: ({ now }) => {
+        const sat = new Date(now);
+        const daysToSat = (6 - sat.getDay() + 7) % 7 || 7;
+        sat.setDate(sat.getDate() + daysToSat);
+        const sun = new Date(sat);
+        sun.setDate(sat.getDate() + 1);
+        return { from: sat, to: sun };
+      },
+    },
+    { label: "Week stay", value: 0, range: 6 },
+    { label: "Two weeks", value: 0, range: 13 },
+  ],
+  [],
+);
+
 const config = createCalendarConfig({ mode: "range", disabled: noPast });
 
 <Calendar config={config} value={stayRange} onChange={(value) => setStayRange(value as { start: Date; end: Date } | null)} appearance={soft}>
@@ -880,7 +970,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
     <CalendarToolbarClear />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarPresets presets={commonPresets.slice(4, 9)} />
+  <CalendarPresets presets={stayPresets} />
   <CalendarInfo showSummary rangeStyle="duration" />
   <CalendarSelectedDates allowClear allowNavigate />
 </Calendar>`}
@@ -901,7 +991,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
                 <CalendarToolbarClear />
               </CalendarToolbar>
               <CalendarDays />
-              <CalendarPresets presets={commonPresets.slice(4, 9)} />
+              <CalendarPresets presets={stayPresets} />
               <CalendarInfo showSummary rangeStyle="duration" />
               <CalendarSelectedDates allowClear allowNavigate />
             </Calendar>
@@ -915,7 +1005,15 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
             demonstrates={`Split bound tracks (\`bound="from"\` / \`bound="to"\`) for compact range selection across two columns.`}
             theme="temporal"
             appearance="compact"
-            code={`const [flightRange, setFlightRange] = useState<{ start: Date; end: Date } | null>(null);
+            code={`// Seed a range — with an empty selection both bound tracks
+// fall back to the shared view date and look identical.
+const [flightRange, setFlightRange] = useState<{ start: Date; end: Date } | null>(() => {
+  const start = new Date();
+  start.setDate(start.getDate() + 7);
+  const end = new Date();
+  end.setDate(end.getDate() + 14);
+  return { start, end };
+});
 
 const noPast = useMemo(() => {
   const today = new Date();
@@ -926,22 +1024,25 @@ const noPast = useMemo(() => {
 const config = createCalendarConfig({ mode: "range", disabled: noPast });
 
 <Calendar config={config} value={flightRange} onChange={(value) => setFlightRange(value as { start: Date; end: Date } | null)} theme={temporal} appearance={compact}>
-  <CalendarToolbar col={2}>
-    <CalendarToolbarLabel>Departure</CalendarToolbarLabel>
-    <CalendarToolbarPrev />
-    <CalendarToolbarMonthLabel />
-    <CalendarToolbarYearLabel />
-    <CalendarToolbarLabel>Return</CalendarToolbarLabel>
-    <CalendarToolbarMonthLabel offset={1} />
-    <CalendarToolbarYearLabel offset={1} />
-    <CalendarToolbarNext />
-    <CalendarToolbarClear />
+  {/* Labels follow the range bounds — same dates the tracks below edit */}
+  <CalendarToolbar col={2} cols={2}>
+    <CalendarToolbarGroup col={1}>
+      <CalendarToolbarLabel>Departure</CalendarToolbarLabel>
+      <CalendarToolbarMonthLabel bound="from" />
+      <CalendarToolbarYearLabel bound="from" />
+    </CalendarToolbarGroup>
+    <CalendarToolbarGroup col={1}>
+      <CalendarToolbarLabel>Return</CalendarToolbarLabel>
+      <CalendarToolbarMonthLabel bound="to" />
+      <CalendarToolbarYearLabel bound="to" />
+      <CalendarToolbarClear />
+    </CalendarToolbarGroup>
   </CalendarToolbar>
   <CalendarMonthsTrack bound="from" short />
   <CalendarDaysTrack bound="from" />
   <CalendarMonthsTrack bound="to" short />
   <CalendarDaysTrack bound="to" />
-  <CalendarSelectedDates allowClear />
+  <CalendarSelectedDates col={2} allowClear />
 </Calendar>`}
           >
             <Calendar
@@ -953,22 +1054,24 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
               style={{ width: "100%" }}
               cols={2}
             >
-              <CalendarToolbar col={2}>
-                <CalendarToolbarLabel>Departure</CalendarToolbarLabel>
-                <CalendarToolbarPrev />
-                <CalendarToolbarMonthLabel />
-                <CalendarToolbarYearLabel />
-                <CalendarToolbarLabel>Return</CalendarToolbarLabel>
-                <CalendarToolbarMonthLabel offset={1} />
-                <CalendarToolbarYearLabel offset={1} />
-                <CalendarToolbarNext />
-                <CalendarToolbarClear />
+              <CalendarToolbar col={2} cols={2}>
+                <CalendarToolbarGroup col={1}>
+                  <CalendarToolbarLabel>Departure</CalendarToolbarLabel>
+                  <CalendarToolbarMonthLabel bound="from" />
+                  <CalendarToolbarYearLabel bound="from" />
+                </CalendarToolbarGroup>
+                <CalendarToolbarGroup col={1}>
+                  <CalendarToolbarLabel>Return</CalendarToolbarLabel>
+                  <CalendarToolbarMonthLabel bound="to" />
+                  <CalendarToolbarYearLabel bound="to" />
+                  <CalendarToolbarClear />
+                </CalendarToolbarGroup>
               </CalendarToolbar>
               <CalendarMonthsTrack col={1} bound="from" />
               <CalendarMonthsTrack col={1} bound="to" />
               <CalendarDaysTrack col={1} bound="from" />
               <CalendarDaysTrack col={1} bound="to" />
-              <CalendarSelectedDates />
+              <CalendarSelectedDates col={2} />
             </Calendar>
           </ExampleCard>
 
@@ -1000,7 +1103,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
   </CalendarToolbar>
   <CalendarDays col={1} />
   <CalendarDays offset={1} col={1} />
-  <CalendarSelectedDates allowClear allowNavigate />
+  <CalendarSelectedDates col={2} allowClear allowNavigate />
 </Calendar>`}
             wide
           >
@@ -1023,7 +1126,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
               </CalendarToolbar>
               <CalendarDays col={1} />
               <CalendarDays offset={1} col={1} />
-              <CalendarSelectedDates allowClear allowNavigate />
+              <CalendarSelectedDates col={2} allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -1295,8 +1398,9 @@ const config = createCalendarConfig({ withTime: true, disabled: weekdaysOnly });
             theme="graphite"
             code={`const [reportRange, setReportRange] = useState<{ start: Date; end: Date } | null>(null);
 
+// range: 0 → a single-day range, so "Today" stays clickable in range mode
 const analyticsPresets = [
-  { label: "Today", value: 0 },
+  { label: "Today", value: 0, range: 0 },
   { label: "Last 7 days", value: -6, range: 6 },
   { label: "Last 30 days", value: -29, range: 29 },
 ];
@@ -1494,7 +1598,7 @@ const config = createCalendarConfig({ mode: "multiple" });
   <CalendarDays />
   <CalendarMonthsGrid col={1} />
   <CalendarYearsGrid col={1} />
-  <CalendarSelectedDates allowClear allowNavigate />
+  <CalendarSelectedDates col={2} allowClear allowNavigate />
 </Calendar>`}
             medium
           >
@@ -1511,7 +1615,7 @@ const config = createCalendarConfig({ mode: "multiple" });
               <CalendarDays />
               <CalendarMonthsGrid col={1} />
               <CalendarYearsGrid col={1} />
-              <CalendarSelectedDates allowClear allowNavigate />
+              <CalendarSelectedDates col={2} allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
@@ -2090,14 +2194,17 @@ const config = createCalendarConfig();
             title="Blackout calendar"
             useWhen="Operations calendars with weekends, maintenance windows, and exact blackout dates."
             demonstrates={`Range mode with composite \`createDisabled\` (weekends + before + ranges + dates).`}
-            theme="graphite"
-            appearance="compact"
+            theme="snow"
+            appearance="square"
             code={`const [blackoutRange, setBlackoutRange] = useState<{ start: Date; end: Date } | null>(null);
 
+// Everything matching a rule renders greyed out and unclickable:
+// past days, weekends, the maintenance window, the exact date.
 const blackout = createDisabled({
   weekends: true,
   before: new Date(),
   ranges: [{ from: new Date("2026-06-10"), to: new Date("2026-06-14") }],
+  dates: [new Date("2026-06-20")],
 });
 
 const config = createCalendarConfig({ mode: "range", disabled: blackout });
@@ -2110,7 +2217,7 @@ const config = createCalendarConfig({ mode: "range", disabled: blackout });
     <CalendarToolbarNext unit="year" />
     <CalendarToolbarHome />
   </CalendarToolbar>
-  <CalendarDays />
+  <CalendarDays highlightWeekends />
   <CalendarSelectedDates allowClear />
 </Calendar>`}
           >
@@ -2118,8 +2225,8 @@ const config = createCalendarConfig({ mode: "range", disabled: blackout });
               config={blackoutCfg}
               value={blackoutRange}
               onChange={(value) => setBlackoutRange(value as RangeValue)}
-              theme={graphite}
-              appearance={compact}
+              theme={snow}
+              appearance={square}
               style={{ width: "100%" }}
             >
               <CalendarToolbar>
@@ -2129,7 +2236,7 @@ const config = createCalendarConfig({ mode: "range", disabled: blackout });
                 <CalendarToolbarNext unit="year" />
                 <CalendarToolbarHome />
               </CalendarToolbar>
-              <CalendarDays />
+              <CalendarDays highlightWeekends />
               <CalendarSelectedDates allowClear />
             </Calendar>
           </ExampleCard>
@@ -2183,7 +2290,7 @@ const config = createCalendarConfig({ readOnly: true });
             code={`const config = createCalendarConfig();
 
 <Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)} cols={2}>
-  <CalendarToolbar>
+  <CalendarToolbar col={2}>
     <CalendarToolbarPrev unit="year" />
     <CalendarToolbarYearTrigger  />
     <CalendarToolbarNext unit="year" />
@@ -2201,13 +2308,93 @@ const config = createCalendarConfig({ readOnly: true });
               appearance={soft}
               style={{ width: "100%" }}
             >
-              <CalendarToolbar>
+              <CalendarToolbar col={2}>
                 <CalendarToolbarPrev unit="year" />
                 <CalendarToolbarYearTrigger />
                 <CalendarToolbarNext unit="year" />
               </CalendarToolbar>
               <CalendarMonthsWheel col={1} showLabel />
               <CalendarDays col={1} />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Drum triggers in toolbar"
+            useWhen="Compact headers where month and year are spun in a wheel popup instead of grids."
+            demonstrates={`\`compact\` on \`CalendarToolbarMonthTrigger\` / \`CalendarToolbarYearTrigger\` — the popup becomes an iOS-style drum picker.`}
+            theme="velvet"
+            appearance="bubble"
+            code={`const config = createCalendarConfig();
+
+<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    {/* compact = drum-style wheel picker in the popup */}
+    <CalendarToolbarMonthTrigger compact />
+    <CalendarToolbarYearTrigger compact />
+    <CalendarToolbarNext />
+  </CalendarToolbar>
+  <CalendarDays />
+</Calendar>`}
+          >
+            <Calendar
+              config={singleCfg}
+              value={drumDate}
+              onChange={(value) => setDrumDate(value as Date | null)}
+              theme={velvet}
+              appearance={bubble}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger compact />
+                <CalendarToolbarYearTrigger compact />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarDays />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Quarter-hour slots"
+            useWhen="Call bookings or service slots that snap to 15-minute steps."
+            demonstrates={`\`CalendarTimeWheel step={{ minute: 15 }}\` — the minutes drum only offers 00 / 15 / 30 / 45; \`defaultTime\` seeds the first pick.`}
+            theme="prism"
+            appearance="soft"
+            code={`const config = createCalendarConfig({
+  withTime: true,
+  defaultTime: { hour: 9 },
+});
+
+<Calendar config={config} value={slot} onChange={(value) => setSlot(value as Date | null)}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarDays />
+  <CalendarTimeWheel step={{ minute: 15 }} labels="short" />
+  <CalendarSelectedDates showTime />
+</Calendar>`}
+          >
+            <Calendar
+              config={slotCfg}
+              value={slotTime}
+              onChange={(value) => setSlotTime(value as Date | null)}
+              theme={prism}
+              appearance={soft}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+              </CalendarToolbar>
+              <CalendarDays />
+              <CalendarTimeWheel step={{ minute: 15 }} labels="short" />
+              <CalendarSelectedDates showTime />
             </Calendar>
           </ExampleCard>
 
@@ -2794,9 +2981,11 @@ function highlightCode(code: string) {
 // Examples in page order with their keyword tags. Drives both the per-card
 // tag chips (`getTags`) and the jump-to tag cloud at the top (`getTagNav`).
 const EXAMPLES: { title: string; tags: string[] }[] = [
-  { title: "The basics", tags: ["single", "starter"] },
-  { title: "One-import prebuilts", tags: ["prebuilt", "one import"] },
+  { title: "SimpleCalendar", tags: ["prebuilt", "one import", "single"] },
+  { title: "DatePicker", tags: ["prebuilt", "manual input", "one import"] },
+  { title: "MonthPicker", tags: ["prebuilt", "months grid", "one import"] },
   { title: "Quarter board", tags: ["prebuilt", "3 months", "range"] },
+  { title: "The basics", tags: ["single", "starter"] },
   { title: "Week picker", tags: ["unit: week", "spans"] },
   { title: "Shift blocks", tags: ["multi-range", "maxRanges"] },
   { title: "Business days", tags: ["exclude", "segments", "range"] },
@@ -2837,6 +3026,11 @@ const EXAMPLES: { title: string; tags: string[] }[] = [
   { title: "Blackout calendar", tags: ["range", "disabled", "operations"] },
   { title: "Launch day", tags: ["read-only", "status"] },
   { title: "Month wheel + day grid", tags: ["single", "wheel", "2 cols"] },
+  {
+    title: "Drum triggers in toolbar",
+    tags: ["toolbar", "wheel", "compact triggers"],
+  },
+  { title: "Quarter-hour slots", tags: ["time", "step", "15 min"] },
   { title: "Lunar phase strip", tags: ["single", "lunar"] },
   {
     title: "Weather forecast",
@@ -2887,8 +3081,12 @@ import {
   CalendarToolbarNext,
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
-    "One-import prebuilts": `import { useState } from "react";
-import { DatePicker, MonthPicker, SimpleCalendar } from "@dateforge/react-calendar/prebuilt";`,
+    "SimpleCalendar": `import { useState } from "react";
+import { SimpleCalendar } from "@dateforge/react-calendar/prebuilt";`,
+    "DatePicker": `import { useState } from "react";
+import { DatePicker } from "@dateforge/react-calendar/prebuilt";`,
+    "MonthPicker": `import { useState } from "react";
+import { MonthPicker } from "@dateforge/react-calendar/prebuilt";`,
     "Quarter board": `import { MultiMonthCalendar } from "@dateforge/react-calendar/prebuilt";`,
     "Week picker": `import { useState } from "react";
 import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
@@ -2945,7 +3143,7 @@ import {
   CalendarToolbarThemeToggle,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Stay booking": `import { useMemo, useState } from "react";
-import { Calendar, commonPresets, createDisabled } from "@dateforge/react-calendar";
+import { Calendar, createCalendarConfig, createDisabled, type PresetInput } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarPresets, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
@@ -2960,10 +3158,11 @@ import { Calendar, createCalendarConfig, createDisabled } from "@dateforge/react
 import { CalendarDaysTrack, CalendarMonthsTrack, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
 import {
   CalendarToolbar,
-  CalendarToolbarPrev,
-  CalendarToolbarMonthTrigger,
-  CalendarToolbarNext,
-  CalendarToolbarYearTrigger,
+  CalendarToolbarClear,
+  CalendarToolbarGroup,
+  CalendarToolbarLabel,
+  CalendarToolbarMonthLabel,
+  CalendarToolbarYearLabel,
 } from "@dateforge/react-calendar/modules/toolbar";
 import { temporal } from "@dateforge/react-calendar/themes";
 import { compact } from "@dateforge/react-calendar/appearances";`,
@@ -3135,6 +3334,27 @@ import {
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Launch day": `import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Drum triggers in toolbar": `import { useState } from "react";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Quarter-hour slots": `import { useState } from "react";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
+import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";
+import { CalendarTimeWheel } from "@dateforge/react-calendar/modules/time";
 import {
   CalendarToolbar,
   CalendarToolbarPrev,
