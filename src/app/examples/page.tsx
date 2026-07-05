@@ -578,6 +578,7 @@ const [month, setMonth] = useState<Date | null>(null);
 
           <ExampleCard
             wide
+            desktopOnly
             title="Quarter board"
             useWhen="Roadmaps, quarters, or long bookings that need several months at once."
             demonstrates={`\`MultiMonthCalendar\` — a 3-month range board generated from one prop set; one shared selection drags across months.`}
@@ -908,6 +909,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
 
           <ExampleCard
             wide
+            desktopOnly
             title="Flight search"
             useWhen="Booking flow needing departure and return without a full second month grid."
             demonstrates={`Split bound tracks (\`bound="from"\` / \`bound="to"\`) for compact range selection across two columns.`}
@@ -971,6 +973,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
           </ExampleCard>
 
           <ExampleCard
+            desktopOnly
             title="Two-month stay search"
             useWhen="Desktop booking with side-by-side months and a single shared range."
             demonstrates={`\`cols={2}\` with two \`CalendarDays\` (offset 0 and 1) and one continuous range value.`}
@@ -1025,6 +1028,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
           </ExampleCard>
 
           <ExampleCard
+            desktopOnly
             title="Six-month availability"
             useWhen="Showing read-only open slots across half a year."
             demonstrates={`Read-only multiple-mode with a 3-column 6-month grid and \`defaultViewDate\`.`}
@@ -2592,6 +2596,7 @@ function ExampleCard({
   featured = false,
   medium = false,
   wide = false,
+  desktopOnly = false,
   children,
 }: {
   title: string;
@@ -2603,6 +2608,12 @@ function ExampleCard({
   featured?: boolean;
   medium?: boolean;
   wide?: boolean;
+  /**
+   * TODO: временно — широкие мульти-месячные доски ломаются на мобиле.
+   * Когда пофиксим адаптив широких примеров, убрать `desktopOnly` с карточек
+   * (Quarter board, Six-month availability, Two-month stay search, Flight search).
+   */
+  desktopOnly?: boolean;
   children: React.ReactNode;
 }) {
   const [copied, setCopied] = useState(false);
@@ -2617,7 +2628,7 @@ function ExampleCard({
   return (
     <section
       id={slugify(title)}
-      className="scroll-mt-24 border-y border-zinc-200/80 bg-white/75 px-0 py-4 shadow-sm backdrop-blur sm:rounded-2xl sm:border sm:p-4"
+      className={`${desktopOnly ? "hidden md:block " : ""}scroll-mt-24 border-y border-zinc-200/80 bg-white/75 px-0 py-4 shadow-sm backdrop-blur sm:rounded-2xl sm:border sm:p-4`}
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start xl:grid-cols-[minmax(0,980px)_420px]">
         <div className="order-2 overflow-x-auto bg-[#fbfbfd] px-2 py-3 sm:rounded-xl sm:p-3 lg:order-1">
