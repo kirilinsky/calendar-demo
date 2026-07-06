@@ -151,6 +151,7 @@ const eventCount = (date: CalendarDate): number => {
 
 export default function ExamplesPage() {
   const [basicDate, setBasicDate] = useState<Date | null>(null);
+  const [pinnedDate, setPinnedDate] = useState<Date | null>(null);
   const [stayRange, setStayRange] = useState<RangeValue>(emptyRange);
   // Seed a range so the from/to bound tracks show different dates right away —
   // with an empty selection both bounds fall back to the shared view date.
@@ -588,7 +589,10 @@ const [date, setDate] = useState<Date | null>(null);
 <DatePicker value={date} onChange={setDate} />
 
 // Rules work the same as everywhere else:
-<DatePicker onChange={setDate} disabled={{ weekends: true }} />`}
+<DatePicker onChange={setDate} disabled={{ weekends: true }} />
+
+// Clear button in the input is on by default — opt out:
+<DatePicker onChange={setDate} allowClear={false} />`}
           >
             <DatePicker value={pickerDate} onChange={setPickerDate} />
           </ExampleCard>
@@ -609,7 +613,6 @@ const [month, setMonth] = useState<Date | null>(null);
 
           <ExampleCard
             wide
-            desktopOnly
             title="Quarter board"
             useWhen="Roadmaps, quarters, or long bookings that need several months at once."
             demonstrates={`\`MultiMonthCalendar\` — a 3-month range board generated from one prop set; one shared selection drags across months.`}
@@ -923,6 +926,52 @@ const [scheme, setScheme] = useState<"light" | "dark">("light");
           </ExampleCard>
 
           <ExampleCard
+            title="Pinned toolbar actions"
+            useWhen="A crowded toolbar that must stay tidy at any width."
+            demonstrates={`The default toolbar is a wrapping flex row — overflow wraps to the next line instead of escaping the container. \`CalendarToolbarGroup push="end"\` pins the actions to the inline end regardless of what shares the row.`}
+            theme="graphite"
+            code={`const config = createCalendarConfig();
+const [date, setDate] = useState<Date | null>(null);
+
+<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)}>
+  <CalendarToolbar>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarYearTrigger />
+    <CalendarToolbarNext />
+    {/* Rides the right edge; wraps as one unit when space runs out */}
+    <CalendarToolbarGroup push="end">
+      <CalendarToolbarHome />
+      <CalendarToolbarClear />
+      <CalendarToolbarThemeToggle />
+    </CalendarToolbarGroup>
+  </CalendarToolbar>
+  <CalendarDays />
+</Calendar>`}
+          >
+            <Calendar
+              config={singleCfg}
+              value={pinnedDate}
+              onChange={(value) => setPinnedDate(value as Date | null)}
+              theme={graphite}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarGroup push="end">
+                  <CalendarToolbarHome />
+                  <CalendarToolbarClear />
+                  <CalendarToolbarThemeToggle />
+                </CalendarToolbarGroup>
+              </CalendarToolbar>
+              <CalendarDays />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
             title="Stay booking"
             useWhen="Lodging or short-stay rentals where guests pick check-in and check-out."
             demonstrates="Range mode with disabled past dates, quick-stay presets, a nights counter via CalendarInfo, and an animated summary."
@@ -999,7 +1048,6 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
 
           <ExampleCard
             wide
-            desktopOnly
             title="Flight search"
             useWhen="Booking flow needing departure and return without a full second month grid."
             demonstrates={`Split bound tracks (\`bound="from"\` / \`bound="to"\`) for compact range selection across two columns.`}
@@ -1025,7 +1073,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
 
 <Calendar config={config} value={flightRange} onChange={(value) => setFlightRange(value as { start: Date; end: Date } | null)} theme={temporal} appearance={compact}>
   {/* Labels follow the range bounds — same dates the tracks below edit */}
-  <CalendarToolbar col={2} cols={2}>
+  <CalendarToolbar col="full" cols={2}>
     <CalendarToolbarGroup col={1}>
       <CalendarToolbarLabel>Departure</CalendarToolbarLabel>
       <CalendarToolbarMonthLabel bound="from" />
@@ -1042,7 +1090,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
   <CalendarDaysTrack bound="from" />
   <CalendarMonthsTrack bound="to" short />
   <CalendarDaysTrack bound="to" />
-  <CalendarSelectedDates col={2} allowClear />
+  <CalendarSelectedDates col="full" allowClear />
 </Calendar>`}
           >
             <Calendar
@@ -1054,7 +1102,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
               style={{ width: "100%" }}
               cols={2}
             >
-              <CalendarToolbar col={2} cols={2}>
+              <CalendarToolbar col="full" cols={2}>
                 <CalendarToolbarGroup col={1}>
                   <CalendarToolbarLabel>Departure</CalendarToolbarLabel>
                   <CalendarToolbarMonthLabel bound="from" />
@@ -1071,12 +1119,11 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
               <CalendarMonthsTrack col={1} bound="to" />
               <CalendarDaysTrack col={1} bound="from" />
               <CalendarDaysTrack col={1} bound="to" />
-              <CalendarSelectedDates col={2} />
+              <CalendarSelectedDates col="full" />
             </Calendar>
           </ExampleCard>
 
           <ExampleCard
-            desktopOnly
             title="Two-month stay search"
             useWhen="Desktop booking with side-by-side months and a single shared range."
             demonstrates={`\`cols={2}\` with two \`CalendarDays\` (offset 0 and 1) and one continuous range value.`}
@@ -1093,7 +1140,7 @@ const noPast = useMemo(() => {
 const config = createCalendarConfig({ mode: "range", disabled: noPast });
 
 <Calendar config={config} value={twoMonthRange} onChange={(value) => setTwoMonthRange(value as { start: Date; end: Date } | null)} cols={2}>
-  <CalendarToolbar col={2}>
+  <CalendarToolbar col="full">
     <CalendarToolbarPrev />
     <CalendarToolbarMonthLabel />
     <CalendarToolbarYearLabel />
@@ -1103,7 +1150,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
   </CalendarToolbar>
   <CalendarDays col={1} />
   <CalendarDays offset={1} col={1} />
-  <CalendarSelectedDates col={2} allowClear allowNavigate />
+  <CalendarSelectedDates col="full" allowClear allowNavigate />
 </Calendar>`}
             wide
           >
@@ -1116,7 +1163,7 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
               cols={2}
               style={{ width: "100%" }}
             >
-              <CalendarToolbar col={2}>
+              <CalendarToolbar col="full">
                 <CalendarToolbarPrev />
                 <CalendarToolbarMonthLabel />
                 <CalendarToolbarYearLabel />
@@ -1126,12 +1173,11 @@ const config = createCalendarConfig({ mode: "range", disabled: noPast });
               </CalendarToolbar>
               <CalendarDays col={1} />
               <CalendarDays offset={1} col={1} />
-              <CalendarSelectedDates col={2} allowClear allowNavigate />
+              <CalendarSelectedDates col="full" allowClear allowNavigate />
             </Calendar>
           </ExampleCard>
 
           <ExampleCard
-            desktopOnly
             title="Six-month availability"
             useWhen="Showing read-only open slots across half a year."
             demonstrates={`Read-only multiple-mode with a 3-column 6-month grid and \`defaultViewDate\`.`}
@@ -2783,7 +2829,6 @@ function ExampleCard({
   featured = false,
   medium = false,
   wide = false,
-  desktopOnly = false,
   children,
 }: {
   title: string;
@@ -2795,12 +2840,6 @@ function ExampleCard({
   featured?: boolean;
   medium?: boolean;
   wide?: boolean;
-  /**
-   * TODO: временно — широкие мульти-месячные доски ломаются на мобиле.
-   * Когда пофиксим адаптив широких примеров, убрать `desktopOnly` с карточек
-   * (Quarter board, Six-month availability, Two-month stay search, Flight search).
-   */
-  desktopOnly?: boolean;
   children: React.ReactNode;
 }) {
   const [copied, setCopied] = useState(false);
@@ -2815,7 +2854,7 @@ function ExampleCard({
   return (
     <section
       id={slugify(title)}
-      className={`${desktopOnly ? "hidden md:block " : ""}scroll-mt-24 border-y border-zinc-200/80 bg-white/75 px-0 py-4 shadow-sm backdrop-blur sm:rounded-2xl sm:border sm:p-4`}
+      className="scroll-mt-24 border-y border-zinc-200/80 bg-white/75 px-0 py-4 shadow-sm backdrop-blur sm:rounded-2xl sm:border sm:p-4"
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start xl:grid-cols-[minmax(0,980px)_420px]">
         <div className="order-2 overflow-x-auto bg-[#fbfbfd] px-2 py-3 sm:rounded-xl sm:p-3 lg:order-1">
@@ -2994,6 +3033,10 @@ const EXAMPLES: { title: string; tags: string[] }[] = [
     tags: ["locale", "labels", "week numbers"],
   },
   { title: "Controlled scheme", tags: ["scheme", "dark mode", "toggle"] },
+  {
+    title: "Pinned toolbar actions",
+    tags: ["toolbar", "push", "smart layout"],
+  },
   { title: "Stay booking", tags: ["range", "booking", "presets"] },
   { title: "Flight search", tags: ["range", "tracks", "mobile"] },
   { title: "Two-month stay search", tags: ["range", "2 months", "desktop"] },
@@ -3141,6 +3184,20 @@ import {
   CalendarToolbarNext,
   CalendarToolbarYearTrigger,
   CalendarToolbarThemeToggle,
+} from "@dateforge/react-calendar/modules/toolbar";`,
+    "Pinned toolbar actions": `import { useState } from "react";
+import { Calendar, createCalendarConfig } from "@dateforge/react-calendar";
+import { CalendarDays } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarClear,
+  CalendarToolbarGroup,
+  CalendarToolbarHome,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarPrev,
+  CalendarToolbarThemeToggle,
+  CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
     "Stay booking": `import { useMemo, useState } from "react";
 import { Calendar, createCalendarConfig, createDisabled, type PresetInput } from "@dateforge/react-calendar";

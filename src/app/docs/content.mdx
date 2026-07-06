@@ -24,6 +24,8 @@ Visible behavior comes from modules placed as children: `CalendarToolbar`, `Cale
 
 The wrapper also provides a small grid contract: `cols` defines equal parent tracks, and child `col={number}` spans that many tracks. For example, inside `cols={4}`, a module with `col={2}` takes half the row. `col` is a span count, not CSS grid-line syntax.
 
+Since 3.1, a numeric `cols={N}` is responsive: it renders **up to** N equal columns and collapses toward one on narrow screens. The collapse threshold is the `--cal-cols-min` CSS variable (default `14em`) — set it to `0px` for fixed, never-collapsing tracks. `col="full"` places a module across the entire row, collapse-safely. String `cols` values stay raw `grid-template-columns` and never collapse.
+
 ![Calendar core architecture](/calendar-core.png)
 
 ## When not to use DateForge
@@ -320,7 +322,7 @@ The default calendar: month/year navigation header + day grid, single-date selec
 
 ### DatePicker
 
-Typed, segment-based manual input above the calendar, plus a Today jump — keyboard-first single-date entry with the grid as fallback.
+Typed, segment-based manual input above the calendar, plus a Today jump — keyboard-first single-date entry with the grid as fallback. `allowClear` (default `true`) controls the clear button inside the manual input — pass `false` to hide it.
 
 <PrebuiltShowcase name="DatePicker" sampleKey="prebuilt-datepicker" />
 
@@ -391,7 +393,7 @@ The root wrapper and context provider. Owns all shared state - mode, value, view
 | `scheme` | `"auto" \| "light" \| "dark"` | `"auto"` | Light/dark choice. `"auto"` follows the OS via `color-scheme` — no SSR flash |
 | `onSchemeChange` | `(scheme: "light" \| "dark") => void` | - | Provide with `scheme` to own the light/dark state (controlled toggle) |
 | `gradient` | `boolean` | `false` | Corner glows + gradient selected fill, pure CSS, theme-driven |
-| `cols` | `number \| string` | 1 column | Root grid columns: a number → equal tracks, a string → raw `grid-template-columns` |
+| `cols` | `number \| string` | 1 column | Root grid columns: a number → up to N equal tracks, collapsing responsively (threshold `--cal-cols-min`, default `14em`; `0px` = fixed); a string → raw `grid-template-columns`, no collapse |
 | `labels` | `Partial<LabelOverrides>` | English | Root-level aria-label registry overrides. See [Accessibility labels](#accessibility-labels) |
 | `className` / `style` / `id` | - | - | Root shell escape hatches; `style` merges over theme/appearance vars (set width here) |
 | `data-testid` | `string` | `"dateforge-calendar"` | Root test handle |
@@ -427,6 +429,8 @@ Everything behavioral lives in the config — compiled once, shared by every mod
 ### CalendarToolbar
 
 Composable navigation bar. Place sub-components as children to compose exactly the toolbar your product needs. Controls the internal `viewDate` - does not commit selection.
+
+The default layout (no `cols`) is a wrapping flex row: overflow wraps to the next line instead of escaping the container, rows distribute `space-between`, and an over-wide label shrinks with an ellipsis. Passing `cols` switches to the explicit grid mode, which never wraps.
 
 ```tsx
 import {
@@ -464,7 +468,7 @@ import {
 | `CalendarToolbarClock` | Live clock display (ticks every second; isolated re-render) |
 | `CalendarToolbarDayLabel` | Read-only current day-of-week label |
 | `CalendarToolbarLabel` | Static text label |
-| `CalendarToolbarGroup` | Flex group wrapper - use `grow` to fill remaining space |
+| `CalendarToolbarGroup` | Flex group wrapper - `grow` fills remaining space; `push="start" \| "end"` pins the group to a toolbar edge in the wrapping flex layout (in `cols` grid mode the auto margin applies within the group's own cell — prefer `col` placement there) |
 
 <PropsTableAccordion title="CalendarToolbar props">
 
@@ -988,7 +992,7 @@ import { nebula } from "@dateforge/react-calendar/themes";
 <Calendar config={config} theme={nebula} scheme="light" />  // always light variant
 ```
 
-Uncontrolled: `CalendarToolbarThemeToggle` flips the scheme internally, seeded from the `scheme` prop. Controlled: pass `scheme` **and** `onSchemeChange` to own the light/dark state — the toggle then reports the next scheme instead of flipping itself.
+Uncontrolled: `CalendarToolbarThemeToggle` flips the scheme internally, seeded from the `scheme` prop. Controlled: pass `scheme` **and** `onSchemeChange` to own the light/dark state — the toggle then reports the next scheme instead of flipping itself. Changing the `scheme` prop on an uncontrolled calendar is ignored (the seed is read once) and logs a dev warning — add `onSchemeChange` if you want to drive it from outside.
 
 ### Built-in theme toggle button
 
