@@ -684,7 +684,8 @@ export function RecipeCalendar({ kind }: { kind: RecipeKind }) {
         </CalendarToolbar>
         {/* days inherit snow light from Calendar */}
         <CalendarDays />
-        <CalendarInfo theme="nebula" showSummary showRelative />
+        {/* custom createTheme object straight on the module (v3.2+) */}
+        <CalendarInfo theme={brandTheme} showSummary showRelative />
       </Calendar>
     );
   }

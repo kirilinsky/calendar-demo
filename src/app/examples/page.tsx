@@ -164,6 +164,7 @@ export default function ExamplesPage() {
   const [singlePresetDate, setSinglePresetDate] = useState<Date | null>(null);
   const [holidayRange, setHolidayRange] = useState<Date[]>([]);
   const [brandDate, setBrandDate] = useState<Date | null>(null);
+  const [moduleThemeDate, setModuleThemeDate] = useState<Date | null>(null);
   const [denseRange, setDenseRange] = useState<RangeValue>(emptyRange);
   const [vacationRange, setVacationRange] = useState<RangeValue>(emptyRange);
   const [sprintRange, setSprintRange] = useState<RangeValue>(emptyRange);
@@ -394,6 +395,28 @@ export default function ExamplesPage() {
           tone: "#2e1065",
           text: "#f5f3ff",
           stroke: "#4c1d95",
+        },
+      }),
+    [],
+  );
+
+  // v3.2: a createTheme object can go straight on a module, not just the root.
+  const railTheme = useMemo(
+    () =>
+      createTheme({
+        accent: "#f97316",
+        range: "#fed7aa",
+        light: {
+          backdrop: "#1c1917",
+          tone: "#292524",
+          text: "#fafaf9",
+          stroke: "#44403c",
+        },
+        dark: {
+          backdrop: "#0c0a09",
+          tone: "#1c1917",
+          text: "#fafaf9",
+          stroke: "#292524",
         },
       }),
     [],
@@ -1718,6 +1741,76 @@ const config = createCalendarConfig();
               </CalendarToolbar>
               <CalendarDays />
               <CalendarSelectedDates allowClear />
+            </Calendar>
+          </ExampleCard>
+
+          <ExampleCard
+            title="Branded preset rail"
+            useWhen="A neutral calendar that still has to carry one branded surface — a dark preset rail, a colored info strip, a toolbar in product colors."
+            demonstrates={`Per-module \`theme\` taking a \`createTheme\` family object (v3.2) instead of only a built-in family name — the module gets inline \`--c-*\` vars while the rest of the calendar keeps the root theme.`}
+            theme="snow + custom module"
+            appearance="soft"
+            medium
+            code={`const [moduleThemeDate, setModuleThemeDate] = useState<Date | null>(null);
+
+// Module theme is ModuleTheme = string | ThemeFamily.
+const railTheme = useMemo(
+  () =>
+    createTheme({
+      accent: "#f97316",
+      range: "#fed7aa",
+      light: { backdrop: "#1c1917", tone: "#292524", text: "#fafaf9", stroke: "#44403c" },
+      dark: { backdrop: "#0c0a09", tone: "#1c1917", text: "#fafaf9", stroke: "#292524" },
+    }),
+  [],
+);
+
+const config = createCalendarConfig();
+const supportPresets: PresetInput[] = [
+  { label: "Today", value: 0 },
+  { label: "Tomorrow", value: 1 },
+  { label: "In 3 days", value: 3 },
+];
+
+// Root stays snow; only the presets rail and info strip take railTheme.
+<Calendar
+  config={config}
+  value={moduleThemeDate}
+  onChange={(value) => setModuleThemeDate(value as Date | null)}
+  theme={snow}
+  scheme="light"
+  cols={2}
+>
+  <CalendarToolbar col={2}>
+    <CalendarToolbarPrev />
+    <CalendarToolbarMonthTrigger />
+    <CalendarToolbarNext />
+    <CalendarToolbarYearTrigger compact />
+  </CalendarToolbar>
+  <CalendarPresets presets={supportPresets} theme={railTheme} />
+  <CalendarDays />
+  <CalendarInfo col={2} theme={railTheme} showSummary showRelative />
+</Calendar>`}
+          >
+            <Calendar
+              config={singleCfg}
+              value={moduleThemeDate}
+              onChange={(value) => setModuleThemeDate(value as Date | null)}
+              theme={snow}
+              scheme="light"
+              appearance={soft}
+              cols={2}
+              style={{ width: "100%" }}
+            >
+              <CalendarToolbar col={2}>
+                <CalendarToolbarPrev />
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarNext />
+                <CalendarToolbarYearTrigger compact />
+              </CalendarToolbar>
+              <CalendarPresets presets={supportPresets} theme={railTheme} />
+              <CalendarDays />
+              <CalendarInfo col={2} theme={railTheme} showSummary showRelative />
             </Calendar>
           </ExampleCard>
 
@@ -3055,6 +3148,10 @@ const EXAMPLES: { title: string; tags: string[] }[] = [
   { title: "Holiday planner", tags: ["multiple", "presets", "holidays"] },
   { title: "Brand theme picker", tags: ["single", "createTheme", "brand"] },
   {
+    title: "Branded preset rail",
+    tags: ["single", "createTheme", "per-module theme"],
+  },
+  {
     title: "Dense product filter",
     tags: ["range", "createAppearance", "dashboard"],
   },
@@ -3315,6 +3412,22 @@ import {
   CalendarToolbarNext,
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";`,
+    "Branded preset rail": `import { useMemo, useState } from "react";
+import {
+  Calendar,
+  createCalendarConfig,
+  createTheme,
+  type PresetInput,
+} from "@dateforge/react-calendar";
+import { CalendarDays, CalendarInfo, CalendarPresets } from "@dateforge/react-calendar/modules";
+import {
+  CalendarToolbar,
+  CalendarToolbarPrev,
+  CalendarToolbarMonthTrigger,
+  CalendarToolbarNext,
+  CalendarToolbarYearTrigger,
+} from "@dateforge/react-calendar/modules/toolbar";
+import { snow } from "@dateforge/react-calendar/themes";`,
     "Dense product filter": `import { useMemo, useState } from "react";
 import { Calendar, createCalendarConfig, createAppearance } from "@dateforge/react-calendar";
 import { CalendarDays, CalendarSelectedDates } from "@dateforge/react-calendar/modules";

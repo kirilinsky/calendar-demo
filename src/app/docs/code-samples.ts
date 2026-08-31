@@ -385,11 +385,19 @@ const brandTheme = createTheme({
   <CalendarDays />
 </Calendar>`,
 
-  "per-module-themes": `import { snow } from "@dateforge/react-calendar/themes";
+  "per-module-themes": `import { createTheme } from "@dateforge/react-calendar";
+import { snow } from "@dateforge/react-calendar/themes";
 
-// Calendar = snow (light). Toolbar overrides to noir dark.
-// CalendarInfo overrides to nebula. Days inherit snow from Calendar.
-// Modules take a STRING theme name (+ optional scheme); objects stay on the root.
+// Module theme is ModuleTheme = string | ThemeFamily — a built-in family NAME
+// (data-theme) or a createTheme object (inline --c-* vars, v3.2+).
+const brandTheme = createTheme({
+  accent: "#1ad980",
+  light: { backdrop: "#ffffff", text: "#18181b", tone: "#f0fdf4", stroke: "#d4d4d8" },
+  dark:  { backdrop: "#0a1a12", text: "#f0fdf4", tone: "#14532d", stroke: "#166534" },
+});
+
+// Calendar = snow (light). Toolbar overrides to noir dark (name).
+// CalendarInfo overrides to brandTheme (object). Days inherit snow from Calendar.
 <Calendar config={config} theme={snow} scheme="light" value={date} onChange={handleChange}>
   <CalendarToolbar theme="noir" scheme="dark">
     <CalendarToolbarPrev />
@@ -398,7 +406,7 @@ const brandTheme = createTheme({
     <CalendarToolbarYearTrigger compact />
   </CalendarToolbar>
   <CalendarDays />
-  <CalendarInfo theme="nebula" showSummary showRelative />
+  <CalendarInfo theme={brandTheme} showSummary showRelative />
 </Calendar>`,
 
   "calendar-lunar": `<Calendar config={config} value={date} onChange={(value) => setDate(value as Date | null)}>
