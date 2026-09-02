@@ -37,6 +37,22 @@ export default async function Home() {
         <span className="pointer-events-none absolute bottom-3 left-4 z-10 select-none font-mono text-[10px] leading-none text-zinc-300/65 sm:bottom-4 sm:left-5">
           @dateforge/react-calendar v{DATEFORGE_VERSION}
         </span>
+
+        {/* pinned footer controls — desktop only */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 hidden justify-center sm:bottom-4 lg:flex">
+          <Reveal
+            delay={0.32}
+            className="pointer-events-auto flex items-center gap-4"
+          >
+            <RandomizeButton />
+            <Link
+              href="/themes"
+              className="text-sm font-medium text-zinc-400 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-700"
+            >
+              Themes &amp; Looks →
+            </Link>
+          </Reveal>
+        </div>
         <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
           <SiteHeader coverage={coverage} />
           <section className="flex flex-1 flex-col py-2 text-center lg:gap-8 lg:py-6">
@@ -56,7 +72,7 @@ export default async function Home() {
                   delay={0.18}
                   y={22}
                   scale
-                  className="w-full max-w-[292px] sm:max-w-[320px] lg:max-w-[330px]"
+                  className="w-full max-w-[327px] sm:max-w-[358px] lg:max-w-[370px]"
                 >
                   <CalendarPreview
                     width="100%"
@@ -64,7 +80,10 @@ export default async function Home() {
                     reserveHeight="min(440px, 58dvh)"
                   />
                 </Reveal>
-                <Reveal delay={0.32} className="flex flex-col items-center gap-2">
+                <Reveal
+                  delay={0.32}
+                  className="flex flex-col items-center gap-2 lg:hidden"
+                >
                   <RandomizeButton />
                   <Link
                     href="/themes"

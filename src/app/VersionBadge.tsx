@@ -5,8 +5,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { appleEaseOut, springSnappy } from "./motion";
 
-const CHANGELOG_URL =
-  "https://github.com/kirilinsky/dateforge-react-calendar/blob/main/CHANGELOG.md";
+const CHANGELOG_URL = "/changelog";
 
 const subscribeNoop = () => () => {};
 
@@ -66,8 +65,6 @@ export function VersionBadge({ version }: { version: string }) {
         v{version} is out
         <a
           href={CHANGELOG_URL}
-          target="_blank"
-          rel="noreferrer"
           className="font-semibold text-emerald-700 underline-offset-2 transition hover:text-emerald-900 hover:underline"
         >
           What&apos;s new →
