@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { InstallSnippet } from "./InstallSnippet";
 import { HeroCode } from "./HeroCode";
 import { SiteHeader } from "./SiteHeader";
@@ -7,6 +6,7 @@ import { CalendarPreview } from "./CalendarPreview";
 import { RandomizeButton } from "./RandomizeButton";
 import { Reveal } from "./Reveal";
 import { VersionBadge } from "./VersionBadge";
+import { COMPOSED_COUNT } from "./examples/examples-data";
 import dateForgePackage from "../../node_modules/@dateforge/react-calendar/package.json";
 
 const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
@@ -100,7 +100,7 @@ export default async function Home() {
                   <HeroCode />
                 </Reveal>
                 <Reveal delay={0.36} className="w-full max-w-md">
-                  <ActionBlock />
+                  <ForkBlock />
                 </Reveal>
               </div>
             </div>
@@ -124,7 +124,7 @@ export default async function Home() {
           </p>
         </Reveal>
         <Reveal inView delay={0.26} className="w-full max-w-md">
-          <ActionBlock />
+          <ForkBlock />
         </Reveal>
       </div>
     </main>
@@ -146,20 +146,37 @@ function CalendarControls() {
   );
 }
 
-/** The three destinations as one card: primary row on top, two cells under it. */
-function ActionBlock() {
+/**
+ * The fork. Two ways in, and the pitch is which one you are: take a prebuilt
+ * and be done, or compose from the modules and use the recipes. Docs and the
+ * sandbox sit under both because they serve either branch.
+ */
+function ForkBlock() {
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/70 shadow-sm">
-      <ActionCell
-        href={STORYBOOK_URL}
-        title="Storybook"
-        text="Interactive playground"
-        external
-        variant="primary"
-      />
+      <div className="grid grid-cols-2 divide-x divide-zinc-200">
+        <ForkCell
+          href="/examples#prebuilt"
+          eyebrow="Need it now"
+          title="Prebuilt"
+          text="One import. Done."
+          variant="primary"
+        />
+        <ForkCell
+          href="/examples#composed"
+          eyebrow="Need more"
+          title="Compose"
+          text={`${COMPOSED_COUNT} finished recipes.`}
+        />
+      </div>
       <div className="grid grid-cols-2 divide-x divide-zinc-200 border-t border-zinc-200">
-        <ActionCell href="/docs" title="Docs" text="Complete API" />
-        <ActionCell href="/examples" title="Examples" text="Polished recipes" />
+        <ForkFootLink href="/docs" label="Docs" text="Complete API" />
+        <ForkFootLink
+          href={STORYBOOK_URL}
+          label="Storybook"
+          text="Open sandbox"
+          external
+        />
       </div>
     </div>
   );
@@ -169,51 +186,74 @@ type CellVariant = "default" | "primary";
 
 const CELL_VARIANTS: Record<
   CellVariant,
-  { cell: string; title: string; sub: string; arrow: string }
+  { cell: string; eyebrow: string; title: string; sub: string }
 > = {
   primary: {
     cell: "bg-emerald-500 hover:bg-emerald-600 focus-visible:ring-white/60",
+    eyebrow: "text-emerald-50/80",
     title: "font-bold text-white",
     sub: "text-emerald-50/90",
-    arrow: "text-white",
   },
   default: {
     cell: "hover:bg-white focus-visible:ring-emerald-500/50",
+    eyebrow: "text-zinc-400",
     title: "font-semibold text-zinc-950",
     sub: "text-zinc-500",
-    arrow: "text-zinc-400 group-hover:text-zinc-950",
   },
 };
 
-function ActionCell({
+function ForkCell({
   href,
+  eyebrow,
   title,
   text,
-  external = false,
   variant = "default",
 }: {
   href: string;
+  eyebrow: string;
   title: string;
   text: string;
-  external?: boolean;
   variant?: CellVariant;
 }) {
   const v = CELL_VARIANTS[variant];
   return (
     <Link
       href={href}
+      className={`group flex h-[4.5rem] flex-col justify-center gap-0.5 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none focus-visible:ring-2 focus-visible:ring-inset lg:h-20 lg:px-5 ${v.cell}`}
+    >
+      <span
+        className={`text-[10px] font-semibold tracking-wide uppercase ${v.eyebrow}`}
+      >
+        {eyebrow}
+      </span>
+      <span className={`truncate text-sm ${v.title}`}>{title}</span>
+      <span className={`truncate text-xs ${v.sub}`}>{text}</span>
+    </Link>
+  );
+}
+
+function ForkFootLink({
+  href,
+  label,
+  text,
+  external = false,
+}: {
+  href: string;
+  label: string;
+  text: string;
+  external?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      className={`group flex h-14 items-center justify-between gap-3 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none focus-visible:ring-2 focus-visible:ring-inset lg:h-16 lg:px-5 ${v.cell}`}
+      className="flex h-11 items-center gap-1.5 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-inset lg:px-5"
     >
-      <span className="min-w-0">
-        <span className={`block truncate text-sm ${v.title}`}>{title}</span>
-        <span className={`block truncate text-xs ${v.sub}`}>{text}</span>
+      <span className="truncate text-xs font-semibold text-zinc-700">
+        {label}
       </span>
-      <ArrowUpRight
-        size={15}
-        className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 ${v.arrow}`}
-      />
+      <span className="truncate text-xs text-zinc-400">{text}</span>
     </Link>
   );
 }

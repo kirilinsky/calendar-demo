@@ -74,6 +74,11 @@ import {
 import { InstallSnippet } from "../InstallSnippet";
 import { ScrollToTop } from "../ScrollToTop";
 import { SiteHeader } from "../SiteHeader";
+import {
+  COMPOSED_COUNT,
+  EXAMPLES,
+  PREBUILT_COUNT,
+} from "./examples-data";
 
 type RangeValue = { start: Date; end: Date } | null;
 
@@ -556,6 +561,8 @@ export default function ExamplesPage() {
               <InstallSnippet />
             </div>
 
+            <ExamplesFork />
+
             <nav
               aria-label="Jump to examples by keyword"
               className="mx-auto mt-8 max-w-4xl"
@@ -580,8 +587,9 @@ export default function ExamplesPage() {
 
         <div className="-mx-5 flex flex-col gap-5 sm:mx-auto sm:max-w-[1720px]">
           <SectionNote
+            id="prebuilt"
             eyebrow="Prebuilt"
-            title="Ready-made sets — one import, no composition."
+            title={`${PREBUILT_COUNT} ready-made sets — one import, no composition.`}
             text="The four below ship assembled. Import one from `@dateforge/react-calendar/prebuilt`, hand it `value`/`onChange` and it works — plain `Date` props, no modules to wire. They take the same shared props as everything else (`locale`, `min`/`max`, `disabled`, `theme`, `appearance`, `scheme`, `gradient`), so you can restyle without dropping down a level. Outgrow one and you compose the same primitives it is built from."
           />
 
@@ -668,8 +676,9 @@ const [month, setMonth] = useState<Date | null>(null);
           </ExampleCard>
 
           <SectionNote
+            id="composed"
             eyebrow="Composition"
-            title="Everything else — assembled from modules."
+            title={`${COMPOSED_COUNT} recipes — assembled from modules.`}
             text="Same core, opened up: a `Calendar` shell around `createCalendarConfig()`, plus only the modules a case needs. This is where modes, tracks, presets, time and custom day rendering live."
           />
 
@@ -2929,20 +2938,87 @@ const config = createCalendarConfig();
 }
 
 /**
+ * The fork, above the cards: take a prebuilt and be done, or come compose. Both
+ * arms scroll to their own group — the page is one list, so without this the
+ * fast path is buried among 42 recipes.
+ */
+function ExamplesFork() {
+  return (
+    <div className="mx-auto mt-8 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
+      <a
+        href="#prebuilt"
+        className="group rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 transition hover:border-emerald-300 hover:bg-emerald-50"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+          Need it now
+        </p>
+        <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-emerald-950">
+          {PREBUILT_COUNT} prebuilt calendars
+        </h2>
+        <p className="mt-1.5 text-sm leading-6 text-emerald-900/70">
+          Grab one, pass <code className="font-mono">value</code>/
+          <code className="font-mono">onChange</code>, ship. One import, nothing
+          to compose.
+        </p>
+        <p className="mt-3 flex flex-wrap gap-1.5">
+          {EXAMPLES.slice(0, PREBUILT_COUNT).map(({ title }) => (
+            <span
+              key={title}
+              className="rounded-full border border-emerald-200 bg-white px-2 py-1 text-[11px] font-medium text-emerald-700"
+            >
+              {title}
+            </span>
+          ))}
+        </p>
+      </a>
+
+      <a
+        href="#composed"
+        className="group rounded-2xl border border-zinc-200 bg-white/70 p-5 transition hover:border-zinc-300 hover:bg-white"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+          Want something bigger
+        </p>
+        <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-zinc-950">
+          {COMPOSED_COUNT} composed recipes
+        </h2>
+        <p className="mt-1.5 text-sm leading-6 text-zinc-600">
+          A <code className="font-mono">Calendar</code> shell plus only the
+          modules the case needs — modes, tracks, presets, time, custom day
+          rendering.
+        </p>
+        <p className="mt-3 flex flex-wrap gap-1.5">
+          {["range", "multiple", "presets", "time", "renderDay"].map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-600"
+            >
+              {tag}
+            </span>
+          ))}
+        </p>
+      </a>
+    </div>
+  );
+}
+
+/**
  * Band between example groups. The prebuilt cards look like every other card,
  * so without this the fastest way in reads as just four more recipes.
  */
 function SectionNote({
+  id,
   eyebrow,
   title,
   text,
 }: {
+  id: string;
   eyebrow: string;
   title: string;
   text: string;
 }) {
   return (
-    <section className="border-y border-zinc-200/80 bg-white/60 px-5 py-5 backdrop-blur sm:rounded-2xl sm:border sm:px-6 sm:py-6">
+    <section id={id} className="scroll-mt-24 border-y border-zinc-200/80 bg-white/60 px-5 py-5 backdrop-blur sm:rounded-2xl sm:border sm:px-6 sm:py-6">
       <div className="mx-auto max-w-3xl text-center">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
           {eyebrow}
@@ -3158,79 +3234,6 @@ function highlightCode(code: string) {
   return parts;
 }
 
-// Examples in page order with their keyword tags. Drives both the per-card
-// tag chips (`getTags`) and the jump-to tag cloud at the top (`getTagNav`).
-const EXAMPLES: { title: string; tags: string[] }[] = [
-  { title: "SimpleCalendar", tags: ["prebuilt", "one import", "single"] },
-  { title: "DatePicker", tags: ["prebuilt", "manual input", "one import"] },
-  { title: "MonthPicker", tags: ["prebuilt", "months grid", "one import"] },
-  { title: "Quarter board", tags: ["prebuilt", "3 months", "range"] },
-  { title: "The basics", tags: ["single", "starter"] },
-  { title: "Week picker", tags: ["unit: week", "spans"] },
-  { title: "Shift blocks", tags: ["multi-range", "maxRanges"] },
-  { title: "Business days", tags: ["exclude", "segments", "range"] },
-  {
-    title: "German locale + labels",
-    tags: ["locale", "labels", "week numbers"],
-  },
-  { title: "Controlled scheme", tags: ["scheme", "dark mode", "toggle"] },
-  {
-    title: "Pinned toolbar actions",
-    tags: ["toolbar", "push", "smart layout"],
-  },
-  { title: "Stay booking", tags: ["range", "booking", "presets"] },
-  { title: "Flight search", tags: ["range", "tracks", "mobile"] },
-  { title: "Two-month stay search", tags: ["range", "2 months", "desktop"] },
-  {
-    title: "Six-month availability",
-    tags: ["read-only", "6 months", "availability"],
-  },
-  { title: "Delivery slots", tags: ["multiple", "capacity"] },
-  {
-    title: "Limited drop window",
-    tags: ["single", "hideOutOfRange", "disabled", "clock"],
-  },
-  { title: "Appointment booking", tags: ["single", "time", "scheduling"] },
-  { title: "Analytics dashboard", tags: ["range", "presets", "reports"] },
-  { title: "Support quick dates", tags: ["single", "presets", "support"] },
-  { title: "Holiday planner", tags: ["multiple", "presets", "holidays"] },
-  { title: "Brand theme picker", tags: ["single", "createTheme", "brand"] },
-  {
-    title: "Branded preset rail",
-    tags: ["single", "createTheme", "per-module theme"],
-  },
-  {
-    title: "Dense product filter",
-    tags: ["range", "createAppearance", "dashboard"],
-  },
-  { title: "Vacation request", tags: ["range", "constraints", "HR"] },
-  { title: "Sprint planning", tags: ["range", "presets", "planning"] },
-  { title: "Invoice due date", tags: ["single", "manual input", "billing"] },
-  { title: "Archive year browser", tags: ["years grid", "archive"] },
-  { title: "Campaign month picker", tags: ["months grid", "campaign"] },
-  { title: "Time slot picker", tags: ["time", "slots"] },
-  { title: "Global meeting time", tags: ["single", "time zone", "hour12"] },
-  { title: "Profile birthday", tags: ["single", "tracks", "birthday"] },
-  { title: "Blackout calendar", tags: ["range", "disabled", "operations"] },
-  { title: "Launch day", tags: ["read-only", "status"] },
-  { title: "Month wheel + day grid", tags: ["single", "wheel", "2 cols"] },
-  {
-    title: "Drum triggers in toolbar",
-    tags: ["toolbar", "wheel", "compact triggers"],
-  },
-  { title: "Quarter-hour slots", tags: ["time", "step", "15 min"] },
-  { title: "Lunar phase strip", tags: ["single", "lunar"] },
-  {
-    title: "Weather forecast",
-    tags: ["renderDay", "custom cell", "custom calendar"],
-  },
-  {
-    title: "Activity heatmap",
-    tags: ["renderDay", "heatmap", "custom calendar"],
-  },
-  { title: "Ticket prices", tags: ["renderDay", "pricing", "custom calendar"] },
-  { title: "Event dots", tags: ["renderDay", "events", "custom calendar"] },
-];
 
 function slugify(title: string) {
   return title
