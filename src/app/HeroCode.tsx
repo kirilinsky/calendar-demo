@@ -5,16 +5,27 @@ const C = "text-sky-600";         // components
 const P = "text-zinc-400";        // punctuation
 
 /** The shortest working DateForge snippet — one prebuilt, no composition. */
-export function HeroCode({ className = "" }: { className?: string }) {
+export function HeroCode({
+  className = "",
+  flat = false,
+}: {
+  className?: string;
+  /** Square, black-ruled shell for the Mondrian hero. */
+  flat?: boolean;
+}) {
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-zinc-200 bg-white/70 shadow-sm backdrop-blur-sm ${className}`}
+      className={`overflow-hidden bg-white ${
+        flat
+          ? "border-2 border-zinc-950"
+          : "rounded-2xl border border-zinc-200 shadow-sm backdrop-blur-sm"
+      } ${className}`}
     >
-      <div className="flex items-center gap-2 border-b border-zinc-200/80 px-3 py-1.5">
+      <div className="flex items-center gap-2 border-b-2 border-zinc-950 px-3 py-1.5">
         <span aria-hidden className="flex gap-1">
-          <span className="h-2 w-2 rounded-full bg-zinc-200" />
-          <span className="h-2 w-2 rounded-full bg-zinc-200" />
-          <span className="h-2 w-2 rounded-full bg-zinc-200" />
+          <span className="h-2 w-2 bg-[#d0021b]" />
+          <span className="h-2 w-2 bg-[#0b3d91]" />
+          <span className="h-2 w-2 bg-[#f6c700]" />
         </span>
         <span className="font-mono text-[10px] leading-none text-zinc-400">
           Booking.tsx

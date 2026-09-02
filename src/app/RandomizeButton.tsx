@@ -23,7 +23,7 @@ export function RandomizeButton({ className = "" }: { className?: string }) {
       onClick={randomize}
       whileTap={reduce ? undefined : { scale: 0.97 }}
       transition={reduce ? { duration: 0 } : springSnappy}
-      className={`inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-b from-zinc-800 to-zinc-950 px-4 text-[13px] font-semibold whitespace-nowrap sm:px-5 sm:text-sm text-white shadow-sm shadow-zinc-950/20 transition-shadow duration-300 outline-none will-change-transform hover:shadow-md hover:shadow-zinc-950/25 focus-visible:ring-2 focus-visible:ring-zinc-950/40 ${className}`}
+      className={`inline-flex h-10 items-center justify-center bg-zinc-950 px-4 text-[13px] font-semibold whitespace-nowrap text-white transition-colors duration-300 outline-none will-change-transform hover:bg-[#d0021b] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white sm:px-5 sm:text-sm ${className}`}
     >
       Surprise Me ✨
     </motion.button>

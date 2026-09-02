@@ -17,7 +17,14 @@ const MANAGERS = [
 
 type ManagerId = (typeof MANAGERS)[number]["id"];
 
-export function InstallSnippet({ className = "" }: { className?: string }) {
+export function InstallSnippet({
+  className = "",
+  flat = false,
+}: {
+  className?: string;
+  /** Square, black-ruled shell for the Mondrian hero. Rounded card elsewhere. */
+  flat?: boolean;
+}) {
   const reduce = useReducedMotion();
   const [manager, setManager] = useState<ManagerId>("npm");
   const [copied, setCopied] = useState(false);
@@ -35,7 +42,11 @@ export function InstallSnippet({ className = "" }: { className?: string }) {
     <motion.div
       whileHover={reduce ? undefined : { y: -2 }}
       transition={reduce ? { duration: 0 } : springSnappy}
-      className={`overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#101012] text-left shadow-sm ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-lg ${className}`}
+      className={`overflow-hidden bg-[#101012] text-left ${
+        flat
+          ? "border-2 border-zinc-950"
+          : "rounded-2xl border border-zinc-800/80 shadow-sm ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-lg"
+      } ${className}`}
     >
       <div className="flex items-center gap-1 border-b border-white/8 px-2 py-1.5">
         {MANAGERS.map((entry) => {
