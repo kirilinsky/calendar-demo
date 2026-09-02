@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { House, Palette, Shapes } from "lucide-react";
 
@@ -34,6 +34,8 @@ import {
   CalendarToolbarYearTrigger,
 } from "@dateforge/react-calendar/modules/toolbar";
 import {
+  APPEARANCE_IDS,
+  getAppearanceById,
   saveDarkMode,
   useSavedAppearance,
   useSavedDarkMode,
@@ -70,6 +72,13 @@ type CalendarPreviewProps = {
    * or a CSS length (e.g. "min(440px, 60dvh)") for viewport-aware reserve.
    */
   reserveHeight?: number | string;
+  /**
+   * Measure every appearance once and reserve the tallest instead of trusting
+   * `reserveHeight`. Appearances differ by ~200px at the same width, so a
+   * randomized one can outgrow a guessed reserve and shove whatever sits below
+   * the calendar. Costs one hidden calendar per appearance, one frame each.
+   */
+  reserveTallestAppearance?: boolean;
 };
 
 export function CalendarPreview({
@@ -87,6 +96,7 @@ export function CalendarPreview({
   useSavedThemeFallback = true,
   width = "100%",
   reserveHeight = 440,
+  reserveTallestAppearance = false,
 }: CalendarPreviewProps) {
   const savedAppearance = useSavedAppearance();
   const savedTheme = useSavedTheme();
@@ -112,6 +122,11 @@ export function CalendarPreview({
 
   const navHeight = navLinks.length > 0 ? 36 : 0;
 
+  const { slotRef, tallest, probe } = useTallestAppearanceHeight(
+    reserveTallestAppearance && hydrated,
+  );
+  const slotMinHeight = tallest || reserveHeight || undefined;
+
   if (!hydrated) {
     return (
       <div style={{ width }}>
@@ -132,9 +147,11 @@ export function CalendarPreview({
 
   return (
     <div>
+      {probe}
       <div
+        ref={slotRef}
         className="flex items-center justify-center"
-        style={{ minHeight: reserveHeight || undefined }}
+        style={{ minHeight: slotMinHeight }}
       >
         <Calendar
           config={previewConfig}
@@ -169,6 +186,94 @@ export function CalendarPreview({
       )}
     </div>
   );
+}
+
+/**
+ * March 2025 spans six week rows in both Monday- and Sunday-start locales, so a
+ * calendar measured on it reserves the tallest month too — navigating from a
+ * five-row month is the same jump as switching appearance.
+ */
+const TALLEST_MONTH = calendarDate(2025, 3, 1);
+
+/**
+ * Renders one hidden calendar per appearance, one frame each, and keeps the
+ * tallest. The calendar sizes itself from its own width (`cqw` units), so a
+ * width change invalidates every measurement and restarts the pass.
+ */
+type MeasurePass = { width: number; step: number; tallest: number };
+
+function useTallestAppearanceHeight(enabled: boolean) {
+  const slotRef = useRef<HTMLDivElement>(null);
+  const probeRef = useRef<HTMLDivElement>(null);
+  const [pass, setPass] = useState<MeasurePass>({
+    width: 0,
+    step: 0,
+    tallest: 0,
+  });
+
+  useLayoutEffect(() => {
+    const slot = slotRef.current;
+    if (!enabled || !slot) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.round(entry.contentRect.width);
+      setPass((current) =>
+        // Sub-pixel and scrollbar-sized churn must not restart the pass.
+        Math.abs(current.width - width) > 8
+          ? { width, step: 0, tallest: 0 }
+          : current,
+      );
+    });
+    observer.observe(slot);
+    return () => observer.disconnect();
+  }, [enabled]);
+
+  const measuring =
+    enabled && pass.width > 0 && pass.step < APPEARANCE_IDS.length;
+
+  useLayoutEffect(() => {
+    if (!measuring) return;
+    const height = probeRef.current?.offsetHeight ?? 0;
+    setPass((current) => ({
+      width: current.width,
+      step: current.step + 1,
+      tallest: Math.max(current.tallest, height),
+    }));
+  }, [measuring, pass.step]);
+
+  const probe = measuring ? (
+    <div
+      ref={probeRef}
+      aria-hidden
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: pass.width,
+        visibility: "hidden",
+        pointerEvents: "none",
+        zIndex: -1,
+      }}
+    >
+      <Calendar
+        config={previewConfig}
+        value={null}
+        initialView={TALLEST_MONTH}
+        style={{ width: "100%" }}
+        appearance={getAppearanceById(APPEARANCE_IDS[pass.step])}
+      >
+        <CalendarToolbar>
+          <CalendarToolbarPrev />
+          <CalendarToolbarMonthTrigger />
+          <CalendarToolbarNext />
+          <CalendarToolbarYearTrigger compact />
+        </CalendarToolbar>
+        <CalendarDays />
+      </Calendar>
+    </div>
+  ) : null;
+
+  return { slotRef, tallest: pass.tallest, probe };
 }
 
 function PageLink({

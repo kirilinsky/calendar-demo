@@ -41,14 +41,14 @@ export default async function Home() {
           @dateforge/react-calendar v{DATEFORGE_VERSION}
         </Link>
 
-        <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-3 sm:px-8 sm:py-4">
           <SiteHeader coverage={coverage} />
-          <section className="flex flex-1 flex-col py-2 text-center lg:gap-8 lg:py-6">
+          <section className="flex flex-1 flex-col py-1 text-center lg:gap-4 lg:py-3">
             <Reveal delay={0.02}>
               <VersionBadge version={DATEFORGE_VERSION} />
             </Reveal>
             <Reveal delay={0.05}>
-              <h1 className="mt-1 mb-1 text-xl font-semibold tracking-tight text-zinc-950 sm:mt-2 sm:mb-2 sm:text-4xl lg:mt-0 lg:text-5xl lg:whitespace-nowrap">
+              <h1 className="mt-1 mb-1 text-xl leading-tight font-semibold tracking-tight text-zinc-950 sm:mt-1.5 sm:mb-1.5 sm:text-3xl lg:mt-0 lg:mb-0 lg:text-[2.6rem] lg:whitespace-nowrap xl:text-5xl">
                 Build exactly the calendar your product needs.
               </h1>
             </Reveal>
@@ -56,12 +56,13 @@ export default async function Home() {
             <div className="flex flex-1 flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-0">
               {/* calendar */}
               <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 lg:order-2 lg:flex-none lg:items-end">
-                <div className="flex w-full max-w-[327px] flex-col gap-3 sm:max-w-[358px] lg:max-w-[370px]">
+                <div className="flex w-full max-w-[327px] flex-col gap-2 sm:max-w-[358px] sm:gap-3 lg:max-w-[370px]">
                   <Reveal delay={0.18} y={22} scale>
                     <CalendarPreview
                       width="100%"
                       navLinks={[]}
                       reserveHeight="min(440px, 58dvh)"
+                      reserveTallestAppearance
                     />
                   </Reveal>
                   <Reveal delay={0.32}>

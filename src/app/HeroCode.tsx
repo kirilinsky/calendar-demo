@@ -4,7 +4,7 @@ const S = "text-emerald-600";     // strings
 const C = "text-sky-600";         // components
 const P = "text-zinc-400";        // punctuation
 
-/** Minimal working DateForge snippet — imports, config, two modules. */
+/** The shortest working DateForge snippet — one prebuilt, no composition. */
 export function HeroCode({ className = "" }: { className?: string }) {
   return (
     <div
@@ -25,38 +25,21 @@ export function HeroCode({ className = "" }: { className?: string }) {
         <code>
           <span className={K}>import</span>
           <span className={P}>{" { "}</span>
-          <span className={N}>Calendar, createCalendarConfig</span>
+          <span className={N}>SimpleCalendar</span>
           <span className={P}>{" } "}</span>
           <span className={K}>from</span>{" "}
-          <span className={S}>&quot;@dateforge/react-calendar&quot;</span>
-          <span className={P}>;</span>
-          {"\n"}
-          <span className={K}>import</span>
-          <span className={P}>{" { "}</span>
-          <span className={N}>CalendarDays</span>
-          <span className={P}>{" } "}</span>
-          <span className={K}>from</span>{" "}
-          <span className={S}>&quot;@dateforge/react-calendar/modules&quot;</span>
+          <span className={S}>&quot;@dateforge/react-calendar/prebuilt&quot;</span>
           <span className={P}>;</span>
           {"\n\n"}
           <span className={P}>&lt;</span>
-          <span className={C}>Calendar</span>{" "}
-          <span className={N}>config</span>
+          <span className={C}>SimpleCalendar</span>{" "}
+          <span className={N}>theme</span>
+          <span className={P}>=</span>
+          <span className={S}>&quot;aurora&quot;</span>{" "}
+          <span className={N}>onChange</span>
           <span className={P}>={"{"}</span>
-          <span className={N}>createCalendarConfig</span>
-          <span className={P}>({"{"} </span>
-          <span className={N}>mode</span>
-          <span className={P}>: </span>
-          <span className={S}>&quot;range&quot;</span>
-          <span className={P}> {"}"}){"}"}&gt;</span>
-          {"\n  "}
-          <span className={P}>&lt;</span>
-          <span className={C}>CalendarDays</span>
-          <span className={P}> /&gt;</span>
-          {"\n"}
-          <span className={P}>&lt;/</span>
-          <span className={C}>Calendar</span>
-          <span className={P}>&gt;</span>
+          <span className={N}>setDate</span>
+          <span className={P}>{"}"} /&gt;</span>
         </code>
       </pre>
     </div>
