@@ -67,7 +67,7 @@ export function VersionBadge({ version }: { version: string }) {
           href={CHANGELOG_URL}
           className="font-semibold text-emerald-700 underline-offset-2 transition hover:text-emerald-900 hover:underline"
         >
-          What&apos;s new →
+          What&apos;s new
         </a>
         <motion.button
           type="button"

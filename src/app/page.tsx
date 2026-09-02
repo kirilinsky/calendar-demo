@@ -59,6 +59,7 @@ export default async function Home() {
                 <div className="flex w-full max-w-[327px] flex-col gap-2 sm:max-w-[358px] sm:gap-3 lg:max-w-[370px]">
                   <Reveal delay={0.18} y={22} scale>
                     <CalendarPreview
+                      simple
                       width="100%"
                       navLinks={[]}
                       reserveHeight="min(440px, 58dvh)"
@@ -139,7 +140,7 @@ function CalendarControls() {
         href="/themes"
         className="flex flex-1 items-center justify-center rounded-full px-3 text-center text-[13px] font-medium whitespace-nowrap text-zinc-500 sm:text-sm transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-100 hover:text-zinc-900"
       >
-        Themes &amp; Looks →
+        Themes &amp; Looks
       </Link>
     </div>
   );

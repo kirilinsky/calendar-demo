@@ -26,6 +26,7 @@ import {
   type ThemeFamily,
 } from "@dateforge/react-calendar";
 import { CalendarDays } from "@dateforge/react-calendar/modules";
+import { SimpleCalendar } from "@dateforge/react-calendar/prebuilt";
 import {
   CalendarToolbar,
   CalendarToolbarMonthTrigger,
@@ -66,6 +67,13 @@ type CalendarPreviewProps = {
   useSavedThemeFallback?: boolean;
   width?: string | number;
   /**
+   * Render the `SimpleCalendar` prebuilt instead of the composed shell — the
+   * same calendar the hero snippet shows, so the preview is literally the code
+   * next to it. Drops `initialView` and `onSchemeChange`: the prebuilt takes
+   * neither.
+   */
+  simple?: boolean;
+  /**
    * Vertical space reserved for the calendar. Appearances differ in height —
    * reserving the tallest one keeps content below from jumping or being
    * overlapped when the appearance changes. Pass 0 to size to content,
@@ -95,6 +103,7 @@ export function CalendarPreview({
   useSavedGradientFallback = true,
   useSavedThemeFallback = true,
   width = "100%",
+  simple = false,
   reserveHeight = 440,
   reserveTallestAppearance = false,
 }: CalendarPreviewProps) {
@@ -153,28 +162,43 @@ export function CalendarPreview({
         className="flex items-center justify-center"
         style={{ minHeight: slotMinHeight }}
       >
-        <Calendar
-          config={previewConfig}
-          value={date}
-          onChange={(value) => setDate(value as Date | null)}
-          initialView={initialView ? toCalendarDate(initialView) : undefined}
-          style={{ width }}
-          theme={calendarTheme}
-          appearance={calendarAppearance}
-          scheme={calendarScheme}
-          onSchemeChange={(next) => saveDarkMode(next === "dark")}
-          gradient={
-            useSavedGradientFallback ? (gradient ?? savedGradient) : gradient
-          }
-        >
-          <CalendarToolbar>
-            <CalendarToolbarPrev />
-            <CalendarToolbarMonthTrigger />
-            <CalendarToolbarNext />
-            <CalendarToolbarYearTrigger compact />
-          </CalendarToolbar>
-          <CalendarDays />
-        </Calendar>
+        {simple ? (
+          <div style={{ width }}>
+            <SimpleCalendar
+              value={date}
+              onChange={setDate}
+              theme={calendarTheme}
+              appearance={calendarAppearance}
+              scheme={calendarScheme}
+              gradient={
+                useSavedGradientFallback ? (gradient ?? savedGradient) : gradient
+              }
+            />
+          </div>
+        ) : (
+          <Calendar
+            config={previewConfig}
+            value={date}
+            onChange={(value) => setDate(value as Date | null)}
+            initialView={initialView ? toCalendarDate(initialView) : undefined}
+            style={{ width }}
+            theme={calendarTheme}
+            appearance={calendarAppearance}
+            scheme={calendarScheme}
+            onSchemeChange={(next) => saveDarkMode(next === "dark")}
+            gradient={
+              useSavedGradientFallback ? (gradient ?? savedGradient) : gradient
+            }
+          >
+            <CalendarToolbar>
+              <CalendarToolbarPrev />
+              <CalendarToolbarMonthTrigger />
+              <CalendarToolbarNext />
+              <CalendarToolbarYearTrigger compact />
+            </CalendarToolbar>
+            <CalendarDays />
+          </Calendar>
+        )}
       </div>
       {(navLinks.length > 0 || navTrailing) && (
         <div className="mt-2.5 flex items-center justify-center gap-2">

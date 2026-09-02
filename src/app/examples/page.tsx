@@ -579,7 +579,14 @@ export default function ExamplesPage() {
         </div>
 
         <div className="-mx-5 flex flex-col gap-5 sm:mx-auto sm:max-w-[1720px]">
+          <SectionNote
+            eyebrow="Prebuilt"
+            title="Ready-made sets — one import, no composition."
+            text="The four below ship assembled. Import one from `@dateforge/react-calendar/prebuilt`, hand it `value`/`onChange` and it works — plain `Date` props, no modules to wire. They take the same shared props as everything else (`locale`, `min`/`max`, `disabled`, `theme`, `appearance`, `scheme`, `gradient`), so you can restyle without dropping down a level. Outgrow one and you compose the same primitives it is built from."
+          />
+
           <ExampleCard
+            eyebrow="Prebuilt"
             title="SimpleCalendar"
             useWhen="You need a working date picker in one line, today."
             demonstrates={`The flagship prebuilt: navigation header + day grid, plain-Date props. Same shared props everywhere — \`locale\`, \`min\`/\`max\`, \`disabled\`, \`theme\`, \`appearance\`, \`scheme\`, \`gradient\`.`}
@@ -602,6 +609,7 @@ const [date, setDate] = useState<Date | null>(null);
           </ExampleCard>
 
           <ExampleCard
+            eyebrow="Prebuilt"
             title="DatePicker"
             useWhen="Forms where users type the date as often as they click it."
             demonstrates={`Prebuilt with a typed, segment-based input above the grid plus a Today jump — keyboard-first entry, grid as fallback.`}
@@ -621,6 +629,7 @@ const [date, setDate] = useState<Date | null>(null);
           </ExampleCard>
 
           <ExampleCard
+            eyebrow="Prebuilt"
             title="MonthPicker"
             useWhen="Billing periods, campaign months, or season selectors."
             demonstrates={`Prebuilt month selector: year-stepping header + 12-month grid (\`unit: "month"\` under the hood). Picking a month selects the whole month, reported as its first day.`}
@@ -636,6 +645,7 @@ const [month, setMonth] = useState<Date | null>(null);
 
           <ExampleCard
             wide
+            eyebrow="Prebuilt"
             title="Quarter board"
             useWhen="Roadmaps, quarters, or long bookings that need several months at once."
             demonstrates={`\`MultiMonthCalendar\` — a 3-month range board generated from one prop set; one shared selection drags across months.`}
@@ -656,6 +666,12 @@ const [month, setMonth] = useState<Date | null>(null);
               startMonth={new Date(2026, 6, 1)}
             />
           </ExampleCard>
+
+          <SectionNote
+            eyebrow="Composition"
+            title="Everything else — assembled from modules."
+            text="Same core, opened up: a `Calendar` shell around `createCalendarConfig()`, plus only the modules a case needs. This is where modes, tracks, presets, time and custom day rendering live."
+          />
 
           <ExampleCard
             title="The basics"
@@ -2912,8 +2928,39 @@ const config = createCalendarConfig();
   );
 }
 
+/**
+ * Band between example groups. The prebuilt cards look like every other card,
+ * so without this the fastest way in reads as just four more recipes.
+ */
+function SectionNote({
+  eyebrow,
+  title,
+  text,
+}: {
+  eyebrow: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <section className="border-y border-zinc-200/80 bg-white/60 px-5 py-5 backdrop-blur sm:rounded-2xl sm:border sm:px-6 sm:py-6">
+      <div className="mx-auto max-w-3xl text-center">
+        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+          {eyebrow}
+        </p>
+        <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950 sm:text-2xl">
+          {title}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-zinc-600">
+          {renderInlineCode(text)}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function ExampleCard({
   title,
+  eyebrow = "Composition",
   useWhen,
   demonstrates,
   code,
@@ -2925,6 +2972,7 @@ function ExampleCard({
   children,
 }: {
   title: string;
+  eyebrow?: string;
   useWhen: string;
   demonstrates: string;
   code: string;
@@ -2967,7 +3015,7 @@ function ExampleCard({
         <div className="order-1 flex min-h-full flex-col px-4 sm:px-0 lg:order-2">
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-              Composition
+              {eyebrow}
             </div>
             <h2 className="text-2xl font-semibold tracking-tight text-zinc-950">
               {title}

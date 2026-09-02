@@ -230,7 +230,7 @@ export default async function ChangelogPage() {
                 href="/docs"
                 className="font-medium text-zinc-500 transition hover:text-zinc-900"
               >
-                Docs →
+                Docs
               </Link>
             </div>
           </header>
