@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { InstallSnippet } from "./InstallSnippet";
+import { HeroCode } from "./HeroCode";
 import { SiteHeader } from "./SiteHeader";
 import { CalendarPreview } from "./CalendarPreview";
 import { RandomizeButton } from "./RandomizeButton";
@@ -95,29 +96,43 @@ export default async function Home() {
               </div>
 
               {/* content — desktop only in screen 1 */}
-              <div className="order-2 hidden lg:order-1 lg:flex lg:flex-col lg:items-center lg:mt-0 lg:pr-12 lg:gap-4">
-                <Reveal delay={0.12}>
-                  <span className="text-[11px] font-medium tracking-tight text-zinc-500 lg:text-sm">
-                    Monolithic pickers ship everything. DateForge ships only what
-                    you use.
+              <div className="order-2 hidden lg:order-1 lg:mt-0 lg:flex lg:flex-col lg:items-start lg:gap-3 lg:pr-12 lg:text-left">
+                <Reveal delay={0.12} className="[@media(max-height:700px)]:hidden">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-[11px] font-medium leading-none text-zinc-500 shadow-sm">
+                    <span
+                      aria-hidden
+                      className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                    />
+                    Composable modules · zero config to start
                   </span>
                 </Reveal>
-                <Reveal delay={0.2} className="hidden w-full max-w-md lg:block">
-                  <InstallSnippet />
-                </Reveal>
-                <Reveal delay={0.28}>
-                  <p className="hidden max-w-xl text-sm leading-6 text-zinc-600 lg:block lg:text-base">
-                    Start minimal. Scale infinitely. Add only the modules you
-                    need.
+                <Reveal delay={0.18} className="w-full max-w-md">
+                  <p className="text-sm leading-6 text-zinc-600 lg:text-[15px]">
+                    Monolithic pickers ship everything. DateForge ships only what
+                    you use — start minimal, scale infinitely.
                   </p>
                 </Reveal>
-                <Reveal delay={0.36} className="flex w-full flex-row gap-1.5 lg:max-w-sm lg:flex-col lg:gap-2">
+                <Reveal delay={0.24} className="w-full max-w-md">
+                  <InstallSnippet />
+                </Reveal>
+                {/* short viewports keep the terminal, drop the editor card */}
+                <Reveal
+                  delay={0.3}
+                  className="w-full max-w-md [@media(max-height:820px)]:hidden"
+                >
+                  <HeroCode />
+                </Reveal>
+                <Reveal
+                  delay={0.36}
+                  className="grid w-full max-w-md grid-cols-2 gap-2"
+                >
                   <BranchLink
                     href={STORYBOOK_URL}
                     title="Storybook"
                     text="Interactive playground"
                     external
                     variant="primary"
+                    className="col-span-2"
                   />
                   <BranchLink href="/docs" title="Docs" text="Complete API" />
                   <BranchLink
@@ -126,6 +141,14 @@ export default async function Home() {
                     text="Polished recipes"
                     variant="secondary"
                   />
+                </Reveal>
+                <Reveal delay={0.42}>
+                  <Link
+                    href="/changelog"
+                    className="text-xs font-medium text-zinc-400 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-700"
+                  >
+                    v{DATEFORGE_VERSION} changelog →
+                  </Link>
                 </Reveal>
               </div>
             </div>
@@ -204,19 +227,21 @@ function BranchLink({
   text,
   external = false,
   variant = "default",
+  className = "",
 }: {
   href: string;
   title: string;
   text: string;
   external?: boolean;
   variant?: BranchVariant;
+  className?: string;
 }) {
   const v = BRANCH_VARIANTS[variant];
   return (
     <Button
       asChild
       variant="outline"
-      className={`group h-10 flex-1 justify-center gap-4 rounded-full px-4 text-left shadow-sm transition-[transform,box-shadow,background-color,border-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] active:duration-100 lg:h-16 lg:justify-between lg:px-6 lg:py-3 ${v.link}`}
+      className={`group h-10 flex-1 justify-center gap-4 rounded-full px-4 text-left shadow-sm transition-[transform,box-shadow,background-color,border-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] active:duration-100 lg:h-16 lg:justify-between lg:px-6 lg:py-3 ${v.link} ${className}`}
     >
       <Link
         href={href}
