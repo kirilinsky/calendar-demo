@@ -54,7 +54,8 @@ export default async function Home() {
               <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 lg:order-2 lg:flex-none lg:items-end">
                 <Reveal
                   delay={0.18}
-                  y={18}
+                  y={22}
+                  scale
                   className="w-full max-w-[292px] sm:max-w-[320px] lg:max-w-[330px]"
                 >
                   <CalendarPreview
@@ -67,7 +68,7 @@ export default async function Home() {
                   <RandomizeButton />
                   <Link
                     href="/themes"
-                    className="text-sm font-medium text-zinc-400 transition hover:text-zinc-700"
+                    className="text-sm font-medium text-zinc-400 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-700"
                   >
                     Themes &amp; Looks →
                   </Link>
@@ -115,20 +116,20 @@ export default async function Home() {
 
       {/* screen 2 — mobile only */}
       <div className="flex h-[100dvh] w-full snap-start flex-col items-center justify-center gap-6 px-5 text-center lg:hidden">
-        <Reveal delay={0.05}>
+        <Reveal inView delay={0.02}>
           <span className="text-sm font-medium tracking-tight text-zinc-500">
             Monolithic pickers ship everything. DateForge ships only what you use.
           </span>
         </Reveal>
-        <Reveal delay={0.15} className="w-full max-w-md">
+        <Reveal inView delay={0.1} className="w-full max-w-md">
           <InstallSnippet />
         </Reveal>
-        <Reveal delay={0.25}>
+        <Reveal inView delay={0.18}>
           <p className="max-w-xs text-sm leading-6 text-zinc-600">
             Start minimal. Scale infinitely. Add only the modules you need.
           </p>
         </Reveal>
-        <Reveal delay={0.35} className="flex w-full flex-col gap-2">
+        <Reveal inView delay={0.26} className="flex w-full flex-col gap-2">
           <BranchLink
             href={STORYBOOK_URL}
             title="Storybook"
@@ -196,7 +197,7 @@ function BranchLink({
     <Button
       asChild
       variant="outline"
-      className={`group h-10 flex-1 justify-center gap-4 rounded-full px-4 text-left shadow-sm transition-transform duration-150 active:scale-[0.98] lg:h-16 lg:justify-between lg:px-6 lg:py-3 ${v.link}`}
+      className={`group h-10 flex-1 justify-center gap-4 rounded-full px-4 text-left shadow-sm transition-[transform,box-shadow,background-color,border-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] active:duration-100 lg:h-16 lg:justify-between lg:px-6 lg:py-3 ${v.link}`}
     >
       <Link
         href={href}
@@ -209,7 +210,7 @@ function BranchLink({
         </span>
         <ArrowUpRight
           size={v.size}
-          className={`shrink-0 transition group-hover:translate-x-0.5 ${v.arrow}`}
+          className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1 ${v.arrow}`}
         />
       </Link>
     </Button>

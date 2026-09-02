@@ -125,5 +125,24 @@
   }
   html {
     @apply font-sans;
+    /* Apple-style easing as the default for every CSS transition on the site. */
+    --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Anything using Tailwind's `transition` utilities gets the Apple curve. */
+  [class*="transition"] {
+    transition-timing-function: var(--ease-apple);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

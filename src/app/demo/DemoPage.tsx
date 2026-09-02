@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import {
   Calendar,
   createAppearance,
@@ -61,6 +61,19 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  appleEaseOut,
+  easeFast,
+  riseItem,
+  springPill,
+  springSnappy,
+  springSoft,
+  staggerList,
+  swapPanel,
+  tap,
+  tapSmall,
+} from "../motion";
 
 type DemoMode = "single" | "range" | "multiple" | "multi-range";
 type DemoUnit = "day" | "week" | "month";
@@ -406,6 +419,7 @@ const initialState: DemoState = {
 };
 
 export function DemoPage() {
+  const reduce = useReducedMotion();
   const [state, setState] = useState<DemoState>(initialState);
   const [sheetOpen, setSheetOpen] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -597,16 +611,26 @@ export function DemoPage() {
           </div>
 
           <div className="px-3 pb-40 pt-4 lg:px-8 lg:pb-10">
-            {state.tab === "recipes" && <RecipeGallery activeId={state.recipeId} onApply={applyRecipe} />}
-            {state.tab === "builder" && (
-              <div className="space-y-4">
-                <SectionTitle icon={<Layers3 size={18} />} title="Module Builder" kicker={activeRecipe.title} />
-                <ModulePalette state={state} onToggle={toggleModule} onMove={moveModule} compact={false} />
-                <SafetyHints hints={safetyHints} />
-              </div>
-            )}
-            {state.tab === "gallery" && <Gallery state={state} patch={patch} />}
-            {state.tab === "code" && <CodePanel code={code} copied={copied} onCopy={copyCode} />}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={state.tab}
+                variants={reduce ? undefined : swapPanel}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+              >
+                {state.tab === "recipes" && <RecipeGallery activeId={state.recipeId} onApply={applyRecipe} />}
+                {state.tab === "builder" && (
+                  <div className="space-y-4">
+                    <SectionTitle icon={<Layers3 size={18} />} title="Module Builder" kicker={activeRecipe.title} />
+                    <ModulePalette state={state} onToggle={toggleModule} onMove={moveModule} compact={false} />
+                    <SafetyHints hints={safetyHints} />
+                  </div>
+                )}
+                {state.tab === "gallery" && <Gallery state={state} patch={patch} />}
+                {state.tab === "code" && <CodePanel code={code} copied={copied} onCopy={copyCode} />}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </section>
 
@@ -628,28 +652,46 @@ export function DemoPage() {
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white shadow-[0_-20px_60px_rgba(0,0,0,0.12)] lg:hidden">
-        <button
+        <motion.button
           type="button"
           className="flex h-10 w-full items-center justify-center gap-2 text-sm font-medium"
           onClick={() => setSheetOpen((open) => !open)}
+          whileTap={reduce ? undefined : tap}
         >
-          {sheetOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+          <motion.span
+            className="grid place-items-center"
+            animate={{ rotate: sheetOpen ? 0 : 180 }}
+            transition={reduce ? { duration: 0 } : springPill}
+          >
+            <ChevronDown size={16} />
+          </motion.span>
           Builder controls
-        </button>
+        </motion.button>
         <PanelTabs active={state.panelTab} onChange={(panelTab) => patch({ panelTab })} />
-        {sheetOpen && (
-          <div className="max-h-[52vh] overflow-y-auto px-3 pb-4 pt-3">
-            <PanelContent
-              state={state}
-              patch={patch}
-              setMode={setMode}
-              setUnit={setUnit}
-              toggleModule={toggleModule}
-              moveModule={moveModule}
-              hints={safetyHints}
-            />
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {sheetOpen && (
+            <motion.div
+              key="sheet"
+              initial={reduce ? false : { height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={reduce ? { duration: 0 } : springSoft}
+              className="overflow-hidden"
+            >
+              <div className="max-h-[52vh] overflow-y-auto px-3 pb-4 pt-3">
+                <PanelContent
+                  state={state}
+                  patch={patch}
+                  setMode={setMode}
+                  setUnit={setUnit}
+                  toggleModule={toggleModule}
+                  moveModule={moveModule}
+                  hints={safetyHints}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </main>
   );
@@ -709,15 +751,32 @@ function LivePreview({
   presets: (Preset | PresetInput)[];
   onChange: (value: DemoValue, details: CalendarChangeDetails) => void;
 }) {
+  const reduce = useReducedMotion();
+
   return (
     <div className="mx-auto max-w-[520px] lg:max-w-[620px]">
       <div className="mb-2 flex items-center justify-between gap-3">
         <SectionTitle icon={<Eye size={18} />} title="Live Preview" kicker="touch the calendar" />
-        <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-600">
-          {state.mode}
+        <span className="relative grid h-7 place-items-center overflow-hidden rounded-full border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={state.mode}
+              initial={reduce ? false : { opacity: 0, y: 10, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+              transition={reduce ? { duration: 0 } : easeFast}
+            >
+              {state.mode}
+            </motion.span>
+          </AnimatePresence>
         </span>
       </div>
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white p-2 shadow-sm sm:p-4">
+      <motion.div
+        layout={reduce ? false : "position"}
+        initial={reduce ? false : { opacity: 0, y: 18, scale: 0.985, filter: "blur(8px)" }}
+        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+        transition={reduce ? { duration: 0 } : { duration: 0.6, ease: appleEaseOut }}
+        className="overflow-hidden rounded-lg border border-zinc-200 bg-white p-2 shadow-sm sm:p-4">
         <Calendar
           config={config}
           value={state.value}
@@ -732,7 +791,7 @@ function LivePreview({
             .filter((module) => module.enabled)
             .map((module) => renderCalendarModule(module, presets))}
         </Calendar>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -786,71 +845,126 @@ function StatusBar({ state }: { state: DemoState }) {
 }
 
 function StatusItem({ label, value }: { label: string; value: string }) {
+  const reduce = useReducedMotion();
+
   return (
     <div className="min-w-0 rounded-md border border-zinc-200 bg-white px-2 py-1.5">
       <div className="text-[10px] uppercase tracking-wide text-zinc-400">{label}</div>
-      <div className="truncate font-medium text-zinc-700">{value}</div>
+      <div className="relative h-5 overflow-hidden">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={value}
+            initial={reduce ? false : { opacity: 0, y: 12, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
+            transition={reduce ? { duration: 0 } : easeFast}
+            className="truncate font-medium text-zinc-700"
+          >
+            {value}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
 
 function RecipeRail({ activeId, onApply }: { activeId: string; onApply: (recipe: Recipe) => void }) {
+  const reduce = useReducedMotion();
+
   return (
     <div className="-mx-3 mt-3 flex gap-2 overflow-x-auto px-3 pb-1 lg:hidden">
       {recipes.map((recipe) => (
-        <button
+        <motion.button
           type="button"
           key={recipe.id}
           onClick={() => onApply(recipe)}
-          className={`h-10 shrink-0 rounded-md border px-3 text-sm font-medium ${
+          whileTap={reduce ? undefined : tap}
+          transition={reduce ? { duration: 0 } : springSnappy}
+          className={`relative h-10 shrink-0 rounded-md border px-3 text-sm font-medium transition-colors duration-300 ${
             activeId === recipe.id
-              ? "border-zinc-950 bg-zinc-950 text-white"
+              ? "border-zinc-950 text-white"
               : "border-zinc-200 bg-white text-zinc-700"
           }`}
         >
-          {recipe.short}
-        </button>
+          {activeId === recipe.id && (
+            <motion.span
+              layoutId={reduce ? undefined : "recipe-rail-active"}
+              className="absolute inset-0 rounded-md bg-zinc-950"
+              transition={springPill}
+            />
+          )}
+          <span className="relative">{recipe.short}</span>
+        </motion.button>
       ))}
     </div>
   );
 }
 
 function RecipeList({ activeId, onApply }: { activeId: string; onApply: (recipe: Recipe) => void }) {
+  const reduce = useReducedMotion();
+
   return (
-    <div className="space-y-2">
+    <motion.div
+      className="space-y-2"
+      variants={reduce ? undefined : staggerList}
+      initial="hidden"
+      animate="show"
+    >
       <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Recipes</div>
       {recipes.map((recipe) => (
-        <button
+        <motion.button
           key={recipe.id}
           type="button"
           onClick={() => onApply(recipe)}
-          className={`w-full rounded-lg border p-3 text-left transition ${
+          variants={reduce ? undefined : riseItem}
+          whileHover={reduce ? undefined : { y: -2 }}
+          whileTap={reduce ? undefined : tap}
+          transition={reduce ? { duration: 0 } : springSnappy}
+          className={`relative w-full rounded-lg border p-3 text-left transition-colors duration-300 ${
             activeId === recipe.id
-              ? "border-zinc-950 bg-zinc-950 text-white"
+              ? "border-zinc-950 text-white"
               : "border-zinc-200 bg-white hover:border-zinc-300"
           }`}
         >
-          <div className="font-medium">{recipe.title}</div>
-          <div className={`mt-1 text-xs leading-4 ${activeId === recipe.id ? "text-zinc-300" : "text-zinc-500"}`}>
+          {activeId === recipe.id && (
+            <motion.span
+              layoutId={reduce ? undefined : "recipe-list-active"}
+              className="absolute inset-0 rounded-lg bg-zinc-950"
+              transition={springPill}
+            />
+          )}
+          <div className="relative font-medium">{recipe.title}</div>
+          <div className={`relative mt-1 text-xs leading-4 ${activeId === recipe.id ? "text-zinc-300" : "text-zinc-500"}`}>
             {recipe.useCase}
           </div>
-        </button>
+        </motion.button>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
 function RecipeGallery({ activeId, onApply }: { activeId: string; onApply: (recipe: Recipe) => void }) {
+  const reduce = useReducedMotion();
+
   return (
     <div className="space-y-4">
       <SectionTitle icon={<Sparkles size={18} />} title="Recipe Gallery" kicker="ready compositions" />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <motion.div
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+        variants={reduce ? undefined : staggerList}
+        initial="hidden"
+        animate="show"
+      >
         {recipes.map((recipe) => (
-          <button
+          <motion.button
             type="button"
             key={recipe.id}
             onClick={() => onApply(recipe)}
-            className={`rounded-lg border bg-white p-4 text-left shadow-sm transition ${
+            variants={reduce ? undefined : riseItem}
+            whileHover={reduce ? undefined : { y: -4, scale: 1.01 }}
+            whileTap={reduce ? undefined : tap}
+            transition={reduce ? { duration: 0 } : springSnappy}
+            className={`rounded-lg border bg-white p-4 text-left shadow-sm transition-[border-color,box-shadow] duration-300 ${
               activeId === recipe.id ? "border-zinc-950 ring-2 ring-zinc-950/10" : "border-zinc-200"
             }`}
           >
@@ -866,9 +980,9 @@ function RecipeGallery({ activeId, onApply }: { activeId: string; onApply: (reci
                 </span>
               ))}
             </div>
-          </button>
+          </motion.button>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -884,10 +998,21 @@ function ModulePalette({
   onMove: (id: string, direction: -1 | 1) => void;
   compact: boolean;
 }) {
+  const reduce = useReducedMotion();
+
   return (
-    <div className="space-y-3">
+    <motion.div
+      className="space-y-3"
+      variants={reduce ? undefined : staggerList}
+      initial="hidden"
+      animate="show"
+    >
       {moduleGroups.map((group) => (
-        <div key={group.title} className="rounded-lg border border-zinc-200 bg-white p-3">
+        <motion.div
+          key={group.title}
+          variants={reduce ? undefined : riseItem}
+          className="rounded-lg border border-zinc-200 bg-white p-3"
+        >
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">{group.title}</div>
           <div className="space-y-2">
             {group.kinds.map((kind) => {
@@ -895,42 +1020,54 @@ function ModulePalette({
               const enabled = demoModule?.enabled ?? false;
               return (
                 <div key={kind} className="flex items-center gap-2">
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => onToggle(kind)}
-                    className={`h-9 flex-1 rounded-md border px-2 text-left text-sm font-medium ${
-                      enabled ? "border-zinc-950 bg-zinc-950 text-white" : "border-zinc-200 bg-zinc-50"
+                    whileTap={reduce ? undefined : tap}
+                    transition={reduce ? { duration: 0 } : springSnappy}
+                    className={`relative h-9 flex-1 overflow-hidden rounded-md border px-2 text-left text-sm font-medium transition-colors duration-300 ${
+                      enabled ? "border-zinc-950 text-white" : "border-zinc-200 bg-zinc-50"
                     }`}
                   >
-                    <span className="block truncate">{moduleMeta[kind].label}</span>
-                  </button>
+                    <motion.span
+                      className="absolute inset-0 bg-zinc-950"
+                      initial={false}
+                      animate={{ opacity: enabled ? 1 : 0, scale: enabled ? 1 : 0.92 }}
+                      transition={reduce ? { duration: 0 } : springSoft}
+                    />
+                    <span className="relative block truncate">{moduleMeta[kind].label}</span>
+                  </motion.button>
                   {!compact && demoModule && (
                     <>
-                      <button
+                      <motion.button
                         type="button"
+                        whileTap={reduce ? undefined : tapSmall}
+                        transition={reduce ? { duration: 0 } : springSnappy}
                         className="grid size-9 place-items-center rounded-md border border-zinc-200 bg-white"
                         onClick={() => onMove(demoModule.id, -1)}
                         aria-label="Move module up"
                       >
                         <ChevronUp size={15} />
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         type="button"
+                        whileTap={reduce ? undefined : tapSmall}
+                        transition={reduce ? { duration: 0 } : springSnappy}
                         className="grid size-9 place-items-center rounded-md border border-zinc-200 bg-white"
                         onClick={() => onMove(demoModule.id, 1)}
                         aria-label="Move module down"
                       >
                         <ChevronDown size={15} />
-                      </button>
+                      </motion.button>
                     </>
                   )}
                 </div>
               );
             })}
           </div>
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -944,19 +1081,31 @@ function PanelTabs({ active, onChange }: { active: PanelTab; onChange: (tab: Pan
     ["presets", "Presets"],
     ["code", "Code"],
   ];
+  const reduce = useReducedMotion();
+  const groupId = useId();
+
   return (
     <div className="flex gap-1 overflow-x-auto border-b border-zinc-200 px-2 py-2 lg:flex-wrap lg:border lg:bg-white lg:p-1">
       {tabs.map(([id, label]) => (
-        <button
+        <motion.button
           key={id}
           type="button"
           onClick={() => onChange(id)}
-          className={`h-9 shrink-0 rounded-md px-3 text-sm font-medium ${
-            active === id ? "bg-zinc-950 text-white" : "bg-transparent text-zinc-600 hover:bg-zinc-100"
+          whileTap={reduce ? undefined : tap}
+          transition={reduce ? { duration: 0 } : springSnappy}
+          className={`relative h-9 shrink-0 rounded-md px-3 text-sm font-medium transition-colors duration-300 ${
+            active === id ? "text-white" : "bg-transparent text-zinc-600 hover:bg-zinc-100"
           }`}
         >
-          {label}
-        </button>
+          {active === id && (
+            <motion.span
+              layoutId={reduce ? undefined : `panel-tab-${groupId}`}
+              className="absolute inset-0 rounded-md bg-zinc-950"
+              transition={springPill}
+            />
+          )}
+          <span className="relative">{label}</span>
+        </motion.button>
       ))}
     </div>
   );
@@ -979,20 +1128,38 @@ function PanelContent({
   moveModule: (id: string, direction: -1 | 1) => void;
   hints: string[];
 }) {
-  if (state.panelTab === "modules") {
-    return (
-      <div className="space-y-3">
-        <ModulePalette state={state} onToggle={toggleModule} onMove={moveModule} compact={false} />
-        <SafetyHints hints={hints} />
-      </div>
-    );
-  }
-  if (state.panelTab === "props") return <PropsLab state={state} patch={patch} setMode={setMode} setUnit={setUnit} />;
-  if (state.panelTab === "theme") return <ThemeLab state={state} patch={patch} />;
-  if (state.panelTab === "look") return <AppearanceLab state={state} patch={patch} />;
-  if (state.panelTab === "disabled") return <DisabledLab state={state} patch={patch} />;
-  if (state.panelTab === "presets") return <PresetsLab state={state} patch={patch} />;
-  return <CodePanel code={generateCode(state)} copied={false} onCopy={() => navigator.clipboard.writeText(generateCode(state))} />;
+  const reduce = useReducedMotion();
+
+  const body = () => {
+    if (state.panelTab === "modules") {
+      return (
+        <div className="space-y-3">
+          <ModulePalette state={state} onToggle={toggleModule} onMove={moveModule} compact={false} />
+          <SafetyHints hints={hints} />
+        </div>
+      );
+    }
+    if (state.panelTab === "props") return <PropsLab state={state} patch={patch} setMode={setMode} setUnit={setUnit} />;
+    if (state.panelTab === "theme") return <ThemeLab state={state} patch={patch} />;
+    if (state.panelTab === "look") return <AppearanceLab state={state} patch={patch} />;
+    if (state.panelTab === "disabled") return <DisabledLab state={state} patch={patch} />;
+    if (state.panelTab === "presets") return <PresetsLab state={state} patch={patch} />;
+    return <CodePanel code={generateCode(state)} copied={false} onCopy={() => navigator.clipboard.writeText(generateCode(state))} />;
+  };
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={state.panelTab}
+        variants={reduce ? undefined : swapPanel}
+        initial="hidden"
+        animate="show"
+        exit="exit"
+      >
+        {body()}
+      </motion.div>
+    </AnimatePresence>
+  );
 }
 
 function PropsLab({
@@ -1201,43 +1368,68 @@ function PresetsLab({ state, patch }: { state: DemoState; patch: (next: Partial<
 }
 
 function Gallery({ state, patch }: { state: DemoState; patch: (next: Partial<DemoState>, event?: string) => void }) {
+  const reduce = useReducedMotion();
+
   return (
     <div className="space-y-5">
       <SectionTitle icon={<Palette size={18} />} title="Gallery Matrix" kicker="quick visual combinations" />
       <div>
         <div className="mb-2 text-sm font-semibold">Themes</div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <motion.div
+          className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+          variants={reduce ? undefined : staggerList}
+          initial="hidden"
+          animate="show"
+        >
           {(Object.keys(themeObjects) as ThemeId[]).map((themeId) => (
-            <button
+            <motion.button
               key={themeId}
               type="button"
               onClick={() => patch({ themeId }, `Theme changed to ${themeId}`)}
-              className={`rounded-lg border bg-white p-3 text-left text-sm font-medium ${
+              variants={reduce ? undefined : riseItem}
+              whileHover={reduce ? undefined : { y: -3, scale: 1.015 }}
+              whileTap={reduce ? undefined : tap}
+              transition={reduce ? { duration: 0 } : springSnappy}
+              className={`rounded-lg border bg-white p-3 text-left text-sm font-medium transition-colors duration-300 ${
                 state.themeId === themeId ? "border-zinc-950" : "border-zinc-200"
               }`}
             >
-              <span className="block h-2 rounded bg-zinc-950" />
+              <motion.span
+                className="block h-2 origin-left rounded bg-zinc-950"
+                initial={false}
+                animate={{ scaleX: state.themeId === themeId ? 1 : 0.35, opacity: state.themeId === themeId ? 1 : 0.35 }}
+                transition={reduce ? { duration: 0 } : springSoft}
+              />
               <span className="mt-2 block">{themeId}</span>
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
       <div>
         <div className="mb-2 text-sm font-semibold">Appearances</div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <motion.div
+          className="grid grid-cols-2 gap-2 sm:grid-cols-5"
+          variants={reduce ? undefined : staggerList}
+          initial="hidden"
+          animate="show"
+        >
           {(["default", ...Object.keys(appearanceObjects)] as AppearanceId[]).map((appearanceId) => (
-            <button
+            <motion.button
               key={appearanceId}
               type="button"
               onClick={() => patch({ appearanceId }, `Appearance changed to ${appearanceId}`)}
-              className={`rounded-lg border bg-white p-3 text-left text-sm font-medium ${
+              variants={reduce ? undefined : riseItem}
+              whileHover={reduce ? undefined : { y: -3, scale: 1.015 }}
+              whileTap={reduce ? undefined : tap}
+              transition={reduce ? { duration: 0 } : springSnappy}
+              className={`rounded-lg border bg-white p-3 text-left text-sm font-medium transition-colors duration-300 ${
                 state.appearanceId === appearanceId ? "border-zinc-950" : "border-zinc-200"
               }`}
             >
               {appearanceId}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
     </div>
   );
@@ -1254,6 +1446,8 @@ function CodePanel({
   onCopy: () => void;
   compact?: boolean;
 }) {
+  const reduce = useReducedMotion();
+
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-950 text-white shadow-sm">
       <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
@@ -1261,14 +1455,27 @@ function CodePanel({
           <Code2 size={16} />
           Component snippet
         </div>
-        <button
+        <motion.button
           type="button"
           onClick={onCopy}
-          className="flex h-8 items-center gap-1 rounded-md bg-white px-2 text-xs font-semibold text-zinc-950"
+          whileTap={reduce ? undefined : tapSmall}
+          transition={reduce ? { duration: 0 } : springSnappy}
+          className="flex h-8 items-center gap-1 overflow-hidden rounded-md bg-white px-2 text-xs font-semibold text-zinc-950"
         >
-          {copied ? <Check size={14} /> : <Clipboard size={14} />}
-          {copied ? "Copied" : "Copy"}
-        </button>
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={copied ? "copied" : "copy"}
+              className="flex items-center gap-1"
+              initial={reduce ? false : { opacity: 0, y: 10, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+              transition={reduce ? { duration: 0 } : easeFast}
+            >
+              {copied ? <Check size={14} /> : <Clipboard size={14} />}
+              {copied ? "Copied" : "Copy"}
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
       </div>
       <pre className={`overflow-x-auto p-3 text-xs leading-5 text-zinc-100 ${compact ? "max-h-72" : "max-h-[520px]"}`}>
         <code>{code}</code>
@@ -1294,25 +1501,55 @@ function ValueInspector({ state }: { state: DemoState }) {
 }
 
 function SafetyHints({ hints }: { hints: string[] }) {
-  if (!hints.length) return null;
+  const reduce = useReducedMotion();
+
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900">
-      {hints.map((hint) => (
-        <div key={hint}>{hint}</div>
-      ))}
-    </div>
+    <AnimatePresence initial={false}>
+      {hints.length > 0 && (
+        <motion.div
+          key="hints"
+          initial={reduce ? false : { opacity: 0, height: 0, filter: "blur(5px)" }}
+          animate={{ opacity: 1, height: "auto", filter: "blur(0px)" }}
+          exit={{ opacity: 0, height: 0, filter: "blur(5px)" }}
+          transition={reduce ? { duration: 0 } : springSoft}
+          className="overflow-hidden"
+        >
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900">
+            {hints.map((hint) => (
+              <motion.div
+                key={hint}
+                initial={reduce ? false : { opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={reduce ? { duration: 0 } : easeFast}
+              >
+                {hint}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
 function PanelCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  const reduce = useReducedMotion();
+
   return (
-    <div className="space-y-3 rounded-lg border border-zinc-200 bg-white p-3 shadow-sm">
+    <motion.div
+      layout={reduce ? false : "position"}
+      variants={reduce ? undefined : riseItem}
+      initial="hidden"
+      animate="show"
+      transition={reduce ? { duration: 0 } : springSoft}
+      className="space-y-3 rounded-lg border border-zinc-200 bg-white p-3 shadow-sm"
+    >
       <div className="flex items-center gap-2 font-semibold">
         {icon}
         {title}
       </div>
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -1337,36 +1574,68 @@ function Segmented({
   options: [string, string][];
   onChange: (value: string) => void;
 }) {
+  const reduce = useReducedMotion();
+  const groupId = useId();
+
   return (
     <div className="flex rounded-md border border-zinc-200 bg-zinc-100 p-1">
       {options.map(([id, label]) => (
-        <button
+        <motion.button
           key={id}
           type="button"
           onClick={() => onChange(id)}
-          className={`h-8 rounded px-2 text-xs font-semibold sm:px-3 ${
-            value === id ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500"
+          whileTap={reduce ? undefined : tap}
+          transition={reduce ? { duration: 0 } : springSnappy}
+          className={`relative h-8 rounded px-2 text-xs font-semibold transition-colors duration-300 sm:px-3 ${
+            value === id ? "text-zinc-950" : "text-zinc-500"
           }`}
         >
-          {label}
-        </button>
+          {value === id && (
+            <motion.span
+              layoutId={reduce ? undefined : `segmented-${groupId}`}
+              className="absolute inset-0 rounded bg-white shadow-sm"
+              transition={springPill}
+            />
+          )}
+          <span className="relative">{label}</span>
+        </motion.button>
       ))}
     </div>
   );
 }
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  const reduce = useReducedMotion();
+
   return (
-    <button
+    <motion.button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`flex h-10 items-center justify-between gap-3 rounded-md border px-3 text-sm font-medium ${
-        checked ? "border-zinc-950 bg-zinc-950 text-white" : "border-zinc-200 bg-zinc-50 text-zinc-700"
+      whileTap={reduce ? undefined : tap}
+      transition={reduce ? { duration: 0 } : springSnappy}
+      className={`relative flex h-10 items-center justify-between gap-3 overflow-hidden rounded-md border px-3 text-sm font-medium transition-colors duration-300 ${
+        checked ? "border-zinc-950 text-white" : "border-zinc-200 bg-zinc-50 text-zinc-700"
       }`}
     >
-      <span className="truncate">{label}</span>
-      <span className={`h-4 w-7 rounded-full ${checked ? "bg-white/80" : "bg-zinc-300"}`} />
-    </button>
+      <motion.span
+        className="absolute inset-0 bg-zinc-950"
+        initial={false}
+        animate={{ opacity: checked ? 1 : 0, scale: checked ? 1 : 0.92 }}
+        transition={reduce ? { duration: 0 } : springSoft}
+      />
+      <span className="relative truncate">{label}</span>
+      <motion.span
+        className={`relative flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors duration-300 ${
+          checked ? "justify-end bg-white/85" : "justify-start bg-zinc-300"
+        }`}
+      >
+        <motion.span
+          layout
+          transition={reduce ? { duration: 0 } : springSnappy}
+          className={`block size-3 rounded-full shadow-sm ${checked ? "bg-zinc-950" : "bg-white"}`}
+        />
+      </motion.span>
+    </motion.button>
   );
 }
 
