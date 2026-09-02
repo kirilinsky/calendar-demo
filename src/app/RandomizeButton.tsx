@@ -1,12 +1,11 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { springSnappy } from "./motion";
 import { APPEARANCE_IDS, saveAppearanceId, saveDarkMode, saveGradient, saveThemePreset } from "./calendar-preferences";
 import { THEMES } from "./themes/themes-data";
 
-export function RandomizeButton() {
+export function RandomizeButton({ className = "" }: { className?: string }) {
   const reduce = useReducedMotion();
 
   function randomize() {
@@ -19,20 +18,14 @@ export function RandomizeButton() {
   }
 
   return (
-    <motion.div
-      className="inline-flex will-change-transform"
-      whileHover={reduce ? undefined : { scale: 1.035, y: -1 }}
-      whileTap={reduce ? undefined : { scale: 0.955 }}
+    <motion.button
+      type="button"
+      onClick={randomize}
+      whileTap={reduce ? undefined : { scale: 0.97 }}
       transition={reduce ? { duration: 0 } : springSnappy}
+      className={`inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-b from-zinc-800 to-zinc-950 px-4 text-[13px] font-semibold whitespace-nowrap sm:px-5 sm:text-sm text-white shadow-sm shadow-zinc-950/20 transition-shadow duration-300 outline-none will-change-transform hover:shadow-md hover:shadow-zinc-950/25 focus-visible:ring-2 focus-visible:ring-zinc-950/40 ${className}`}
     >
-      <Button
-        type="button"
-        onClick={randomize}
-        size="lg"
-        className="h-12 rounded-full bg-gradient-to-b from-zinc-800 to-zinc-950 px-8 text-sm font-semibold shadow-lg shadow-zinc-950/25 transition-shadow duration-300 hover:shadow-xl hover:shadow-zinc-950/30"
-      >
-        Surprise Me ✨
-      </Button>
-    </motion.div>
+      Surprise Me ✨
+    </motion.button>
   );
 }

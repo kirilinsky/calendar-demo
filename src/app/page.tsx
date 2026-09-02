@@ -7,7 +7,6 @@ import { CalendarPreview } from "./CalendarPreview";
 import { RandomizeButton } from "./RandomizeButton";
 import { Reveal } from "./Reveal";
 import { VersionBadge } from "./VersionBadge";
-import { Button } from "@/components/ui/button";
 import dateForgePackage from "../../node_modules/@dateforge/react-calendar/package.json";
 
 const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
@@ -35,25 +34,13 @@ export default async function Home() {
     <main className="h-[100dvh] snap-y snap-mandatory overflow-y-auto bg-[#fbfbfd] text-zinc-950 lg:overflow-hidden lg:snap-none">
       {/* screen 1 */}
       <div className="relative flex h-[100dvh] w-full snap-start flex-col">
-        <span className="pointer-events-none absolute bottom-3 left-4 z-10 select-none font-mono text-[10px] leading-none text-zinc-300/65 sm:bottom-4 sm:left-5">
+        <Link
+          href="/changelog"
+          className="absolute bottom-3 left-4 z-10 font-mono text-[10px] leading-none text-zinc-300/65 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-500 sm:bottom-4 sm:left-5"
+        >
           @dateforge/react-calendar v{DATEFORGE_VERSION}
-        </span>
+        </Link>
 
-        {/* pinned footer controls — desktop only */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 hidden justify-center sm:bottom-4 lg:flex">
-          <Reveal
-            delay={0.32}
-            className="pointer-events-auto flex items-center gap-4"
-          >
-            <RandomizeButton />
-            <Link
-              href="/themes"
-              className="text-sm font-medium text-zinc-400 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-700"
-            >
-              Themes &amp; Looks →
-            </Link>
-          </Reveal>
-        </div>
         <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-4 sm:px-8">
           <SiteHeader coverage={coverage} />
           <section className="flex flex-1 flex-col py-2 text-center lg:gap-8 lg:py-6">
@@ -69,30 +56,18 @@ export default async function Home() {
             <div className="flex flex-1 flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-0">
               {/* calendar */}
               <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 lg:order-2 lg:flex-none lg:items-end">
-                <Reveal
-                  delay={0.18}
-                  y={22}
-                  scale
-                  className="w-full max-w-[327px] sm:max-w-[358px] lg:max-w-[370px]"
-                >
-                  <CalendarPreview
-                    width="100%"
-                    navLinks={[]}
-                    reserveHeight="min(440px, 58dvh)"
-                  />
-                </Reveal>
-                <Reveal
-                  delay={0.32}
-                  className="flex flex-col items-center gap-2 lg:hidden"
-                >
-                  <RandomizeButton />
-                  <Link
-                    href="/themes"
-                    className="text-sm font-medium text-zinc-400 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-700"
-                  >
-                    Themes &amp; Looks →
-                  </Link>
-                </Reveal>
+                <div className="flex w-full max-w-[327px] flex-col gap-3 sm:max-w-[358px] lg:max-w-[370px]">
+                  <Reveal delay={0.18} y={22} scale>
+                    <CalendarPreview
+                      width="100%"
+                      navLinks={[]}
+                      reserveHeight="min(440px, 58dvh)"
+                    />
+                  </Reveal>
+                  <Reveal delay={0.32}>
+                    <CalendarControls />
+                  </Reveal>
+                </div>
               </div>
 
               {/* content — desktop only in screen 1 */}
@@ -122,33 +97,8 @@ export default async function Home() {
                 >
                   <HeroCode />
                 </Reveal>
-                <Reveal
-                  delay={0.36}
-                  className="grid w-full max-w-md grid-cols-2 gap-2"
-                >
-                  <BranchLink
-                    href={STORYBOOK_URL}
-                    title="Storybook"
-                    text="Interactive playground"
-                    external
-                    variant="primary"
-                    className="col-span-2"
-                  />
-                  <BranchLink href="/docs" title="Docs" text="Complete API" />
-                  <BranchLink
-                    href="/examples"
-                    title="Examples"
-                    text="Polished recipes"
-                    variant="secondary"
-                  />
-                </Reveal>
-                <Reveal delay={0.42}>
-                  <Link
-                    href="/changelog"
-                    className="text-xs font-medium text-zinc-400 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-700"
-                  >
-                    v{DATEFORGE_VERSION} changelog →
-                  </Link>
+                <Reveal delay={0.36} className="w-full max-w-md">
+                  <ActionBlock />
                 </Reveal>
               </div>
             </div>
@@ -171,92 +121,97 @@ export default async function Home() {
             Start minimal. Scale infinitely. Add only the modules you need.
           </p>
         </Reveal>
-        <Reveal inView delay={0.26} className="flex w-full flex-col gap-2">
-          <BranchLink
-            href={STORYBOOK_URL}
-            title="Storybook"
-            text="Interactive playground"
-            external
-            variant="primary"
-          />
-          <BranchLink href="/docs" title="Docs" text="Complete API" />
-          <BranchLink
-            href="/examples"
-            title="Examples"
-            text="Polished recipes"
-            variant="secondary"
-          />
+        <Reveal inView delay={0.26} className="w-full max-w-md">
+          <ActionBlock />
         </Reveal>
       </div>
     </main>
   );
 }
 
-type BranchVariant = "default" | "secondary" | "primary";
+/** Surprise Me + Themes as one pill — they both act on the calendar above. */
+function CalendarControls() {
+  return (
+    <div className="flex items-stretch gap-1 rounded-full border border-zinc-200 bg-white/70 p-1 shadow-sm backdrop-blur-sm">
+      <RandomizeButton className="flex-1" />
+      <Link
+        href="/themes"
+        className="flex flex-1 items-center justify-center rounded-full px-3 text-center text-[13px] font-medium whitespace-nowrap text-zinc-500 sm:text-sm transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-100 hover:text-zinc-900"
+      >
+        Themes &amp; Looks →
+      </Link>
+    </div>
+  );
+}
 
-const BRANCH_VARIANTS: Record<
-  BranchVariant,
-  { link: string; title: string; sub: string; arrow: string; size: number }
+/** The three destinations as one card: primary row on top, two cells under it. */
+function ActionBlock() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/70 shadow-sm">
+      <ActionCell
+        href={STORYBOOK_URL}
+        title="Storybook"
+        text="Interactive playground"
+        external
+        variant="primary"
+      />
+      <div className="grid grid-cols-2 divide-x divide-zinc-200 border-t border-zinc-200">
+        <ActionCell href="/docs" title="Docs" text="Complete API" />
+        <ActionCell href="/examples" title="Examples" text="Polished recipes" />
+      </div>
+    </div>
+  );
+}
+
+type CellVariant = "default" | "primary";
+
+const CELL_VARIANTS: Record<
+  CellVariant,
+  { cell: string; title: string; sub: string; arrow: string }
 > = {
   primary: {
-    link: "border border-emerald-500 bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600 hover:border-emerald-600",
-    title: "text-xs font-bold lg:text-base",
-    sub: "hidden lg:block text-emerald-50/90",
-    arrow: "hidden lg:block text-white",
-    size: 16,
-  },
-  secondary: {
-    link: "border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 hover:border-emerald-300",
-    title: "text-xs font-semibold lg:text-sm",
-    sub: "hidden lg:block text-emerald-700/70",
-    arrow: "hidden lg:block text-emerald-400 group-hover:text-emerald-900",
-    size: 15,
+    cell: "bg-emerald-500 hover:bg-emerald-600 focus-visible:ring-white/60",
+    title: "font-bold text-white",
+    sub: "text-emerald-50/90",
+    arrow: "text-white",
   },
   default: {
-    link: "border border-zinc-200 bg-white/70 text-zinc-950 hover:border-zinc-300 hover:bg-white",
-    title: "text-xs font-semibold lg:text-sm",
-    sub: "hidden lg:block text-zinc-500",
-    arrow: "hidden lg:block text-zinc-400 group-hover:text-zinc-950",
-    size: 15,
+    cell: "hover:bg-white focus-visible:ring-emerald-500/50",
+    title: "font-semibold text-zinc-950",
+    sub: "text-zinc-500",
+    arrow: "text-zinc-400 group-hover:text-zinc-950",
   },
 };
 
-function BranchLink({
+function ActionCell({
   href,
   title,
   text,
   external = false,
   variant = "default",
-  className = "",
 }: {
   href: string;
   title: string;
   text: string;
   external?: boolean;
-  variant?: BranchVariant;
-  className?: string;
+  variant?: CellVariant;
 }) {
-  const v = BRANCH_VARIANTS[variant];
+  const v = CELL_VARIANTS[variant];
   return (
-    <Button
-      asChild
-      variant="outline"
-      className={`group h-10 flex-1 justify-center gap-4 rounded-full px-4 text-left shadow-sm transition-[transform,box-shadow,background-color,border-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] active:duration-100 lg:h-16 lg:justify-between lg:px-6 lg:py-3 ${v.link} ${className}`}
+    <Link
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      className={`group flex h-14 items-center justify-between gap-3 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none focus-visible:ring-2 focus-visible:ring-inset lg:h-16 lg:px-5 ${v.cell}`}
     >
-      <Link
-        href={href}
-        target={external ? "_blank" : undefined}
-        rel={external ? "noreferrer" : undefined}
-      >
-        <span className="min-w-0">
-          <span className={`block truncate ${v.title}`}>{title}</span>
-          <span className={`block truncate text-xs ${v.sub}`}>{text}</span>
-        </span>
-        <ArrowUpRight
-          size={v.size}
-          className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1 ${v.arrow}`}
-        />
-      </Link>
-    </Button>
+      <span className="min-w-0">
+        <span className={`block truncate text-sm ${v.title}`}>{title}</span>
+        <span className={`block truncate text-xs ${v.sub}`}>{text}</span>
+      </span>
+      <ArrowUpRight
+        size={15}
+        className={`shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 ${v.arrow}`}
+      />
+    </Link>
   );
 }
