@@ -14,13 +14,6 @@ const CODECOV_BADGE =
   "https://codecov.io/gh/kirilinsky/dateforge-react-calendar/branch/main/graph/badge.svg";
 const DATEFORGE_VERSION = dateForgePackage.version;
 
-/**
- * Mondrian-influenced hero: white ground, black orthogonal rules instead of
- * soft cards, and three blocks carrying the primaries. Poster values, not the
- * literal painting — #d0021b / #0b3d91 / #f6c700 hold up next to the emerald
- * the brand keeps on the install snippet and the version dot.
- */
-
 export const revalidate = 3600;
 
 async function getCoverage(): Promise<string | null> {
@@ -38,7 +31,7 @@ async function getCoverage(): Promise<string | null> {
 export default async function Home() {
   const coverage = await getCoverage();
   return (
-    <main className="h-[100dvh] snap-y snap-mandatory overflow-y-auto bg-white text-zinc-950 lg:overflow-hidden lg:snap-none">
+    <main className="h-[100dvh] snap-y snap-mandatory overflow-y-auto bg-[#fbfbfd] text-zinc-950 lg:overflow-hidden lg:snap-none">
       {/* screen 1 */}
       <div className="relative flex h-[100dvh] w-full snap-start flex-col">
         <Link
@@ -64,12 +57,7 @@ export default async function Home() {
               {/* calendar */}
               <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 lg:order-2 lg:flex-none lg:items-end">
                 <div className="flex w-full max-w-[327px] flex-col gap-2 sm:max-w-[358px] sm:gap-3 lg:max-w-[370px]">
-                  <Reveal
-                    delay={0.18}
-                    y={22}
-                    scale
-                    className="border-[3px] border-zinc-950 bg-white p-2"
-                  >
+                  <Reveal delay={0.18} y={22} scale>
                     <CalendarPreview
                       simple
                       width="100%"
@@ -87,8 +75,11 @@ export default async function Home() {
               {/* content — desktop only in screen 1 */}
               <div className="order-2 hidden lg:order-1 lg:mt-0 lg:flex lg:flex-col lg:items-start lg:gap-3 lg:pr-12 lg:text-left">
                 <Reveal delay={0.12} className="[@media(max-height:700px)]:hidden">
-                  <span className="inline-flex items-center gap-2 border-2 border-zinc-950 bg-[#f6c700] px-3 py-1.5 text-[11px] font-semibold leading-none text-zinc-950">
-                    <span aria-hidden className="h-1.5 w-1.5 bg-zinc-950" />
+                  <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-[11px] font-medium leading-none text-zinc-500 shadow-sm">
+                    <span
+                      aria-hidden
+                      className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                    />
                     Composable modules · zero config to start
                   </span>
                 </Reveal>
@@ -99,14 +90,15 @@ export default async function Home() {
                   </p>
                 </Reveal>
                 <Reveal delay={0.24} className="w-full max-w-md">
-                  <InstallSnippet flat />
+                  <InstallSnippet />
                 </Reveal>
                 {/* short viewports keep the terminal, drop the editor card */}
+                {/* Wider than the rest of the column so the import line never wraps. */}
                 <Reveal
                   delay={0.3}
-                  className="w-full max-w-md [@media(max-height:820px)]:hidden"
+                  className="w-full max-w-lg [@media(max-height:820px)]:hidden"
                 >
-                  <HeroCode flat />
+                  <HeroCode />
                 </Reveal>
                 <Reveal delay={0.36} className="w-full max-w-md">
                   <ForkBlock />
@@ -125,7 +117,7 @@ export default async function Home() {
           </span>
         </Reveal>
         <Reveal inView delay={0.1} className="w-full max-w-md">
-          <InstallSnippet flat />
+          <InstallSnippet />
         </Reveal>
         <Reveal inView delay={0.18}>
           <p className="max-w-xs text-sm leading-6 text-zinc-600">
@@ -140,14 +132,14 @@ export default async function Home() {
   );
 }
 
-/** Surprise Me + Themes in one ruled bar — both act on the calendar above. */
+/** Surprise Me + Themes as one pill — they both act on the calendar above. */
 function CalendarControls() {
   return (
-    <div className="flex items-stretch divide-x-2 divide-zinc-950 border-2 border-zinc-950 bg-white">
+    <div className="flex items-stretch gap-1 rounded-full border border-zinc-200 bg-white/70 p-1 shadow-sm backdrop-blur-sm">
       <RandomizeButton className="flex-1" />
       <Link
         href="/themes"
-        className="flex flex-1 items-center justify-center px-3 text-center text-[13px] font-medium whitespace-nowrap text-zinc-950 sm:text-sm transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#f6c700]"
+        className="flex flex-1 items-center justify-center rounded-full px-3 text-center text-[13px] font-medium whitespace-nowrap text-zinc-500 sm:text-sm transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-zinc-100 hover:text-zinc-900"
       >
         Themes &amp; Looks
       </Link>
@@ -162,24 +154,23 @@ function CalendarControls() {
  */
 function ForkBlock() {
   return (
-    <div className="border-[3px] border-zinc-950 bg-white">
-      <div className="grid grid-cols-2 divide-x-2 divide-zinc-950">
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/70 shadow-sm">
+      <div className="grid grid-cols-2 divide-x divide-zinc-200">
         <ForkCell
           href="/examples#prebuilt"
           eyebrow="Need it now"
           title="Prebuilt"
           text="One import. Done."
-          variant="red"
+          variant="primary"
         />
         <ForkCell
           href="/examples#composed"
           eyebrow="Need more"
           title="Compose"
           text={`${COMPOSED_COUNT} finished recipes.`}
-          variant="blue"
         />
       </div>
-      <div className="grid grid-cols-2 divide-x-2 divide-zinc-950 border-t-2 border-zinc-950">
+      <div className="grid grid-cols-2 divide-x divide-zinc-200 border-t border-zinc-200">
         <ForkFootLink href="/docs" label="Docs" text="Complete API" />
         <ForkFootLink
           href={STORYBOOK_URL}
@@ -192,23 +183,23 @@ function ForkBlock() {
   );
 }
 
-type CellVariant = "red" | "blue";
+type CellVariant = "default" | "primary";
 
 const CELL_VARIANTS: Record<
   CellVariant,
   { cell: string; eyebrow: string; title: string; sub: string }
 > = {
-  red: {
-    cell: "bg-[#d0021b] hover:bg-[#b00117] focus-visible:ring-white/70",
-    eyebrow: "text-white/70",
+  primary: {
+    cell: "bg-emerald-500 hover:bg-emerald-600 focus-visible:ring-white/60",
+    eyebrow: "text-emerald-50/80",
     title: "font-bold text-white",
-    sub: "text-white/85",
+    sub: "text-emerald-50/90",
   },
-  blue: {
-    cell: "bg-[#0b3d91] hover:bg-[#092f70] focus-visible:ring-white/70",
-    eyebrow: "text-white/70",
-    title: "font-bold text-white",
-    sub: "text-white/85",
+  default: {
+    cell: "hover:bg-white focus-visible:ring-emerald-500/50",
+    eyebrow: "text-zinc-400",
+    title: "font-semibold text-zinc-950",
+    sub: "text-zinc-500",
   },
 };
 
@@ -217,13 +208,13 @@ function ForkCell({
   eyebrow,
   title,
   text,
-  variant,
+  variant = "default",
 }: {
   href: string;
   eyebrow: string;
   title: string;
   text: string;
-  variant: CellVariant;
+  variant?: CellVariant;
 }) {
   const v = CELL_VARIANTS[variant];
   return (
@@ -258,12 +249,12 @@ function ForkFootLink({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      className="flex h-11 items-center gap-1.5 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none hover:bg-[#f6c700] focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-inset lg:px-5"
+      className="flex h-11 items-center gap-1.5 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-inset lg:px-5"
     >
-      <span className="truncate text-xs font-semibold text-zinc-950">
+      <span className="truncate text-xs font-semibold text-zinc-700">
         {label}
       </span>
-      <span className="truncate text-xs text-zinc-500">{text}</span>
+      <span className="truncate text-xs text-zinc-400">{text}</span>
     </Link>
   );
 }

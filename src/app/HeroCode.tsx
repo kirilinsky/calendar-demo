@@ -4,35 +4,17 @@ const S = "text-emerald-600";     // strings
 const C = "text-sky-600";         // components
 const P = "text-zinc-400";        // punctuation
 
-/** The shortest working DateForge snippet — one prebuilt, no composition. */
-export function HeroCode({
-  className = "",
-  flat = false,
-}: {
-  className?: string;
-  /** Square, black-ruled shell for the Mondrian hero. */
-  flat?: boolean;
-}) {
+/**
+ * The shortest working DateForge snippet — one prebuilt, no composition. No
+ * window chrome: the point is the two lines, and a filename tab only invited
+ * the reader to wonder what file this is.
+ */
+export function HeroCode({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`overflow-hidden bg-white ${
-        flat
-          ? "border-2 border-zinc-950"
-          : "rounded-2xl border border-zinc-200 shadow-sm backdrop-blur-sm"
-      } ${className}`}
+      className={`overflow-hidden rounded-2xl border border-zinc-200 bg-white/70 shadow-sm backdrop-blur-sm ${className}`}
     >
-      <div className="flex items-center gap-2 border-b-2 border-zinc-950 px-3 py-1.5">
-        <span aria-hidden className="flex gap-1">
-          <span className="h-2 w-2 bg-[#d0021b]" />
-          <span className="h-2 w-2 bg-[#0b3d91]" />
-          <span className="h-2 w-2 bg-[#f6c700]" />
-        </span>
-        <span className="font-mono text-[10px] leading-none text-zinc-400">
-          Booking.tsx
-        </span>
-      </div>
-
-      <pre className="overflow-x-auto px-3 py-2.5 font-mono text-[11px] leading-5 lg:text-[12px] lg:leading-[1.55rem]">
+      <pre className="overflow-x-auto px-4 py-3.5 font-mono text-[12px] leading-[1.5rem] lg:text-[13px] lg:leading-[1.65rem]">
         <code>
           <span className={K}>import</span>
           <span className={P}>{" { "}</span>
