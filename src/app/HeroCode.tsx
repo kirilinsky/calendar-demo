@@ -1,8 +1,8 @@
-const K = "text-violet-500";      // keywords
-const N = "text-zinc-800";        // identifiers
-const S = "text-emerald-600";     // strings
-const C = "text-sky-600";         // components
-const P = "text-zinc-400";        // punctuation
+const K = "text-violet-500"; // keywords
+const N = "text-zinc-800"; // identifiers
+const S = "text-emerald-600"; // strings
+const C = "text-sky-600"; // components
+const P = "text-zinc-400"; // punctuation
 
 /**
  * The shortest working DateForge snippet — one prebuilt, no composition. No
@@ -20,15 +20,14 @@ export function HeroCode({ className = "" }: { className?: string }) {
           <span className={P}>{" { "}</span>
           <span className={N}>SimpleCalendar</span>
           <span className={P}>{" } "}</span>
-          <span className={K}>from</span>{" "}
-          <span className={S}>&quot;@dateforge/react-calendar/prebuilt&quot;</span>
+          <span className={K}>from</span> {"\n\n"}
+          <span className={S}>
+            &quot;@dateforge/react-calendar/prebuilt&quot;
+          </span>
           <span className={P}>;</span>
           {"\n\n"}
           <span className={P}>&lt;</span>
           <span className={C}>SimpleCalendar</span>{" "}
-          <span className={N}>theme</span>
-          <span className={P}>=</span>
-          <span className={S}>&quot;aurora&quot;</span>{" "}
           <span className={N}>onChange</span>
           <span className={P}>={"{"}</span>
           <span className={N}>setDate</span>

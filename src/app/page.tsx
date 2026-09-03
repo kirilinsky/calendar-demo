@@ -74,7 +74,10 @@ export default async function Home() {
 
               {/* content — desktop only in screen 1 */}
               <div className="order-2 hidden lg:order-1 lg:mt-0 lg:flex lg:flex-col lg:items-start lg:gap-3 lg:pr-12 lg:text-left">
-                <Reveal delay={0.12} className="[@media(max-height:700px)]:hidden">
+                <Reveal
+                  delay={0.12}
+                  className="[@media(max-height:700px)]:hidden"
+                >
                   <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-[11px] font-medium leading-none text-zinc-500 shadow-sm">
                     <span
                       aria-hidden
@@ -83,24 +86,22 @@ export default async function Home() {
                     Composable modules · zero config to start
                   </span>
                 </Reveal>
-                <Reveal delay={0.18} className="w-full max-w-md">
+                <Reveal delay={0.18} className="w-full max-w-lg">
                   <p className="text-sm leading-6 text-zinc-600 lg:text-[15px]">
-                    Monolithic pickers ship everything. DateForge ships only what
-                    you use — start minimal, scale infinitely.
+                    Monolithic pickers ship everything. DateForge ships only
+                    what you use — start minimal, scale infinitely.
                   </p>
                 </Reveal>
-                <Reveal delay={0.24} className="w-full max-w-md">
+                <Reveal delay={0.24} className="w-full max-w-lg">
                   <InstallSnippet />
                 </Reveal>
-                {/* short viewports keep the terminal, drop the editor card */}
-                {/* Wider than the rest of the column so the import line never wraps. */}
                 <Reveal
                   delay={0.3}
                   className="w-full max-w-lg [@media(max-height:820px)]:hidden"
                 >
                   <HeroCode />
                 </Reveal>
-                <Reveal delay={0.36} className="w-full max-w-md">
+                <Reveal delay={0.36} className="w-full max-w-lg">
                   <ForkBlock />
                 </Reveal>
               </div>
@@ -113,7 +114,8 @@ export default async function Home() {
       <div className="flex h-[100dvh] w-full snap-start flex-col items-center justify-center gap-6 px-5 text-center lg:hidden">
         <Reveal inView delay={0.02}>
           <span className="text-sm font-medium tracking-tight text-zinc-500">
-            Monolithic pickers ship everything. DateForge ships only what you use.
+            Monolithic pickers ship everything. DateForge ships only what you
+            use.
           </span>
         </Reveal>
         <Reveal inView delay={0.1} className="w-full max-w-md">
