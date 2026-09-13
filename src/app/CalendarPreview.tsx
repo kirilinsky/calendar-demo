@@ -164,7 +164,13 @@ export function CalendarPreview({
       >
         {simple ? (
           <div style={{ width }}>
+            {/*
+              Prebuilt calendars take `scheme` uncontrolled (no `onSchemeChange`),
+              so a later prop change is ignored. Remount on change; the selected
+              date lives here, so it survives.
+            */}
             <SimpleCalendar
+              key={calendarScheme}
               value={date}
               onChange={setDate}
               theme={calendarTheme}

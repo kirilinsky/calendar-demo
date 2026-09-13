@@ -22,7 +22,7 @@ export function CodeBlock({ code, lang }: { code: string; lang: string }) {
   };
 
   return (
-    <div className="mb-6 overflow-hidden rounded-lg border border-[var(--code-border)] bg-[var(--code-bg)] text-[var(--code-text)] shadow-sm">
+    <div className="mb-6 overflow-hidden rounded-xl border border-[var(--code-border)] bg-[var(--code-bg)] text-[var(--code-text)] shadow-sm">
       <div className="flex h-10 items-center justify-between border-b border-white/10 bg-white/[0.03] px-3">
         <Badge
           variant="outline"
@@ -48,7 +48,6 @@ export function CodeBlock({ code, lang }: { code: string; lang: string }) {
         PreTag="div"
         customStyle={{
           margin: 0,
-          minWidth: "max-content",
           overflowX: "auto",
           padding: "1rem",
           background: "transparent",

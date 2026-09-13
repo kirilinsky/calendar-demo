@@ -13,19 +13,45 @@ function headingClass(level: 1 | 2 | 3 | 4) {
     return "mb-5 scroll-mt-24 text-3xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-5xl";
   }
   if (level === 2) {
-    return "mb-5 mt-14 scroll-mt-24 border-b border-[var(--border)] pb-3 text-xl font-semibold tracking-tight text-[var(--text-primary)]";
+    return "group/h mb-5 mt-14 scroll-mt-24 border-b border-[var(--border)] pb-3 text-xl font-semibold tracking-tight text-[var(--text-primary)] first:mt-0";
   }
   if (level === 3) {
-    return "mb-4 mt-9 scroll-mt-24 text-base font-semibold text-[var(--text-primary)]";
+    return "group/h mb-4 mt-9 scroll-mt-24 text-base font-semibold text-[var(--text-primary)]";
   }
   return "mb-3 mt-7 scroll-mt-24 text-sm font-semibold text-[var(--text-primary)]";
+}
+
+type HeadingProps = React.ComponentPropsWithoutRef<"h2">;
+
+/** Heading with a hover-revealed `#` link, so any section can be shared. */
+function AnchoredHeading({
+  as: Tag,
+  id,
+  children,
+  className,
+  ...rest
+}: HeadingProps & { as: "h2" | "h3" }) {
+  return (
+    <Tag id={id} className={className} {...rest}>
+      {children}
+      {id && (
+        <a
+          href={`#${id}`}
+          aria-label="Link to this section"
+          className="ml-2 font-normal text-[var(--text-muted)] no-underline opacity-0 transition-opacity group-hover/h:opacity-100 hover:text-[var(--emerald)] focus-visible:opacity-100"
+        >
+          #
+        </a>
+      )}
+    </Tag>
+  );
 }
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     h1: (props) => <h1 className={headingClass(1)} {...props} />,
-    h2: (props) => <h2 className={headingClass(2)} {...props} />,
-    h3: (props) => <h3 className={headingClass(3)} {...props} />,
+    h2: (props) => <AnchoredHeading as="h2" className={headingClass(2)} {...props} />,
+    h3: (props) => <AnchoredHeading as="h3" className={headingClass(3)} {...props} />,
     h4: (props) => <h4 className={headingClass(4)} {...props} />,
     p: (props) => (
       <p
@@ -74,20 +100,20 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     hr: () => <hr className="my-8 border-[var(--border)]" />,
     img: ({ src = "", alt = "", ...rest }) => (
-      <span className="mb-8 mt-6 block">
+      <span className="mb-8 mt-6 block max-w-3xl rounded-xl border border-[var(--border)] bg-white p-3 shadow-sm">
         <Image
           src={src as ImageProps["src"]}
           alt={alt}
           width={900}
           height={500}
-          className="w-full max-w-3xl rounded-none object-contain"
+          className="w-full rounded-none object-contain"
           unoptimized
           {...(rest as Omit<ImageProps, "src" | "alt" | "width" | "height">)}
         />
       </span>
     ),
     table: (props) => (
-      <div className="mb-7 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--doc-bg-secondary)] shadow-sm [&_table]:w-full [&_table]:min-w-[680px] [&_table]:border-collapse [&_table]:text-left [&_table]:text-sm">
+      <div className="mb-7 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--doc-bg-secondary)] shadow-sm [&_table]:w-full [&_table]:border-collapse [&_table]:text-left [&_table]:text-sm">
         <table {...props} />
       </div>
     ),
@@ -125,7 +151,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       }
       return (
         <code
-          className="whitespace-nowrap rounded-md border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-1.5 py-0.5 font-mono text-[0.92em] text-[var(--emerald)]"
+          className="whitespace-nowrap rounded-md border border-[var(--border)] bg-[var(--code-inline-bg)] px-1.5 py-0.5 font-mono text-[0.9em] text-[var(--text-primary)]"
           {...rest}
         >
           {children}
