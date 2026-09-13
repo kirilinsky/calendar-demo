@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ArrowLeft, ExternalLink, Moon, Sun } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { appleEaseOut } from "../motion";
 import { DocsHero } from "./components/DocsHero";
 import { ScrollToTop } from "../ScrollToTop";
 import Content from "./content.mdx";
@@ -15,6 +17,45 @@ import {
 } from "@/components/ui/tooltip";
 
 const GITHUB_URL = "https://github.com/kirilinsky/dateforge-react-calendar";
+const DARK_STORAGE_KEY = "dateforge:docs-dark";
+const DARK_EVENT = "dateforge:docs-dark-change";
+
+/** Saved choice wins; otherwise follow the OS. */
+function readDark(): boolean {
+  try {
+    const saved = window.localStorage.getItem(DARK_STORAGE_KEY);
+    if (saved === "1") return true;
+    if (saved === "0") return false;
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+}
+
+function saveDark(dark: boolean) {
+  try {
+    window.localStorage.setItem(DARK_STORAGE_KEY, dark ? "1" : "0");
+  } catch {
+    // localStorage can be unavailable in private or restricted contexts.
+  }
+  window.dispatchEvent(new Event(DARK_EVENT));
+}
+
+function subscribeDark(onChange: () => void) {
+  const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+  window.addEventListener("storage", onChange);
+  window.addEventListener(DARK_EVENT, onChange);
+  media?.addEventListener("change", onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(DARK_EVENT, onChange);
+    media?.removeEventListener("change", onChange);
+  };
+}
+
+function useDocsDark(): boolean {
+  return useSyncExternalStore(subscribeDark, readDark, () => false);
+}
 
 const themeVars = {
   dark: {
@@ -30,6 +71,7 @@ const themeVars = {
     "--code-bg": "#09090b",
     "--code-border": "rgba(255,255,255,0.09)",
     "--code-text": "#d4d4d8",
+    "--code-inline-bg": "rgba(255,255,255,0.06)",
     "--amber": "#fbbf24",
     "--sky": "#38bdf8",
     "--emerald": "#34d399",
@@ -48,6 +90,7 @@ const themeVars = {
     "--code-bg": "#101012",
     "--code-border": "rgba(24,24,27,0.12)",
     "--code-text": "#f4f4f5",
+    "--code-inline-bg": "rgba(24,24,27,0.04)",
     "--amber": "#b45309",
     "--sky": "#0284c7",
     "--emerald": "#059669",
@@ -56,12 +99,28 @@ const themeVars = {
 } as const;
 
 type HeadingEntry = { id: string; text: string; level: number };
+type HeadingGroup = { parent: HeadingEntry; children: HeadingEntry[] };
+
+/** h3s nest under the h2 above them; a leading h3 gets its own group. */
+function groupHeadings(list: HeadingEntry[]): HeadingGroup[] {
+  const groups: HeadingGroup[] = [];
+  for (const heading of list) {
+    const last = groups[groups.length - 1];
+    if (heading.level === 3 && last) last.children.push(heading);
+    else groups.push({ parent: heading, children: [] });
+  }
+  return groups;
+}
 
 export default function DocsPage() {
-  const [dark, setDark] = useState(false);
+  const dark = useDocsDark();
   const [headings, setHeadings] = useState<HeadingEntry[]>([]);
   const [active, setActive] = useState<string>("");
   const articleRef = useRef<HTMLElement | null>(null);
+  const reduce = useReducedMotion();
+  const groups = useMemo(() => groupHeadings(headings), [headings]);
+
+  const toggleDark = () => saveDark(!dark);
 
   useEffect(() => {
     if (!articleRef.current) return;
@@ -97,7 +156,7 @@ export default function DocsPage() {
   return (
     <div
       style={themeVars[dark ? "dark" : "light"] as React.CSSProperties}
-      className="min-h-screen bg-[var(--doc-bg)] text-[var(--text-primary)] transition-colors"
+      className={`min-h-screen bg-[var(--doc-bg)] text-[var(--text-primary)] transition-colors ${dark ? "dark" : ""}`}
     >
       <header className="fixed inset-x-0 top-0 z-50 border-b border-[var(--border)] bg-[var(--header-bg)]/92 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-5 sm:px-6">
@@ -127,6 +186,7 @@ export default function DocsPage() {
 
           <select
             value={active}
+            aria-label="On this page"
             onChange={(event) => scrollTo(event.target.value)}
             className="min-w-0 flex-1 rounded-full border border-[var(--border)] bg-[var(--doc-bg-secondary)] px-3 py-1.5 font-mono text-xs text-[var(--text-secondary)] shadow-sm outline-none md:hidden"
           >
@@ -167,7 +227,7 @@ export default function DocsPage() {
             </Tooltip>
             <Button
               type="button"
-              onClick={() => setDark((value) => !value)}
+              onClick={toggleDark}
               variant="outline"
               size="sm"
               className="border-[var(--border)] bg-[var(--doc-bg-secondary)] font-mono text-xs text-[var(--text-muted)] shadow-sm hover:border-[var(--nav-active-border)] hover:text-[var(--text-primary)]"
@@ -180,32 +240,50 @@ export default function DocsPage() {
       </header>
 
       <div className="mx-auto flex max-w-6xl gap-12 px-5 pt-24 sm:px-6">
-        <aside className="sticky top-24 hidden max-h-[calc(100vh-7rem)] w-56 shrink-0 self-start overflow-y-auto border-r border-[var(--border)] pb-8 pr-4 md:block">
-          <nav className="flex flex-col gap-0.5">
-            {headings.map((heading) => (
-              <button
-                key={heading.id}
-                type="button"
-                onClick={() => scrollTo(heading.id)}
-                className="cursor-pointer border px-3 py-1.5 text-left font-mono text-xs transition-colors"
-                style={{
-                  color:
-                    active === heading.id
-                      ? "var(--text-primary)"
-                      : "var(--text-muted)",
-                  background:
-                    active === heading.id ? "var(--nav-active)" : "transparent",
-                  borderColor:
-                    active === heading.id
-                      ? "var(--nav-active-border)"
-                      : "transparent",
-                  borderRadius: "999px",
-                  paddingLeft: heading.level === 3 ? "1.5rem" : "0.75rem",
-                }}
-              >
-                {heading.text}
-              </button>
-            ))}
+        <aside className="sticky top-24 hidden max-h-[calc(100vh-7rem)] w-56 shrink-0 self-start overflow-y-auto pb-8 pr-4 md:block">
+          <p className="mb-3 px-3 font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+            On this page
+          </p>
+          <nav className="flex flex-col border-l border-[var(--border)]">
+            {groups.map(({ parent, children }) => {
+              const open =
+                active === parent.id ||
+                children.some((child) => child.id === active);
+              return (
+                <div key={parent.id}>
+                  <NavItem
+                    heading={parent}
+                    active={active === parent.id}
+                    onSelect={scrollTo}
+                  />
+                  <AnimatePresence initial={false}>
+                    {open && children.length > 0 && (
+                      <motion.div
+                        key="children"
+                        initial={reduce ? false : { height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                        transition={
+                          reduce
+                            ? { duration: 0 }
+                            : { duration: 0.28, ease: appleEaseOut }
+                        }
+                        className="overflow-hidden"
+                      >
+                        {children.map((child) => (
+                          <NavItem
+                            key={child.id}
+                            heading={child}
+                            active={active === child.id}
+                            onSelect={scrollTo}
+                          />
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </nav>
         </aside>
 
@@ -220,5 +298,33 @@ export default function DocsPage() {
 
       <ScrollToTop className="border-[var(--border)] bg-[var(--doc-bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]" />
     </div>
+  );
+}
+
+function NavItem({
+  heading,
+  active,
+  onSelect,
+}: {
+  heading: HeadingEntry;
+  active: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const nested = heading.level === 3;
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(heading.id)}
+      aria-current={active ? "location" : undefined}
+      className={`-ml-px block w-full cursor-pointer border-l-2 py-1.5 pr-2 text-left transition-colors duration-200 ${
+        nested ? "pl-6 text-[11px]" : "pl-3 text-xs"
+      } ${
+        active
+          ? "border-[var(--emerald)] bg-[var(--nav-active)] text-[var(--text-primary)]"
+          : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+      } font-mono`}
+    >
+      {heading.text}
+    </button>
   );
 }
