@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { InstallSnippet } from "./InstallSnippet";
 import { HeroCode } from "./HeroCode";
 import { SiteHeader } from "./SiteHeader";
@@ -13,6 +14,10 @@ const STORYBOOK_URL = "https://kirilinsky.github.io/dateforge-react-calendar/";
 const CODECOV_BADGE =
   "https://codecov.io/gh/kirilinsky/dateforge-react-calendar/branch/main/graph/badge.svg";
 const DATEFORGE_VERSION = dateForgePackage.version;
+
+/** One soft, layered shadow for every card on the hero. */
+const CARD_SHADOW =
+  "shadow-[0_1px_2px_rgba(24,24,27,0.04),0_14px_32px_-18px_rgba(24,24,27,0.22)]";
 
 export const revalidate = 3600;
 
@@ -31,9 +36,10 @@ async function getCoverage(): Promise<string | null> {
 export default async function Home() {
   const coverage = await getCoverage();
   return (
-    <main className="h-[100dvh] snap-y snap-mandatory overflow-y-auto bg-[#fbfbfd] text-zinc-950 lg:overflow-hidden lg:snap-none">
+    <main className="h-[100dvh] snap-y snap-mandatory overflow-y-auto bg-[#fbfbfd] text-zinc-950 selection:bg-emerald-100 selection:text-emerald-950 lg:overflow-hidden lg:snap-none">
       {/* screen 1 */}
       <div className="relative flex h-[100dvh] w-full snap-start flex-col">
+        <HeroBackdrop />
         <Link
           href="/changelog"
           className="absolute bottom-3 left-4 z-10 font-mono text-[10px] leading-none text-zinc-300/65 transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-zinc-500 sm:bottom-4 sm:left-5"
@@ -48,7 +54,7 @@ export default async function Home() {
               <VersionBadge version={DATEFORGE_VERSION} />
             </Reveal>
             <Reveal delay={0.05}>
-              <h1 className="mt-1 mb-1 text-xl leading-tight font-semibold tracking-tight text-zinc-950 sm:mt-1.5 sm:mb-1.5 sm:text-3xl lg:mt-0 lg:mb-0 lg:text-[2.6rem] lg:whitespace-nowrap xl:text-5xl">
+              <h1 className="mt-1 mb-1 bg-gradient-to-b from-zinc-950 to-zinc-600 bg-clip-text text-xl leading-tight font-semibold tracking-tight text-balance text-transparent sm:mt-1.5 sm:mb-1.5 sm:text-3xl lg:mt-0 lg:mb-0 lg:text-[2.6rem] lg:whitespace-nowrap xl:text-5xl">
                 Build exactly the calendar your product needs.
               </h1>
             </Reveal>
@@ -78,7 +84,7 @@ export default async function Home() {
                   delay={0.12}
                   className="[@media(max-height:700px)]:hidden"
                 >
-                  <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-[11px] font-medium leading-none text-zinc-500 shadow-sm">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 px-3 py-1 text-[11px] font-medium leading-none text-zinc-500 shadow-sm backdrop-blur-sm">
                     <span
                       aria-hidden
                       className="h-1.5 w-1.5 rounded-full bg-emerald-500"
@@ -134,10 +140,29 @@ export default async function Home() {
   );
 }
 
+/**
+ * Quiet depth behind screen 1: a dot grid that fades toward the edges and two
+ * soft tinted glows. Clipped here so nothing leaks into the mobile screen 2.
+ */
+function HeroBackdrop() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(24,24,27,0.07)_1px,transparent_0)] bg-[size:22px_22px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_40%,black_10%,transparent_100%)]" />
+      <div className="absolute -top-32 right-[-8%] h-[28rem] w-[28rem] rounded-full bg-emerald-200/35 blur-3xl" />
+      <div className="absolute -bottom-40 left-[-12%] h-[26rem] w-[26rem] rounded-full bg-sky-200/30 blur-3xl" />
+    </div>
+  );
+}
+
 /** Surprise Me + Themes as one pill — they both act on the calendar above. */
 function CalendarControls() {
   return (
-    <div className="flex items-stretch gap-1 rounded-full border border-zinc-200 bg-white/70 p-1 shadow-sm backdrop-blur-sm">
+    <div
+      className={`flex items-stretch gap-1 rounded-full border border-zinc-200 bg-white/80 p-1 backdrop-blur-sm ${CARD_SHADOW}`}
+    >
       <RandomizeButton className="flex-1" />
       <Link
         href="/themes"
@@ -156,7 +181,9 @@ function CalendarControls() {
  */
 function ForkBlock() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/70 shadow-sm">
+    <div
+      className={`overflow-hidden rounded-2xl border border-zinc-200 bg-white/80 backdrop-blur-sm ${CARD_SHADOW}`}
+    >
       <div className="grid grid-cols-2 divide-x divide-zinc-200">
         <ForkCell
           href="/examples#prebuilt"
@@ -189,19 +216,21 @@ type CellVariant = "default" | "primary";
 
 const CELL_VARIANTS: Record<
   CellVariant,
-  { cell: string; eyebrow: string; title: string; sub: string }
+  { cell: string; eyebrow: string; title: string; sub: string; arrow: string }
 > = {
   primary: {
-    cell: "bg-emerald-500 hover:bg-emerald-600 focus-visible:ring-white/60",
+    cell: "bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 focus-visible:ring-white/60",
     eyebrow: "text-emerald-50/80",
     title: "font-bold text-white",
     sub: "text-emerald-50/90",
+    arrow: "text-white/80",
   },
   default: {
     cell: "hover:bg-white focus-visible:ring-emerald-500/50",
     eyebrow: "text-zinc-400",
     title: "font-semibold text-zinc-950",
     sub: "text-zinc-500",
+    arrow: "text-zinc-400",
   },
 };
 
@@ -222,8 +251,13 @@ function ForkCell({
   return (
     <Link
       href={href}
-      className={`group flex h-[4.5rem] flex-col justify-center gap-0.5 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none focus-visible:ring-2 focus-visible:ring-inset lg:h-20 lg:px-5 ${v.cell}`}
+      className={`group relative flex h-[4.5rem] flex-col justify-center gap-0.5 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none focus-visible:ring-2 focus-visible:ring-inset lg:h-20 lg:px-5 ${v.cell}`}
     >
+      <ArrowRight
+        aria-hidden
+        size={14}
+        className={`absolute top-1/2 right-4 -translate-x-1 -translate-y-1/2 opacity-0 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0 group-hover:opacity-100 lg:right-5 ${v.arrow}`}
+      />
       <span
         className={`text-[10px] font-semibold tracking-wide uppercase ${v.eyebrow}`}
       >
@@ -251,12 +285,19 @@ function ForkFootLink({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      className="flex h-11 items-center gap-1.5 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-inset lg:px-5"
+      className="group flex h-11 items-center gap-1.5 px-4 text-left transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-inset lg:px-5"
     >
       <span className="truncate text-xs font-semibold text-zinc-700">
         {label}
       </span>
       <span className="truncate text-xs text-zinc-400">{text}</span>
+      {external && (
+        <ArrowUpRight
+          aria-hidden
+          size={12}
+          className="ml-auto shrink-0 text-zinc-300 transition-colors duration-300 group-hover:text-zinc-500"
+        />
+      )}
     </Link>
   );
 }

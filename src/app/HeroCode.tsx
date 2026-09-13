@@ -12,7 +12,7 @@ const P = "text-zinc-400"; // punctuation
 export function HeroCode({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-zinc-200 bg-white/70 shadow-sm backdrop-blur-sm ${className}`}
+      className={`overflow-hidden rounded-2xl border border-zinc-200 bg-white/80 shadow-[0_1px_2px_rgba(24,24,27,0.04),0_14px_32px_-18px_rgba(24,24,27,0.22)] backdrop-blur-sm ${className}`}
     >
       <pre className="overflow-x-auto px-4 py-3.5 font-mono text-[12px] leading-[1.5rem] lg:text-[13px] lg:leading-[1.65rem]">
         <code>
