@@ -26,9 +26,9 @@ import {
   type ThemeFamily,
 } from "@dateforge/react-calendar";
 import { CalendarDays } from "@dateforge/react-calendar/modules";
-import { SimpleCalendar } from "@dateforge/react-calendar/prebuilt";
 import {
   CalendarToolbar,
+  CalendarToolbarGroup,
   CalendarToolbarMonthTrigger,
   CalendarToolbarNext,
   CalendarToolbarPrev,
@@ -67,10 +67,10 @@ type CalendarPreviewProps = {
   useSavedThemeFallback?: boolean;
   width?: string | number;
   /**
-   * Render the `SimpleCalendar` prebuilt instead of the composed shell — the
-   * same calendar the hero snippet shows, so the preview is literally the code
-   * next to it. Drops `initialView` and `onSchemeChange`: the prebuilt takes
-   * neither.
+   * Render the `SimpleCalendar` layout instead of the composed shell — the
+   * same calendar the hero snippet shows. Built from the prebuilt's own modules
+   * so the scheme stays controlled (see the render branch). Ignores
+   * `initialView`, like the prebuilt.
    */
   simple?: boolean;
   /**
@@ -163,24 +163,36 @@ export function CalendarPreview({
         style={{ minHeight: slotMinHeight }}
       >
         {simple ? (
-          <div style={{ width }}>
-            {/*
-              Prebuilt calendars take `scheme` uncontrolled (no `onSchemeChange`),
-              so a later prop change is ignored. Remount on change; the selected
-              date lives here, so it survives.
-            */}
-            <SimpleCalendar
-              key={calendarScheme}
-              value={date}
-              onChange={setDate}
-              theme={calendarTheme}
-              appearance={calendarAppearance}
-              scheme={calendarScheme}
-              gradient={
-                useSavedGradientFallback ? (gradient ?? savedGradient) : gradient
-              }
-            />
-          </div>
+          /*
+            `SimpleCalendar`, composed by hand. The prebuilt takes `scheme`
+            uncontrolled (no `onSchemeChange`), so following the saved scheme
+            meant remounting it — and a fresh DOM has nothing to transition
+            from, which killed the paint animation on Surprise Me. Owning the
+            scheme here keeps one instance and lets the colors morph.
+          */
+          <Calendar
+            config={previewConfig}
+            value={date}
+            onChange={(value) => setDate(value as Date | null)}
+            style={{ width }}
+            theme={calendarTheme}
+            appearance={calendarAppearance}
+            scheme={calendarScheme}
+            onSchemeChange={(next) => saveDarkMode(next === "dark")}
+            gradient={
+              useSavedGradientFallback ? (gradient ?? savedGradient) : gradient
+            }
+          >
+            <CalendarToolbar cols="auto minmax(0, 1fr) auto">
+              <CalendarToolbarPrev />
+              <CalendarToolbarGroup>
+                <CalendarToolbarMonthTrigger />
+                <CalendarToolbarYearTrigger />
+              </CalendarToolbarGroup>
+              <CalendarToolbarNext />
+            </CalendarToolbar>
+            <CalendarDays />
+          </Calendar>
         ) : (
           <Calendar
             config={previewConfig}
