@@ -14,7 +14,9 @@ import { codeSamples } from "./code-samples";
 
 <SimplePresetShowcase sampleKey="quick-start" />
 
-No global CSS import is required. Every module ships its own styles and applies them on first render. In RSC frameworks, render the calendar behind a `"use client"` boundary.
+No global CSS import is required with ESM (any bundler, Next.js, Vite): every module ships its own styles and the bundler picks them up. CJS consumers import the shared stylesheet once — `require("@dateforge/react-calendar/style.css")` or the equivalent bundler import. In RSC frameworks, render the calendar behind a `"use client"` boundary.
+
+Since 3.2.3 the package also ships the full reference offline: `node_modules/@dateforge/react-calendar/DOCUMENTATION.md`, plus an `llms.txt` summary for AI coding assistants — point your editor's agent at it and it gets the v3 API instead of guessing from older versions.
 
 ## Core idea
 
@@ -284,6 +286,43 @@ Registry keys by area:
 
 The exact `LabelOverrides` type ships with the package — your editor autocompletes every key.
 
+## Right-to-left (RTL)
+
+The calendar is RTL-ready through CSS logical properties. It deliberately does **not** set `dir` itself — it inherits from the document or any ancestor (`<html dir="rtl">`, or `dir` on a wrapper). Direction-bearing chevrons mirror automatically (`data-flip-rtl`), including inside portalled popups, and toolbar arrow-key navigation follows the direction.
+
+```tsx
+<div dir="rtl">
+  <Calendar config={createCalendarConfig({ locale: "ar" })}>
+    <CalendarToolbar>
+      <CalendarToolbarPrev />
+      <CalendarToolbarMonthTrigger />
+      <CalendarToolbarNext />
+    </CalendarToolbar>
+    <CalendarDays />
+  </Calendar>
+</div>
+```
+
+## Dev warnings
+
+Malformed input never throws — it degrades to a safe fallback and warns **once per distinct message**, in non-production builds only, prefixed `[dateforge]`:
+
+| Id | Fires when |
+| -- | ---------- |
+| `invalidFirstDayOfWeek` | `firstDayOfWeek` outside 0–6 (normalized) |
+| `invalidMinMax` | `min` is after `max` — nothing is selectable |
+| `malformedDateRule` | a `disabled`/`exclude` rule entry was skipped (Invalid Date, bad bound) |
+| `invalidTimeZone` | unknown zone — fell back to the system zone |
+| `invalidValue` | an entry in `value`/`defaultValue` was dropped (Invalid Date, wrong shape, array in single mode) |
+| `emptySelectionAfterExclude` | exclude rules removed every day of a span; nothing committed |
+| `maxRangesReached` | a new range was ignored at the `maxRanges` cap |
+| `invalidPreset` | a preset entry was skipped (null, missing label/id) |
+| `duplicatePresetId` | two presets share an id — first wins |
+| `presetResolveError` | a preset resolver threw — treated as empty |
+| `schemeChangeIgnored` | `scheme` changed on an uncontrolled calendar (no `onSchemeChange`) or a prebuilt |
+
+User-facing rejections (clicking a disabled day, exceeding a cap, an out-of-order time) are not warnings — they surface through the root `onValidationReject` prop, see [`Calendar`](#calendar).
+
 ## Ready-made module sets
 
 These are starting points rather than exported presets. Copy the shape, then add constraints, disabled rules, themes, or appearances.
@@ -338,7 +377,23 @@ Year-stepping header + 12-month grid; picking a month selects the whole month (`
 
 <PrebuiltShowcase name="MultiMonthCalendar" sampleKey="prebuilt-multimonth" />
 
-When a prebuilt stops fitting, drop one level down to the modules — every prebuilt is just `Calendar` + modules + `createCalendarConfig` inside.
+Prebuilt `scheme` is a seed, not a controlled prop: prebuilts take no `onSchemeChange`, so changing `scheme` after mount is ignored (with a `schemeChangeIgnored` dev warning). To drive light/dark from outside, either remount with `key={scheme}` — simple, but the swap is instant, with no color transition — or compose the same layout on `<Calendar scheme={scheme} onSchemeChange={setScheme}>` to keep one instance and let the colors animate.
+
+When a prebuilt stops fitting, drop one level down to the modules — every prebuilt is just `Calendar` + modules + `createCalendarConfig` inside. `SimpleCalendar`, for example, is:
+
+```tsx
+<Calendar config={createCalendarConfig({ mode: "single" })}>
+  <CalendarToolbar cols="auto minmax(0, 1fr) auto">
+    <CalendarToolbarPrev />
+    <CalendarToolbarGroup>
+      <CalendarToolbarMonthTrigger />
+      <CalendarToolbarYearTrigger />
+    </CalendarToolbarGroup>
+    <CalendarToolbarNext />
+  </CalendarToolbar>
+  <CalendarDays />
+</Calendar>
+```
 
 ## Week and month selection
 
