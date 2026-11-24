@@ -9,18 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "@dateforge/react-calendar": "^3.2.3",
+    "@dateforge/react-calendar": "^3.2.4",
     "@hugeicons/core-free-icons": "^4.3.5",
     "@hugeicons/react": "^1.1.10",
-=======
-    "@dateforge/react-calendar": "^3.2.4",
-    "@hugeicons/core-free-icons": "^4.0.0",
-    "@hugeicons/react": "^1.1.6",
->>>>>>> 5f53792 (chore: bump @dateforge/react-calendar to 3.2.4)
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
-    "@next/mdx": "^16.4.2",
+    "@next/mdx": "^16.4.6",
     "@types/mdx": "^2.0.14",
     "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.1",
@@ -28,7 +22,7 @@
     "cmdk": "^1.1.1",
     "framer-motion": "^12.43.0",
     "lucide-react": "^0.577.0",
-    "next": "16.4.2",
+    "next": "16.4.6",
     "radix-ui": "^1.8.1",
     "react": "19.2.3",
     "react-calendar-datetime": "^5.2.3",
@@ -50,7 +44,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.39.5",
-    "eslint-config-next": "16.4.2",
+    "eslint-config-next": "16.4.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3"
   }
